@@ -94,6 +94,10 @@ std::string Planet::getFlavorTextLife()
 		{
 			return "An outpost made by the organisms. With time it will\ngrow to a fully capable part of the civilization.";
 		}
+    default:
+        {
+            return "Do not look into the void.";
+        }
 	}
 }
 
@@ -240,7 +244,7 @@ void Planet::draw(sf::RenderWindow &w, double xx, double yy)
 	else
 	{
 		w.draw(circle);
-		for (int i = 0; i < atmoLinesBrightness.size(); i++)
+		for (size_t i = 0; i < atmoLinesBrightness.size(); i++)
 		{
 			sf::CircleShape atmoLine;
 

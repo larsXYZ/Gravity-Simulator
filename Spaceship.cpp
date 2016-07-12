@@ -2,7 +2,7 @@
 
 SpaceShip::SpaceShip(sf::Vector2f p)
 {
-	pos = pos;
+	pos = p;
 	speed.x = 0;
 	speed.y = 0;
 	angle = 0;

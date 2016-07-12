@@ -38,9 +38,9 @@ void Rom::runSim()
 	initSetup();
 	gui.add(simInfo), gui.add(functions), gui.add(newPlanetInfo), gui.add(massSlider), gui.add(timeStepSlider), gui.add(tempChooser), gui.add(currPlanetInfo), gui.add(massExistingObjectSlider), gui.add(autoBound);
 
-	//PREPEARING EVENTS AND OTHER THINGS	
-	int xx;
-	int yy;
+	//PREPARING EVENTS AND OTHER THINGS	
+	int xx = 0;
+	int yy = 0;
 	xtrans = 0;
 	ytrans = 0;
 	xmidltrans = 0;
@@ -50,15 +50,13 @@ void Rom::runSim()
 	bool randomToggle = false;
 	bool randomToggle2 = false;
 
-	bool harPlanet = false;
-
 	int ringPlanetCounter = 0;
-	int planetFuncId;
+	int planetFuncId = 0;
 
 	sf::Vector2f mouse_rand_pos;
 	sf::Vector2f mouse_ring_pos;
 
-	double ringInnerRad;
+	double ringInnerRad = 0;
 	double ringOuterRad;
 	int createInOrbitCounter = 0;
 	int advCreateInOrbitCounter = 0;
@@ -76,7 +74,7 @@ void Rom::runSim()
 
 		//CHECKING IF MOUSE IS ON WIDGETS OR CURRENT OBJECT MASS-SLIDER
 		mouseOnWidgets = false;
-		for (int i = 0; i < gui.getWidgets().size(); i++)
+		for (size_t i = 0; i < gui.getWidgets().size(); i++)
 		{
 			if (gui.getWidgets()[i]->mouseOnWidget(mousePos.x,mousePos.y)) mouseOnWidgets = true;
 		}
@@ -131,7 +129,7 @@ void Rom::runSim()
 				if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Explode object (C)" && !mouseOnWidgets)
 				{
 					sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-					for (int i = 0; i < pListe.size(); i++)
+					for (size_t i = 0; i < pListe.size(); i++)
 					{
 						if (range(mPos.x, mPos.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
 						{
@@ -145,7 +143,7 @@ void Rom::runSim()
 				{
 					bool fantP = false;
 					sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-					for (int i = 0; i < pListe.size(); i++)
+					for (size_t i = 0; i < pListe.size(); i++)
 					{
 						if (range(localPosition.x, localPosition.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
 						{
@@ -171,19 +169,17 @@ void Rom::runSim()
 				{
 					//SEARCHING FOR PLANET
 					sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-					for (int i = 0; i < pListe.size(); i++)
+					for (size_t i = 0; i < pListe.size(); i++)
 					{
 						if (range(pListe[i].getx(), pListe[i].gety(), mPos.x, mPos.y) < pListe[i].getRad())
 						{
 
 							//CHECKING IF IT ALREADY IS IN THE LIST
 							bool alreadyIn = false;
-							for (int q = 0; q < midlPListe.size(); q++)
+							for (size_t q = 0; q < midlPListe.size(); q++)
 							{
 								if (midlPListe[q] == pListe[i].getId())
 								{
-									if (q >= midlPListe.size() || q < 0) return;
-
 									auto it = midlPListe.begin() + q;
 									*it = std::move(midlPListe.back());
 									midlPListe.pop_back();
@@ -245,14 +241,14 @@ void Rom::runSim()
 					view1.setCenter(findPlanet(lockToObjectId).getx(), findPlanet(lockToObjectId).gety()), window.setView(view1);
 					xtrans = findPlanet(lockToObjectId).getx();
 					ytrans = findPlanet(lockToObjectId).gety();
-					xmidltrans, ymidltrans = 0;
+					xmidltrans = ymidltrans = 0;
 				}
 				if (lockToObjectId == -1)
 				{
 					view1.setCenter(ship.getpos()), window.setView(view1);
 					xtrans = ship.getpos().x;
 					ytrans = ship.getpos().y;
-					xmidltrans, ymidltrans = 0;
+					xmidltrans = ymidltrans = 0;
 				}
 
 				//ADDING PLANET
@@ -326,15 +322,13 @@ void Rom::runSim()
 					if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && createInOrbitCounter == 0)
 					{
 
-						for (int i = 0; i < pListe.size(); i++)
+						for (size_t i = 0; i < pListe.size(); i++)
 						{
 							sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 
 							if (range(pListe[i].getx(), pListe[i].gety(), localPosition.x, localPosition.y) < pListe[i].getRad())
 							{
-
 								planetFuncId = pListe[i].getId();
-								harPlanet = true;
 								createInOrbitCounter = 1;
 								break;
 							}
@@ -433,7 +427,7 @@ void Rom::runSim()
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && functions->getSelectedItem() == "Remove object (D)" && !mouseOnWidgets)
 				{
 					sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-					for (int i = 0; i < pListe.size(); i++)
+					for (size_t i = 0; i < pListe.size(); i++)
 					{
 						if (range(pListe[i].getx(), pListe[i].gety(), localPosition.x, localPosition.y) < pListe[i].getRad())
 						{
@@ -466,7 +460,7 @@ void Rom::runSim()
 						if (pListe.size() > 0)
 						{
 							sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-							for (int i = 0; i < pListe.size(); i++)
+							for (size_t i = 0; i < pListe.size(); i++)
 							{
 								if (range(pListe[i].getx(), pListe[i].gety(), localPosition.x, localPosition.y) < pListe[i].getRad())
 								{
@@ -604,7 +598,6 @@ void Rom::runSim()
 					sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
 					sf::Vector3f massCenterInfoVector(centerOfMass(midlPListe));
 					sf::Vector2f massCenterVelocity = centerOfMassVelocity(midlPListe);
-					double massCenterMass = centerOfMass(midlPListe).z;
 					double rad = range(new_mouse_pos.x, new_mouse_pos.y, massCenterInfoVector.x, massCenterInfoVector.y);
 					Planet midlP(size);
 
@@ -638,7 +631,7 @@ void Rom::runSim()
 							double angle = atan2(new_mouse_pos.y - massCenterInfoVector.y, new_mouse_pos.x - massCenterInfoVector.x);
 							double fixhast = size*hast / (size + massCenterInfoVector.z);
 
-							for (int i = 0; i < midlPListe.size(); i++)
+							for (size_t i = 0; i < midlPListe.size(); i++)
 							{
 								if (findPlanet(midlPListe[i]).getmass() != -1)
 								{
@@ -710,7 +703,7 @@ void Rom::runSim()
 		{
 
 			//SELECTED PLANETS
-			for (int i = 0; i < midlPListe.size(); i++)
+			for (size_t i = 0; i < midlPListe.size(); i++)
 			{
 				Planet p = findPlanet(midlPListe[i]);
 				if (p.getmass() != -1)

@@ -30,7 +30,7 @@ void Rom::printPListe()
 {
 	if (pListe.size() > 0)
 	{
-		for (int i = 0; i < pListe.size(); i++)
+		for (size_t i = 0; i < pListe.size(); i++)
 		{
 			std::cout << "Element: " << i << " // ";
 			pListe[i].printInfoShort();
@@ -50,7 +50,7 @@ sf::Vector3f Rom::centerOfMass(std::vector<int> midlPList)
 	double xCont = 0;
 	double yCont = 0;
 
-	for (int i = 0; i < midlPList.size(); i++)
+	for (size_t i = 0; i < midlPList.size(); i++)
 	{
 
 		Planet p = findPlanet(midlPList[i]);
@@ -75,7 +75,7 @@ sf::Vector2f Rom::centerOfMassVelocity(std::vector<int> midlPList)
 	double xCont = 0;
 	double yCont = 0;
 
-	for (int i = 0; i < midlPList.size(); i++)
+	for (size_t i = 0; i < midlPList.size(); i++)
 	{
 
 		Planet p = findPlanet(midlPList[i]);
@@ -91,7 +91,6 @@ sf::Vector2f Rom::centerOfMassVelocity(std::vector<int> midlPList)
 	}
 
 	return sf::Vector2f(xCont / tMass, yCont / tMass);
-
 }
 
 sf::Vector2f Rom::centerOfMassAll()
@@ -100,7 +99,7 @@ sf::Vector2f Rom::centerOfMassAll()
 	double xCont = 0;
 	double yCont = 0;
 
-	for (int i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < pListe.size(); i++)
 	{
 
 		Planet p = pListe[i];
@@ -131,15 +130,8 @@ void Rom::update()
 	if (iterasjon % SMK_ACCURACY == 0) updateSMK = true;
 
 	//SHIPCHECK
-	for (int i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < pListe.size(); i++)
 	{
-		if (!ship.getLandedState() && ship.isExist())
-		{
-			double speed = sqrt((pListe[i].getxv() - ship.getvel().x)*(pListe[i].getxv() - ship.getvel().x) + (pListe[i].getyv() - ship.getvel().y) * (pListe[i].getyv() - ship.getvel().y));
-			double dist = sqrt((pListe[i].getx() - ship.getpos().x)*(pListe[i].getx() - ship.getpos().x) + (pListe[i].gety() - ship.getpos().y) * (pListe[i].gety() - ship.getpos().y));
-
-		}
-
 		if (ship.isExist() && !ship.pullofGravity(pListe[i], ship, timeStep))
 		{
 			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
@@ -148,15 +140,15 @@ void Rom::update()
 
 	//SMOKE MOVE
 #pragma omp parallel for schedule(dynamic)
-	for (int i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < pListe.size(); i++)
 	{
 		if (pListe[i].getmass() > MINIMUMBREAKUPSIZE && updateSMK) GravitySmoke(pListe[i], timeStep);
 	}
 
 	//GRAVITY, COLLISIONS, ROCHE, AND TEMP
-	for (int i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < pListe.size(); i++)
 	{
-		for (int p = 0; p < pListe.size(); p++)
+		for (size_t p = 0; p < pListe.size(); p++)
 		{
 			if (p != i)
 			{
@@ -181,7 +173,7 @@ void Rom::update()
 				{
 					if (pListe[i].getmass() >= pListe[p].getmass())
 					{
-						if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_COLLISION) for (int i = 0; i < PARTICULES_PER_COLLISION; i++) addSmoke(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 10, sf::Vector2f(pListe[p].getxv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4), pListe[p].getyv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4)), DUSTLEVETID);
+						if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_COLLISION) for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++) addSmoke(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 10, sf::Vector2f(pListe[p].getxv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4), pListe[p].getyv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4)), DUSTLEVETID);
 						addExplosion(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 2 * pListe[p].getRad(), sf::Vector2f(pListe[p].getxv()*0.5, pListe[p].getyv()*0.5), sqrt(pListe[i].getmass()) / 2);
 						pListe[i].kollisjon(pListe[p]);
 						pListe[i].incMass(pListe[p].getmass());
@@ -211,7 +203,7 @@ void Rom::update()
 
 	//OTHER
 #pragma omp parallel for schedule(dynamic)
-	for (int i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < pListe.size(); i++)
 	{
 		//TEMPERATURE
 		pListe[i].coolDOWN(timeStep);
@@ -226,7 +218,7 @@ void Rom::update()
 	}
 
 	//COLONIZATION
-	for (int i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < pListe.size(); i++)
 	{
 		if (pListe[i].getLife().willExp())
 		{
@@ -237,7 +229,7 @@ void Rom::update()
 
 	//MOVE
 #pragma omp parallel for schedule(dynamic)
-	for (int i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < pListe.size(); i++)
 	{
 		pListe[i].move(timeStep);
 		pListe[i].resetAttractorMeasure();
@@ -247,13 +239,13 @@ void Rom::update()
 	if (bound.getState())
 	{
 		//PLANETS
-		for (int i = 0; i < pListe.size(); i++)
+		for (size_t i = 0; i < pListe.size(); i++)
 		{
 			if (bound.isOutside(sf::Vector2f(pListe[i].getx(), pListe[i].gety()))) removePlanet(i);
 		}
 
 		//DUST
-		for (int i = 0; i < smkListe.size(); i++)
+		for (size_t i = 0; i < smkListe.size(); i++)
 		{
 			if (bound.isOutside(smkListe[i].getpos())) removeSmoke(i);
 		}
@@ -272,7 +264,7 @@ void Rom::update()
 	}
 
 	//CHECKING TOTAL MASS
-	for (int i = 0; i < pListe.size(); i++) totalMass += pListe[i].getmass();
+	for (size_t i = 0; i < pListe.size(); i++) totalMass += pListe[i].getmass();
 
 }
 
@@ -313,7 +305,7 @@ void Rom::randomPlaneter(int totmass,int antall, double radius, sf::Vector2f pos
 
 void Rom::removePlanet(int ind)
 {
-	if (ind >= pListe.size() || ind < 0) return;
+	if (ind >= (int) pListe.size() || ind < 0) return;
 
 	auto it = pListe.begin() + ind;
 	*it = std::move(pListe.back());
@@ -322,7 +314,7 @@ void Rom::removePlanet(int ind)
 
 void Rom::removeTrail(int ind)
 {
-	if (ind >= trlListe.size() || ind < 0) return;
+	if (ind >= (int) trlListe.size() || ind < 0) return;
 
 	auto it = trlListe.begin() + ind;
 	*it = std::move(trlListe.back());
@@ -332,7 +324,7 @@ void Rom::removeTrail(int ind)
 
 void Rom::removeExplosion(int ind)
 {
-	if (ind >= expListe.size() || ind < 0) return;
+	if (ind >= (int) expListe.size() || ind < 0) return;
 
 	auto it = expListe.begin() + ind;
 	*it = std::move(expListe.back());
@@ -341,7 +333,7 @@ void Rom::removeExplosion(int ind)
 
 void Rom::removeSmoke(int ind)
 {
-	if (ind >= smkListe.size() || ind < 0) return;
+	if (ind >= (int) smkListe.size() || ind < 0) return;
 
 	std::vector<Smoke> midl;
 
@@ -352,6 +344,8 @@ void Rom::removeSmoke(int ind)
 
 void Rom::clear(sf::View& v, sf::Window& w)
 {
+    (void) w;
+
 	pListe.clear();
 	expListe.clear();
 	smkListe.clear();
@@ -391,7 +385,7 @@ void Rom::explodePlanet(int ind)
 		int added = 0;
 
 
-		for (int i = 0; i < antall; i += kanter)
+		for (size_t i = 0; i < antall; i += kanter)
 		{
 			double angle = ((double) modernRandomWithLimits(0,200*PI))/100;
 			double deltaVinkel = 2 * PI / kanter;
@@ -399,7 +393,7 @@ void Rom::explodePlanet(int ind)
 			double escVel = G*sqrt(origMass) * EXPLODE_PLANET_SPEEDMULT_OTHER / cbrt(dist+0.1);
 			kanter++;
 
-			for (int q = 0; q < kanter; q++)
+			for (size_t q = 0; q < kanter; q++)
 			{
 				Planet Q(mass, x + dist  * cos(angle), y + dist * sin(angle), xv + escVel * cos(angle), yv + escVel * sin(angle));
 				Q.setTemp(1500);
@@ -426,7 +420,7 @@ void Rom::explodePlanetOld(int ind)
 
 		double angle = 0;
 
-		for (int i = 0; i < antall; i++)
+		for(size_t i = 0; i < antall; i++)
 		{
 
 			Planet Q(masse / antall, x + 2 * cbrt(radius)*cos(angle), y + 2 * cbrt(radius)*sin(angle), pListe[ind].getxv() + EXPLODE_PLANET_SPEEDMULT* sqrt(masse) *cos(angle), pListe[ind].getyv() + EXPLODE_PLANET_SPEEDMULT * sqrt(masse) *sin(angle));
@@ -435,7 +429,7 @@ void Rom::explodePlanetOld(int ind)
 			addPlanet(Q);
 		}
 		removePlanet(ind);
-		if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_EXPLOSION) for (int i = 0; i < PARTICULES_PER_EXPLOSION; i++) addSmoke(sf::Vector2f(x, y), 10, sf::Vector2f(pListe[ind].getxv() + CREATEDUSTSPEEDMULT*(((double)modernRandomWithLimits(-400, 400)) / 100), pListe[ind].getyv() + CREATEDUSTSPEEDMULT*(((double)modernRandomWithLimits(-400, 400)) / 100)), DUSTLEVETID);
+		if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_EXPLOSION) for(size_t i = 0; i < PARTICULES_PER_EXPLOSION; i++) addSmoke(sf::Vector2f(x, y), 10, sf::Vector2f(pListe[ind].getxv() + CREATEDUSTSPEEDMULT*(((double)modernRandomWithLimits(-400, 400)) / 100), pListe[ind].getyv() + CREATEDUSTSPEEDMULT*(((double)modernRandomWithLimits(-400, 400)) / 100)), DUSTLEVETID);
 
 	}
 }
@@ -453,7 +447,7 @@ void Rom::giveId(Planet &p)
 
 Planet Rom::findPlanet(double id)
 {
-	for (int i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < pListe.size(); i++)
 	{
 		if (pListe[i].getId() == id)
 		{
@@ -465,7 +459,7 @@ Planet Rom::findPlanet(double id)
 
 Planet Rom::findPlanetRef(double id)
 {
-	for (int i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < pListe.size(); i++)
 	{
 		if (pListe[i].getId() == id)
 		{
@@ -480,7 +474,7 @@ int Rom::findBestPlanet(int q)
 	int ind = -1;
 	double highest = -1;
 
-	for (int i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < pListe.size(); i++)
 	{
 		if (pListe[i].getType() == ROCKY || pListe[i].getType() == TERRESTIAL)
 		{
@@ -488,7 +482,7 @@ int Rom::findBestPlanet(int q)
 			if (nr == 6 || nr == 7 || nr == 5 || nr == 4)
 			{
 			}
-			else if (pListe[i].getSupportedBiomass() > highest && i != q)
+			else if (pListe[i].getSupportedBiomass() > highest && (int) i != q)
 			{
 				highest = pListe[i].getSupportedBiomass();
 				ind = i;
@@ -506,7 +500,7 @@ void Rom::addTrail(sf::Vector2f p, int l)
 
 void Rom::GravitySmoke(Planet forcer, int t)
 {
-	for (int i = 0; i < smkListe.size(); i++)
+	for (size_t i = 0; i < smkListe.size(); i++)
 	{
 		smkListe[i].pullOfGravity(forcer, t);
 	}
@@ -545,6 +539,7 @@ std::string Rom::calcTemperature(double q, int e)
 	{
 		return convertDoubleToString((int)((q - 273.15)* 1.8000 + 32.00)) + "°F";
 	}
+    return "-";
 }
 
 void Rom::romskipHandling()
@@ -761,6 +756,8 @@ void Rom::initSetup()
 
 void Rom::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
 {
+    (void) v;
+
 	//PRINTING INFO TO WINDOW
 	if (findPlanet(fokusId).getmass() != -1)
 	{
@@ -871,7 +868,7 @@ void Rom::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
 
 		//DRAWING LINES TO OTHER PLANET WITH THE SAME SPECIES
 		if (fokusP.getLife().getTypeEnum() >= 6) {
-			for (int i = 0; i < pListe.size(); i++)
+			for(size_t i = 0; i < pListe.size(); i++)
 			{
 				if (pListe[i].getLife().getId() == fokusP.getLife().getId())
 				{
@@ -925,7 +922,7 @@ void Rom::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
 void Rom::PlanetSkjermPrint(sf::RenderWindow &window)
 {
 	//DRAWING PLANETS																										
-	for (int i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < pListe.size(); i++)
 	{
 		pListe[i].draw(window, xmidltrans, ymidltrans);
 	}
@@ -938,7 +935,7 @@ void Rom::effectSkjermPrint(sf::RenderWindow &window)
 	int inc = 1;
 	if (timeStep == 0) inc = 0;
 
-	for (int i = 0; i < expListe.size(); i++)
+	for(size_t i = 0; i < expListe.size(); i++)
 	{
 		expListe[i].move(timeStep);
 
@@ -949,7 +946,7 @@ void Rom::effectSkjermPrint(sf::RenderWindow &window)
 		}
 	}
 	//DUST
-	for (int i = 0; i < smkListe.size(); i++)
+	for(size_t i = 0; i < smkListe.size(); i++)
 	{
 		smkListe[i].move(timeStep);
 		if (smkListe[i].getAge(timeStep) < smkListe[i].levetidmax() && !smkListe[i].killMe()) smkListe[i].print(window, xmidltrans, ymidltrans);
@@ -959,7 +956,7 @@ void Rom::effectSkjermPrint(sf::RenderWindow &window)
 		}
 	}
 	//TRAILS
-	for (int i = 0; i < trlListe.size(); i++)
+	for(size_t i = 0; i < trlListe.size(); i++)
 	{
 		trlListe[i].move(timeStep);
 		if (trlListe[i].getAge(0) < trlListe[i].levetidmax() && !trlListe[i].killMe()) trlListe[i].print(window, xmidltrans, ymidltrans);
@@ -973,7 +970,7 @@ void Rom::effectSkjermPrint(sf::RenderWindow &window)
 
 void Rom::lightSkjermPrint(sf::RenderWindow& window)
 {
-	for (int i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < pListe.size(); i++)
 	{
 		Planet p = pListe[i];
 		
@@ -990,7 +987,7 @@ void Rom::lightSkjermPrint(sf::RenderWindow& window)
 			double deltaAng = 2*PI / ((double)LIGHT_NUMBER_OF_VERTECES);
 			double ang = 0;
 			double rad = LIGHT_STRENGTH_MULTIPLIER * sqrt(p.fusionEnergy());
-			for (int nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
+			for(size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
 			{
 				sf::Vector2f pos(p.getx() - xmidltrans + cos(ang) * rad, p.gety() - ymidltrans + sin(ang) * rad);
 				vertexArr.append(sf::Vertex(pos, col));
@@ -1006,7 +1003,7 @@ void Rom::lightSkjermPrint(sf::RenderWindow& window)
 			col.a = LIGHT_END_STRENGTH;
 			ang = 0;
 			rad = SHORT_LIGHT_RANGE_MULTIPLIER * p.getRad();
-			for (int nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
+			for(size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
 			{
 				sf::Vector2f pos(p.getx() - xmidltrans + cos(ang) * rad, p.gety() - ymidltrans + sin(ang) * rad);
 				vertexArr2.append(sf::Vertex(pos, col));
@@ -1026,16 +1023,14 @@ void Rom::lockToObject(sf::RenderWindow& w, sf::View& v)
 	//FINDING NEW OBJECT TO FOCUS ON
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && functions->getSelectedItem() == "Follow object (T)" && !mouseOnWidgets)
 	{
-		bool fantP = false;
 		sf::Vector2i localPosition(w.mapPixelToCoords(sf::Mouse::getPosition(w), v));
 
 		//SEARCH
-		for (int i = 0; i < pListe.size(); i++)
+		for(size_t i = 0; i < pListe.size(); i++)
 		{
 			if (range(localPosition.x, localPosition.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
 			{
 				lockToObjectId = pListe[i].getId();
-				fantP = true;
 				return;
 			}
 		}
@@ -1056,7 +1051,7 @@ double Rom::getTherEnergyAtPos(sf::Vector2f pos)
 {
 	double tEnergyFromOutside = 0;
 
-	for (int i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < pListe.size(); i++)
 	{
 		if (pListe[i].getmass() < BIGSTARLIMIT && pListe[i].getmass() >= GASGIANTLIMIT)
 		{
