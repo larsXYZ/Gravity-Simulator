@@ -153,7 +153,7 @@ public:
 		f *= SMK_ACCURACY*tidsskritt;
 
 		//DOING THE BUSINESS
-		if (distSquared > forcer.getRad()*forcer.getRad())
+		if (distanceSquared > forcer.getRad()*forcer.getRad())
 		{
 			setVel(sf::Vector2f(f*cos(angle), f*sin(angle)));
 		}
