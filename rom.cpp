@@ -865,7 +865,7 @@ Planet Rom::finnPlanet(double id)
 	return Planet(-1);
 }
 
-Planet& Rom::finnPlanetRef(double id)
+Planet Rom::finnPlanetRef(double id)
 {
 	for (int i = 0; i < pListe.size(); i++)
 	{
