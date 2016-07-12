@@ -147,13 +147,13 @@ public:
 
 
 		//MATH
-		double dist = sqrt((forcer.getx() - getpos().x)*(forcer.getx() - getpos().x) + (forcer.gety() - getpos().y) * (forcer.gety() - getpos().y));
+		double distanceSquared = (forcer.getx() - getpos().x)*(forcer.getx() - getpos().x) + (forcer.gety() - getpos().y) * (forcer.gety() - getpos().y);
 		double angle = atan2(forcer.gety() - getpos().y, forcer.getx() - getpos().x);
-		double f = forcer.getG() * forcer.getmass() / (dist*dist);
+		double f = forcer.getG() * forcer.getmass() / (distanceSquared);
 		f *= SMK_ACCURACY*tidsskritt;
 
 		//DOING THE BUSINESS
-		if (dist > forcer.getRad())
+		if (dist > forcer.getRad()*forcer.getRad())
 		{
 			setVel(sf::Vector2f(f*cos(angle), f*sin(angle)));
 		}
