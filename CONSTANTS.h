@@ -9,6 +9,7 @@ double const G = 0.00667;
 double const SBconst = 0.00007;
 double const tempConstTwo = 0.018;
 const double PI = 3.14159265359;
+const double SPEED_OF_LIGHT = 299792458.;
 
 //SIMULATION
 const int FRAMERATE = 60;
