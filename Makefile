@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 -fpermissive -O3
+CFLAGS = -Werror -std=c++11 -O3
 LDFLAGS = -ltgui -lsfml-graphics -lsfml-window -lsfml-system
 TARGET = gravity-simulator
 SRC = $(wildcard *.cpp)

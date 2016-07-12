@@ -161,7 +161,7 @@ public:
 	{
 		return name;
 	}
-	std::string Planet::getFlavorTextLife();
+	std::string getFlavorTextLife();
 	sf::Color getStarCol()
 	{
 		if (temperature < 1600) return (sf::Color(255, 38, 00));
