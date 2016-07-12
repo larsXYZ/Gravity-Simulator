@@ -344,7 +344,7 @@ void Rom::removeSmoke(int ind)
 
 void Rom::clear(sf::View& v, sf::Window& w)
 {
-    (void) w;
+	(void) w;
 
 	pListe.clear();
 	expListe.clear();
@@ -539,7 +539,7 @@ std::string Rom::calcTemperature(double q, int e)
 	{
 		return convertDoubleToString((int)((q - 273.15)* 1.8000 + 32.00)) + "°F";
 	}
-    return "-";
+	return "-";
 }
 
 void Rom::romskipHandling()
@@ -756,7 +756,7 @@ void Rom::initSetup()
 
 void Rom::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
 {
-    (void) v;
+	(void) v;
 
 	//PRINTING INFO TO WINDOW
 	if (findPlanet(fokusId).getmass() != -1)

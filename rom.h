@@ -131,7 +131,7 @@ public:
 	//USERFUNCTIONS
 	void hotkeys(sf::Window& w, sf::View& v)
 	{
-        (void) w;
+		(void) w;
 
 		//ZOOM
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) && zoom < 15)

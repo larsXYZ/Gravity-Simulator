@@ -150,11 +150,11 @@ void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c
 		x = Rom::convertStringToDouble(c1->getText());
 		y = Rom::convertStringToDouble(c2->getText());
 	}
-    else
-    {
-        x = 640;
-        y = 480;
-    }
+	else
+	{
+		x = 640;
+		y = 480;
+	}
 
 	//STARTING
 	Rom sim(x, y, fullscreen);
