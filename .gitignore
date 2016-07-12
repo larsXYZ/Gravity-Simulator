@@ -1,0 +1,4 @@
+.*.swp
+*.o
+gravity-simulator
+prevSettings.txt
