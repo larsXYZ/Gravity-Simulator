@@ -37,12 +37,12 @@ const double MASS_SLIDER_MAX_VALUE = 4000;
 
 //PLANETTHINGS
 const int maxAtmoLayer = 15;
-const int minAtmoLayer = 10;																									
-const int brightnessVariance = 8;																						//THE VARIANCE OF ATMOSPHERE BRIGHNESS IN GASGIANTS
+const int minAtmoLayer = 10;
+const int brightnessVariance = 8;           //THE VARIANCE OF ATMOSPHERE BRIGHNESS IN GASGIANTS
 const double greenHouseEffectMult = 0.0008;
-const double maxAtmo = 600;																							//MAX ATMOSPHERE
-const double atmoThicknessMult = 0.05;																			//HEIGHT OF ATMOSPHERE MULTIPLIER
-const double atmoAlphaMult = 0.3;																					//ALPHA OF ATMOSPHERE MULTIPLIER
+const double maxAtmo = 600;                 //MAX ATMOSPHERE
+const double atmoThicknessMult = 0.05;      //HEIGHT OF ATMOSPHERE MULTIPLIER
+const double atmoAlphaMult = 0.3;           //ALPHA OF ATMOSPHERE MULTIPLIER
 
 // SHIP
 const double SHIP_GAS_EJECT_SPEED = 0.06;
@@ -64,7 +64,7 @@ const int COLLISION_HEAT_MULTIPLIER = 90000;
 const int FLASH_SIZE = 1.2;
 
 //UI
-const int UI_SEPERATION_DISTANCE = 5;																		//SEPERATION OF UI ELEMENTS
+const int UI_SEPERATION_DISTANCE = 5; //SEPERATION OF UI ELEMENTS
 
 //ETC
 const double MAXSIZEPLANETCREATOR = 80;
@@ -93,10 +93,10 @@ const int colony_expand_rate = 50000;
 const int interstellar_expand_rate = 20000;
 const int interstellar_min_size = 1000;
 const double civilization_compact_constant = 500;
-const int LIFE_PREFERRED_TEMP = 298;																//KELVIN
-const int LIFE_PREFERRED_ATMO = 300;																//KILOPASCAL
-const double LIFE_PREFERRED_TEMP_MULTIPLIER = 0.005;									//HOW MUCH THE TEMPERATURE DIFFERENCE FROM THE IDEAL IMPACTS LIFE
-const double LIFE_PREFERRED_ATMO_MULTIPLIER = 0.0003;							//HOW MUCH THE ATMO DIFFERENCE FROM THE IDEAL IMPACTS LIFE
+const int LIFE_PREFERRED_TEMP = 298;                  //KELVIN
+const int LIFE_PREFERRED_ATMO = 300;                  //KILOPASCAL
+const double LIFE_PREFERRED_TEMP_MULTIPLIER = 0.005;  //HOW MUCH THE TEMPERATURE DIFFERENCE FROM THE IDEAL IMPACTS LIFE
+const double LIFE_PREFERRED_ATMO_MULTIPLIER = 0.0003; //HOW MUCH THE ATMO DIFFERENCE FROM THE IDEAL IMPACTS LIFE
 
 //GOLDI LOCK ZONE
 const double inner_goldi_temp = 323.15;
@@ -111,8 +111,8 @@ const double LIGHT_STRENGTH_MULTIPLIER = 30;
 const int LIGHT_START_STRENGTH = 50;
 const int LIGHT_END_STRENGTH = 0;
 
-const double SHORT_LIGHT_STRENGTH_MULTIPLIER = 5;					//HOW MUCH STRONGER THE SHORT RANGE LIGHT IS THAN THE LONG RANGE LIGHT
-const double SHORT_LIGHT_RANGE_MULTIPLIER = 1.5;						//THE RELATIONSHIP BETWEEN THE STARS RADIUS AND THE INNER LIGHT RADIUS
+const double SHORT_LIGHT_STRENGTH_MULTIPLIER = 5; //HOW MUCH STRONGER THE SHORT RANGE LIGHT IS THAN THE LONG RANGE LIGHT
+const double SHORT_LIGHT_RANGE_MULTIPLIER = 1.5;  //THE RELATIONSHIP BETWEEN THE STARS RADIUS AND THE INNER LIGHT RADIUS
 
 //EXPLOSIONLIGHT
 const int EXPLOSION_LIGHT_START_STRENGTH = 50;
@@ -135,6 +135,6 @@ const double ROCHE_LIMIT_SIZE_DIFFERENCE = 0.3;
 const double MINIMUMBREAKUPSIZE = 3;
 
 //EXPLODE PLANET
-const double EXPLODE_PLANET_SPEEDMULT_OTHER = 10;											//APPLIES TO EXPLODE PLANET FEATURE
-const double EXPLODE_PLANET_SPEEDMULT = 0.025;													//APPLIES TO ROCHE LIMIT
+const double EXPLODE_PLANET_SPEEDMULT_OTHER = 10; //APPLIES TO EXPLODE PLANET FEATURE
+const double EXPLODE_PLANET_SPEEDMULT = 0.025;    //APPLIES TO ROCHE LIMIT
 const double EXPLODE_PLANET_DISTCONST = 2;
