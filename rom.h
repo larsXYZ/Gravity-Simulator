@@ -113,10 +113,7 @@ public:
 	void giveRings(Planet p, int inner, int outer);
 	
 	//SIMULATION FUNCTIONS
-	void updateNew();
-	void updateImproved();
 	void update();
-	void updateOLD();
 	void runSim();
 	void PlanetSkjermPrint(sf::RenderWindow &window);
 	void effectSkjermPrint(sf::RenderWindow & window);

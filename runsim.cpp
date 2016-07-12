@@ -769,7 +769,7 @@ void Rom::runSim()
 		window.setView(view1);
 		window.display();
 
-		if (tidsskritt != 0) updateImproved();
+		if (tidsskritt != 0) update();
 
 		//FRAMERATE OUT
 		sf::Time time = clock.getElapsedTime();
