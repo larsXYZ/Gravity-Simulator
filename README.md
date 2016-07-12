@@ -14,7 +14,7 @@ and the user interface library [TGUI](https://www.tgui.eu/).
 ## Dependencies
 
 ```bash
-# >> /etc/apt/sources.list <<< deb http://ppa.launchpad.net/texus/tgui/ubuntu xenial main
+# >> /etc/apt/sources.list <<< "deb http://ppa.launchpad.net/texus/tgui/ubuntu xenial main"
 # apt update
 # apt install libsfml-dev libtgui-dev
 ```
