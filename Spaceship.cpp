@@ -41,7 +41,7 @@ SpaceShip::SpaceShip()
 	ship.setRotation(angle);
 }
 
-int SpaceShip::move(int tidsskritt)
+int SpaceShip::move(int timeStep)
 {
 	if (exist)
 	{
@@ -79,14 +79,14 @@ int SpaceShip::move(int tidsskritt)
 			isFiring = 0;
 		}
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !isLanded) angle -= 0.25 * tidsskritt;
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !isLanded) angle += 0.25* tidsskritt;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !isLanded) angle -= 0.25 * timeStep;
+		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !isLanded) angle += 0.25* timeStep;
 
 		speed.x += acc * cos(2 * PI*angle / 360);
 		speed.y += acc * sin(2 * PI*angle / 360);
 
-		pos.x += speed.x * tidsskritt;
-		pos.y += speed.y * tidsskritt;
+		pos.x += speed.x * timeStep;
+		pos.y += speed.y * timeStep;
 	}
 
 	return isFiring;
@@ -187,7 +187,7 @@ void SpaceShip::setLandedstate(bool state)
 	isLanded = state;
 }
 
-bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int tidsskritt)
+bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 {
 	double dist = sqrt((forcer.getx() - ship.getpos().x)*(forcer.getx() - ship.getpos().x) + (forcer.gety() - ship.getpos().y) * (forcer.gety() - ship.getpos().y));
 
@@ -235,8 +235,8 @@ bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int tidsskritt)
 
 		if (dist > forcer.getRad())
 		{
-			speed.x += xf * tidsskritt / mass;
-			speed.y += yf * tidsskritt / mass;
+			speed.x += xf * timeStep / mass;
+			speed.y += yf * timeStep / mass;
 		}
 	}
 

@@ -185,8 +185,8 @@ public:
 
 	//LIFE FUNCTIONS
 
-	void updateVel(Planet forcer, double tidsskritt);
-	void move(double tidsskritt);
+	void updateVel(Planet forcer, double timeStep);
+	void move(double timeStep);
 	void updateRadiAndType();
 	void resetAttractorMeasure()
 	{

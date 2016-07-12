@@ -29,8 +29,8 @@ public:
 	SpaceShip();
 	SpaceShip(sf::Vector2f p);
 
-	int move(int tidsskritt);
-	bool pullofGravity(Planet forcer, SpaceShip &ship, int tidsskritt);
+	int move(int timeStep);
+	bool pullofGravity(Planet forcer, SpaceShip &ship, int timeStep);
 	sf::Vector2f getpos();
 	sf::Vector2f getvel();
 	void reset(sf::Vector2f p);
