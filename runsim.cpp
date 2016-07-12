@@ -625,24 +625,24 @@ void Rom::runSim()
 
 					//ADDING NEW PLANET
 					if (advCreateInOrbitCounter == 1 && !sf::Mouse::isButtonPressed(sf::Mouse::Left))
+					{
+
+						double hast = sqrt(G*(massCenterInfoVector.z + size) / rad);
+						double angle = atan2(new_mouse_pos.y - massCenterInfoVector.y, new_mouse_pos.x - massCenterInfoVector.x);
+						double fixhast = size*hast / (size + massCenterInfoVector.z);
+						addPlanet(Planet(size, massCenterInfoVector.x + rad*cos(angle), massCenterInfoVector.y + rad*sin(angle), (massCenterVelocity.x + hast*cos(angle + 1.507)- fixhast*cos(angle + 1.507)), (massCenterVelocity.y + hast*sin(angle + 1.507)- fixhast*sin(angle + 1.507))));
+						
+						for (int i = 0; i < midlPListe.size(); i++)
 						{
-
-							double hast = sqrt(G*(massCenterInfoVector.z + size) / rad);
-							double angle = atan2(new_mouse_pos.y - massCenterInfoVector.y, new_mouse_pos.x - massCenterInfoVector.x);
-							double fixhast = size*hast / (size + massCenterInfoVector.z);
-
-							for (size_t i = 0; i < midlPListe.size(); i++)
+							if (finnPlanet(midlPListe[i]).getmass() != -1)
 							{
-								if (findPlanet(midlPListe[i]).getmass() != -1)
-								{
-									findPlanetRef(midlPListe[i]).getxv() -= fixhast*cos(angle + 1.507);
-									findPlanetRef(midlPListe[i]).getyv() -= fixhast*sin(angle + 1.507);
-								}
+								finnPlanetRef(midlPListe[i]).getxv() -= fixhast*cos(angle + 1.507);
+								finnPlanetRef(midlPListe[i]).getyv() -= fixhast*sin(angle + 1.507);
 							}
-
-							addPlanet(Planet(size, massCenterInfoVector.x + rad*cos(angle), massCenterInfoVector.y + rad*sin(angle), (massCenterVelocity.x + hast*cos(angle + 1.507)), (massCenterVelocity.y + hast*sin(angle + 1.507))));
-							advCreateInOrbitCounter = 0;
 						}
+
+						advCreateInOrbitCounter = 0;
+					}
 
 				}
 				else
