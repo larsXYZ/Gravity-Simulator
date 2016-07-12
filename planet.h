@@ -1,6 +1,6 @@
 #pragma once
 #include <cmath>
-#include <math.h> 
+#include <math.h>
 #include <iostream>
 #include "CONSTANTS.h"
 #include <SFML/Graphics.hpp>
@@ -161,7 +161,7 @@ public:
 	{
 		return name;
 	}
-	std::string Planet::getFlavorTextLife();
+	std::string getFlavorTextLife();
 	sf::Color getStarCol()
 	{
 		if (temperature < 1600) return (sf::Color(255, 38, 00));
@@ -185,8 +185,8 @@ public:
 
 	//LIFE FUNCTIONS
 
-	void updateVel(Planet forcer, double tidsskritt);
-	void move(double tidsskritt);
+	void updateVel(Planet forcer, double timeStep);
+	void move(double timeStep);
 	void updateRadiAndType();
 	void resetAttractorMeasure()
 	{
@@ -228,6 +228,8 @@ public:
 			return HEAT_STAR_MULT * mass;
 		case BIGSTAR:
 			return HEAT_BIG_STAR_MULT * mass;
+        default:
+            return 0;
 		}
 	}
 	double thermalEnergy()
@@ -240,6 +242,7 @@ public:
 	}
 	void heatUP(double e, int t)
 	{
+        (void) t;
 		tEnergy += (e*(1+greenHouseEffectMult*atmoCur));
 	}
 	double giveTEnergy(int t)
@@ -261,7 +264,7 @@ public:
 		{
 			if (planetType == ROCKY)
 			{
-				atmoCur == 0;
+				atmoCur = 0;
 				return;
 			}
 			else

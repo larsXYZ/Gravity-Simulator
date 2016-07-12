@@ -38,9 +38,9 @@ void Rom::runSim()
 	initSetup();
 	gui.add(simInfo), gui.add(functions), gui.add(newPlanetInfo), gui.add(massSlider), gui.add(timeStepSlider), gui.add(tempChooser), gui.add(currPlanetInfo), gui.add(massExistingObjectSlider), gui.add(autoBound);
 
-	//PREPEARING EVENTS AND OTHER THINGS	
-	int xx;
-	int yy;
+	//PREPARING EVENTS AND OTHER THINGS	
+	int xx = 0;
+	int yy = 0;
 	xtrans = 0;
 	ytrans = 0;
 	xmidltrans = 0;
@@ -50,15 +50,13 @@ void Rom::runSim()
 	bool randomToggle = false;
 	bool randomToggle2 = false;
 
-	bool harPlanet = false;
-
 	int ringPlanetCounter = 0;
-	int planetFuncId;
+	int planetFuncId = 0;
 
 	sf::Vector2f mouse_rand_pos;
 	sf::Vector2f mouse_ring_pos;
 
-	double ringInnerRad;
+	double ringInnerRad = 0;
 	double ringOuterRad;
 	int createInOrbitCounter = 0;
 	int advCreateInOrbitCounter = 0;
@@ -76,7 +74,7 @@ void Rom::runSim()
 
 		//CHECKING IF MOUSE IS ON WIDGETS OR CURRENT OBJECT MASS-SLIDER
 		mouseOnWidgets = false;
-		for (int i = 0; i < gui.getWidgets().size(); i++)
+		for (size_t i = 0; i < gui.getWidgets().size(); i++)
 		{
 			if (gui.getWidgets()[i]->mouseOnWidget(mousePos.x,mousePos.y)) mouseOnWidgets = true;
 		}
@@ -131,7 +129,7 @@ void Rom::runSim()
 				if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Explode object (C)" && !mouseOnWidgets)
 				{
 					sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-					for (int i = 0; i < pListe.size(); i++)
+					for (size_t i = 0; i < pListe.size(); i++)
 					{
 						if (range(mPos.x, mPos.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
 						{
@@ -145,7 +143,7 @@ void Rom::runSim()
 				{
 					bool fantP = false;
 					sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-					for (int i = 0; i < pListe.size(); i++)
+					for (size_t i = 0; i < pListe.size(); i++)
 					{
 						if (range(localPosition.x, localPosition.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
 						{
@@ -171,19 +169,17 @@ void Rom::runSim()
 				{
 					//SEARCHING FOR PLANET
 					sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-					for (int i = 0; i < pListe.size(); i++)
+					for (size_t i = 0; i < pListe.size(); i++)
 					{
 						if (range(pListe[i].getx(), pListe[i].gety(), mPos.x, mPos.y) < pListe[i].getRad())
 						{
 
 							//CHECKING IF IT ALREADY IS IN THE LIST
 							bool alreadyIn = false;
-							for (int q = 0; q < midlPListe.size(); q++)
+							for (size_t q = 0; q < midlPListe.size(); q++)
 							{
 								if (midlPListe[q] == pListe[i].getId())
 								{
-									if (q >= midlPListe.size() || q < 0) return;
-
 									auto it = midlPListe.begin() + q;
 									*it = std::move(midlPListe.back());
 									midlPListe.pop_back();
@@ -238,21 +234,21 @@ void Rom::runSim()
 				}
 
 				//TRACKING OBJECT
-				if (finnPlanet(lockToObjectId).getmass() == -1 && lockToObjectId >= 0) lockToObjectId = -2;
+				if (findPlanet(lockToObjectId).getmass() == -1 && lockToObjectId >= 0) lockToObjectId = -2;
 				if (!ship.isExist() && lockToObjectId == -1) lockToObjectId = -2;
 				if (lockToObjectId >= 0)
 				{
-					view1.setCenter(finnPlanet(lockToObjectId).getx(), finnPlanet(lockToObjectId).gety()), window.setView(view1);
-					xtrans = finnPlanet(lockToObjectId).getx();
-					ytrans = finnPlanet(lockToObjectId).gety();
-					xmidltrans, ymidltrans = 0;
+					view1.setCenter(findPlanet(lockToObjectId).getx(), findPlanet(lockToObjectId).gety()), window.setView(view1);
+					xtrans = findPlanet(lockToObjectId).getx();
+					ytrans = findPlanet(lockToObjectId).gety();
+					xmidltrans = ymidltrans = 0;
 				}
 				if (lockToObjectId == -1)
 				{
 					view1.setCenter(ship.getpos()), window.setView(view1);
 					xtrans = ship.getpos().x;
 					ytrans = ship.getpos().y;
-					xmidltrans, ymidltrans = 0;
+					xmidltrans = ymidltrans = 0;
 				}
 
 				//ADDING PLANET
@@ -326,15 +322,13 @@ void Rom::runSim()
 					if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && createInOrbitCounter == 0)
 					{
 
-						for (int i = 0; i < pListe.size(); i++)
+						for (size_t i = 0; i < pListe.size(); i++)
 						{
 							sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 
 							if (range(pListe[i].getx(), pListe[i].gety(), localPosition.x, localPosition.y) < pListe[i].getRad())
 							{
-
 								planetFuncId = pListe[i].getId();
-								harPlanet = true;
 								createInOrbitCounter = 1;
 								break;
 							}
@@ -343,18 +337,18 @@ void Rom::runSim()
 					else if (createInOrbitCounter == 1)
 					{
 						sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
-						double rad = sqrt((new_mouse_pos.x - finnPlanet(planetFuncId).getx())*(new_mouse_pos.x - finnPlanet(planetFuncId).getx()) + (new_mouse_pos.y - finnPlanet(planetFuncId).gety())*(new_mouse_pos.y - finnPlanet(planetFuncId).gety()));
+						double rad = sqrt((new_mouse_pos.x - findPlanet(planetFuncId).getx())*(new_mouse_pos.x - findPlanet(planetFuncId).getx()) + (new_mouse_pos.y - findPlanet(planetFuncId).gety())*(new_mouse_pos.y - findPlanet(planetFuncId).gety()));
 						Planet midlP(size);
 
 						//GOLDILOCK-ZONE
-						if (finnPlanet(planetFuncId).getType() == SMALLSTAR || finnPlanet(planetFuncId).getType() == STAR || finnPlanet(planetFuncId).getType() == BIGSTAR)
+						if (findPlanet(planetFuncId).getType() == SMALLSTAR || findPlanet(planetFuncId).getType() == STAR || findPlanet(planetFuncId).getType() == BIGSTAR)
 						{
-							double goldilock_inner_rad = (tempConstTwo * finnPlanet(planetFuncId).getRad() * finnPlanet(planetFuncId).getRad() * finnPlanet(planetFuncId).getTemp()) / inner_goldi_temp;
-							double goldilock_outer_rad = (tempConstTwo * finnPlanet(planetFuncId).getRad() * finnPlanet(planetFuncId).getRad() * finnPlanet(planetFuncId).getTemp()) / outer_goldi_temp;
+							double goldilock_inner_rad = (tempConstTwo * findPlanet(planetFuncId).getRad() * findPlanet(planetFuncId).getRad() * findPlanet(planetFuncId).getTemp()) / inner_goldi_temp;
+							double goldilock_outer_rad = (tempConstTwo * findPlanet(planetFuncId).getRad() * findPlanet(planetFuncId).getRad() * findPlanet(planetFuncId).getTemp()) / outer_goldi_temp;
 
 							sf::CircleShape g(goldilock_inner_rad);
 							g.setPointCount(60);
-							g.setPosition(sf::Vector2f(finnPlanet(planetFuncId).getx(), finnPlanet(planetFuncId).gety()));
+							g.setPosition(sf::Vector2f(findPlanet(planetFuncId).getx(), findPlanet(planetFuncId).gety()));
 							g.setOrigin(goldilock_inner_rad, goldilock_inner_rad);
 							g.setOutlineThickness(goldilock_outer_rad - goldilock_inner_rad);
 							g.setFillColor(sf::Color(0, 0, 0, 0));
@@ -364,7 +358,7 @@ void Rom::runSim()
 
 						//DRAWING ORBIT
 						sf::CircleShape omr(rad);
-						omr.setPosition(sf::Vector2f(finnPlanet(planetFuncId).getx(), finnPlanet(planetFuncId).gety()));
+						omr.setPosition(sf::Vector2f(findPlanet(planetFuncId).getx(), findPlanet(planetFuncId).gety()));
 						omr.setOrigin(rad, rad);
 						omr.setFillColor(sf::Color(0, 0, 0, 0));
 						omr.setOutlineColor(sf::Color::Red);
@@ -374,7 +368,7 @@ void Rom::runSim()
 						//DRAWING MASS CENTER
 						sf::CircleShape midtpunkt(2);
 						midtpunkt.setOrigin(2, 2);
-						Planet annen = finnPlanet(planetFuncId);
+						Planet annen = findPlanet(planetFuncId);
 						midtpunkt.setFillColor(sf::Color(255, 0, 0));
 
 						double avst = sqrt((new_mouse_pos.x - annen.getx())*(new_mouse_pos.x - annen.getx()) + (new_mouse_pos.y - annen.gety())*(new_mouse_pos.y - annen.gety()));
@@ -385,12 +379,12 @@ void Rom::runSim()
 						window.draw(midtpunkt);
 
 						//DRAWING ROCHE LIMIT
-						if (size > MINIMUMBREAKUPSIZE && size / finnPlanet(planetFuncId).getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+						if (size > MINIMUMBREAKUPSIZE && size / findPlanet(planetFuncId).getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 						{
-							double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER*(midlP.getRad() + finnPlanet(planetFuncId).getRad());
+							double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER*(midlP.getRad() + findPlanet(planetFuncId).getRad());
 
 							sf::CircleShape omr(rocheRad);
-							omr.setPosition(sf::Vector2f(finnPlanet(planetFuncId).getx(), finnPlanet(planetFuncId).gety()));
+							omr.setPosition(sf::Vector2f(findPlanet(planetFuncId).getx(), findPlanet(planetFuncId).gety()));
 							omr.setOrigin(rocheRad, rocheRad);
 							omr.setFillColor(sf::Color(0, 0, 0, 0));
 							omr.setOutlineColor(sf::Color(255, 140, 0));
@@ -410,14 +404,14 @@ void Rom::runSim()
 						if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
 						{
 
-							double hast = sqrt(G*(finnPlanet(planetFuncId).getmass() + size) / rad);
-							double angle = atan2(new_mouse_pos.y - finnPlanet(planetFuncId).gety(), new_mouse_pos.x - finnPlanet(planetFuncId).getx());
-							double fixhast = size*hast / (size + finnPlanet(planetFuncId).getmass());
+							double hast = sqrt(G*(findPlanet(planetFuncId).getmass() + size) / rad);
+							double angle = atan2(new_mouse_pos.y - findPlanet(planetFuncId).gety(), new_mouse_pos.x - findPlanet(planetFuncId).getx());
+							double fixhast = size*hast / (size + findPlanet(planetFuncId).getmass());
 
-							finnPlanetRef(planetFuncId).getxv() -= fixhast*cos(angle + 1.507);
-							finnPlanetRef(planetFuncId).getyv() -= fixhast*sin(angle + 1.507);
+							findPlanetRef(planetFuncId).getxv() -= fixhast*cos(angle + 1.507);
+							findPlanetRef(planetFuncId).getyv() -= fixhast*sin(angle + 1.507);
 
-							addPlanet(Planet(size, finnPlanet(planetFuncId).getx() + rad*cos(angle), finnPlanet(planetFuncId).gety() + rad*sin(angle), (finnPlanet(planetFuncId).getxv() + hast*cos(angle + 1.507)), (finnPlanet(planetFuncId).getyv() + hast*sin(angle + 1.507))));
+							addPlanet(Planet(size, findPlanet(planetFuncId).getx() + rad*cos(angle), findPlanet(planetFuncId).gety() + rad*sin(angle), (findPlanet(planetFuncId).getxv() + hast*cos(angle + 1.507)), (findPlanet(planetFuncId).getyv() + hast*sin(angle + 1.507))));
 							createInOrbitCounter = 0;
 						}
 
@@ -433,7 +427,7 @@ void Rom::runSim()
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && functions->getSelectedItem() == "Remove object (D)" && !mouseOnWidgets)
 				{
 					sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-					for (int i = 0; i < pListe.size(); i++)
+					for (size_t i = 0; i < pListe.size(); i++)
 					{
 						if (range(pListe[i].getx(), pListe[i].gety(), localPosition.x, localPosition.y) < pListe[i].getRad())
 						{
@@ -466,7 +460,7 @@ void Rom::runSim()
 						if (pListe.size() > 0)
 						{
 							sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-							for (int i = 0; i < pListe.size(); i++)
+							for (size_t i = 0; i < pListe.size(); i++)
 							{
 								if (range(pListe[i].getx(), pListe[i].gety(), localPosition.x, localPosition.y) < pListe[i].getRad())
 								{
@@ -484,10 +478,10 @@ void Rom::runSim()
 					else if (ringPlanetCounter == 2 && !sf::Mouse::isButtonPressed(sf::Mouse::Left))
 					{
 						sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
-						double rad = sqrt((new_mouse_pos.x - finnPlanet(planetFuncId).getx())*(new_mouse_pos.x - finnPlanet(planetFuncId).getx()) + (new_mouse_pos.y - finnPlanet(planetFuncId).gety())*(new_mouse_pos.y - finnPlanet(planetFuncId).gety()));
+						double rad = sqrt((new_mouse_pos.x - findPlanet(planetFuncId).getx())*(new_mouse_pos.x - findPlanet(planetFuncId).getx()) + (new_mouse_pos.y - findPlanet(planetFuncId).gety())*(new_mouse_pos.y - findPlanet(planetFuncId).gety()));
 
 						sf::CircleShape omr(rad);
-						omr.setPosition(sf::Vector2f(finnPlanet(planetFuncId).getx(), finnPlanet(planetFuncId).gety()));
+						omr.setPosition(sf::Vector2f(findPlanet(planetFuncId).getx(), findPlanet(planetFuncId).gety()));
 						omr.setOrigin(rad, rad);
 						omr.setFillColor(sf::Color(0, 0, 0, 0));
 						omr.setOutlineColor(sf::Color::Red);
@@ -497,7 +491,7 @@ void Rom::runSim()
 					else if (ringPlanetCounter == 2 && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 					{
 						sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
-						double rad = sqrt((new_mouse_pos.x - finnPlanet(planetFuncId).getx())*(new_mouse_pos.x - finnPlanet(planetFuncId).getx()) + (new_mouse_pos.y - finnPlanet(planetFuncId).gety())*(new_mouse_pos.y - finnPlanet(planetFuncId).gety()));
+						double rad = sqrt((new_mouse_pos.x - findPlanet(planetFuncId).getx())*(new_mouse_pos.x - findPlanet(planetFuncId).getx()) + (new_mouse_pos.y - findPlanet(planetFuncId).gety())*(new_mouse_pos.y - findPlanet(planetFuncId).gety()));
 
 						ringInnerRad = rad;
 						ringPlanetCounter = 3;
@@ -509,7 +503,7 @@ void Rom::runSim()
 					else if ((ringPlanetCounter == 4 && !sf::Mouse::isButtonPressed(sf::Mouse::Left)))
 					{
 						sf::CircleShape omr(ringInnerRad);
-						omr.setPosition(sf::Vector2f(finnPlanet(planetFuncId).getx(), finnPlanet(planetFuncId).gety()));
+						omr.setPosition(sf::Vector2f(findPlanet(planetFuncId).getx(), findPlanet(planetFuncId).gety()));
 						omr.setOrigin(ringInnerRad, ringInnerRad);
 						omr.setFillColor(sf::Color(0, 0, 0, 0));
 						omr.setOutlineColor(sf::Color::Red);
@@ -517,10 +511,10 @@ void Rom::runSim()
 						window.draw(omr);
 
 						sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
-						double rad2 = sqrt((new_mouse_pos.x - finnPlanet(planetFuncId).getx())*(new_mouse_pos.x - finnPlanet(planetFuncId).getx()) + (new_mouse_pos.y - finnPlanet(planetFuncId).gety())*(new_mouse_pos.y - finnPlanet(planetFuncId).gety()));
+						double rad2 = sqrt((new_mouse_pos.x - findPlanet(planetFuncId).getx())*(new_mouse_pos.x - findPlanet(planetFuncId).getx()) + (new_mouse_pos.y - findPlanet(planetFuncId).gety())*(new_mouse_pos.y - findPlanet(planetFuncId).gety()));
 
 						sf::CircleShape omr2(rad2);
-						omr2.setPosition(sf::Vector2f(finnPlanet(planetFuncId).getx(), finnPlanet(planetFuncId).gety()));
+						omr2.setPosition(sf::Vector2f(findPlanet(planetFuncId).getx(), findPlanet(planetFuncId).gety()));
 						omr2.setOrigin(rad2, rad2);
 						omr2.setFillColor(sf::Color(0, 0, 0, 0));
 						omr2.setOutlineColor(sf::Color::Red);
@@ -530,8 +524,8 @@ void Rom::runSim()
 					else if (ringPlanetCounter == 4 && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 					{
 						sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
-						ringOuterRad = sqrt((new_mouse_pos.x - finnPlanet(planetFuncId).getx())*(new_mouse_pos.x - finnPlanet(planetFuncId).getx()) + (new_mouse_pos.y - finnPlanet(planetFuncId).gety())*(new_mouse_pos.y - finnPlanet(planetFuncId).gety()));
-						giveRings(finnPlanet(planetFuncId), ringInnerRad, ringOuterRad);
+						ringOuterRad = sqrt((new_mouse_pos.x - findPlanet(planetFuncId).getx())*(new_mouse_pos.x - findPlanet(planetFuncId).getx()) + (new_mouse_pos.y - findPlanet(planetFuncId).gety())*(new_mouse_pos.y - findPlanet(planetFuncId).gety()));
+						giveRings(findPlanet(planetFuncId), ringInnerRad, ringOuterRad);
 						ringPlanetCounter = 0;
 					}
 				}
@@ -604,7 +598,6 @@ void Rom::runSim()
 					sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
 					sf::Vector3f massCenterInfoVector(centerOfMass(midlPListe));
 					sf::Vector2f massCenterVelocity = centerOfMassVelocity(midlPListe);
-					double massCenterMass = centerOfMass(midlPListe).z;
 					double rad = range(new_mouse_pos.x, new_mouse_pos.y, massCenterInfoVector.x, massCenterInfoVector.y);
 					Planet midlP(size);
 
@@ -638,12 +631,12 @@ void Rom::runSim()
 							double angle = atan2(new_mouse_pos.y - massCenterInfoVector.y, new_mouse_pos.x - massCenterInfoVector.x);
 							double fixhast = size*hast / (size + massCenterInfoVector.z);
 
-							for (int i = 0; i < midlPListe.size(); i++)
+							for (size_t i = 0; i < midlPListe.size(); i++)
 							{
-								if (finnPlanet(midlPListe[i]).getmass() != -1)
+								if (findPlanet(midlPListe[i]).getmass() != -1)
 								{
-									finnPlanetRef(midlPListe[i]).getxv() -= fixhast*cos(angle + 1.507);
-									finnPlanetRef(midlPListe[i]).getyv() -= fixhast*sin(angle + 1.507);
+									findPlanetRef(midlPListe[i]).getxv() -= fixhast*cos(angle + 1.507);
+									findPlanetRef(midlPListe[i]).getyv() -= fixhast*sin(angle + 1.507);
 								}
 							}
 
@@ -710,9 +703,9 @@ void Rom::runSim()
 		{
 
 			//SELECTED PLANETS
-			for (int i = 0; i < midlPListe.size(); i++)
+			for (size_t i = 0; i < midlPListe.size(); i++)
 			{
-				Planet p = finnPlanet(midlPListe[i]);
+				Planet p = findPlanet(midlPListe[i]);
 				if (p.getmass() != -1)
 				{
 					sf::Vector2f pos(p.getx() - xmidltrans, p.gety() - ymidltrans);
@@ -742,7 +735,7 @@ void Rom::runSim()
 		}
 		if (bound.getState()) bound.draw(window,xmidltrans,ymidltrans, zoom);
 		printInfoPlanet(window, view1);
-		if (drawtext2 && finnPlanet(fokusId).getmass() != -1) window.draw(text2);
+		if (drawtext2 && findPlanet(fokusId).getmass() != -1) window.draw(text2);
 		if (showGUI) gui.draw();
 
 
@@ -769,7 +762,7 @@ void Rom::runSim()
 		window.setView(view1);
 		window.display();
 
-		if (tidsskritt != 0) updateImproved();
+		if (timeStep != 0) update();
 
 		//FRAMERATE OUT
 		sf::Time time = clock.getElapsedTime();

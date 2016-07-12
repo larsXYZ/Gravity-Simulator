@@ -29,7 +29,7 @@ private:
 	double maxSize = MAXSIZEPLANETCREATOR;
 	double minSize = MINSIZEPLANETCREATOR;
 	double deltaMasse = DELTAMASSE;
-	double tidsskrittInc = TIDSKRITTINC;
+	double timeStepInc = TIDSKRITTINC;
 
 
 	//WINDOW
@@ -42,7 +42,7 @@ private:
 	int xs;
 	int ys;
 	int nesteid = 0;
-	double tidsskritt = TIMESTEP_VALUE_START;
+	double timeStep = TIMESTEP_VALUE_START;
 	int iterasjon = 0;
 	bool fullScreen;
 	double size = 1;
@@ -75,7 +75,7 @@ private:
 	std::vector<Planet> pListe;
 	std::vector<int> midlPListe;
 	std::vector<Explosion> expListe;
-	std::vector<Royk> smkListe;
+	std::vector<Smoke> smkListe;
 	std::vector<Trail> trlListe;
 	Bound bound;
 
@@ -113,18 +113,15 @@ public:
 	void giveRings(Planet p, int inner, int outer);
 	
 	//SIMULATION FUNCTIONS
-	void updateNew();
-	void updateImproved();
 	void update();
-	void updateOLD();
 	void runSim();
 	void PlanetSkjermPrint(sf::RenderWindow &window);
 	void effectSkjermPrint(sf::RenderWindow & window);
 	void lightSkjermPrint(sf::RenderWindow& window);
 	void giveId(Planet &p);
-	Planet finnPlanet(double id);
-	Planet finnPlanetRef(double id);
-	int finnBestPlanet(int q);
+	Planet findPlanet(double id);
+	Planet findPlanetRef(double id);
+	int findBestPlanet(int q);
 	void romskipHandling();
 	double getTherEnergyAtPos(sf::Vector2f pos);
 	sf::Vector3f centerOfMass(std::vector<int> midlPList);
@@ -134,6 +131,8 @@ public:
 	//USERFUNCTIONS
 	void hotkeys(sf::Window& w, sf::View& v)
 	{
+        (void) w;
+
 		//ZOOM
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) && zoom < 15)
 		{
@@ -233,7 +232,7 @@ public:
 	{
 		double result;
 
-		std::stringstream convert; 
+		std::stringstream convert;
 
 		convert << string;
 

@@ -45,7 +45,7 @@ void saveSettings(int x, int y, bool m)
 	fil.close();
 }
 
-void setup(sf::RenderWindow& s, sf::Event& e, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode, tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::Button::Ptr& b, tgui::Gui& sg)
+void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode, tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::Button::Ptr& b, tgui::Gui& sg)
 {
 	tf.loadFromFile("sansation.ttf");
 
@@ -150,6 +150,11 @@ void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c
 		x = Rom::convertStringToDouble(c1->getText());
 		y = Rom::convertStringToDouble(c2->getText());
 	}
+    else
+    {
+        x = 640;
+        y = 480;
+    }
 
 	//STARTING
 	Rom sim(x, y, fullscreen);
@@ -176,7 +181,7 @@ int main()
 	tgui::EditBox::Ptr customResY = std::make_shared<tgui::EditBox>();
 	tgui::Button::Ptr startButton = std::make_shared<tgui::Button>();
 
-	setup(settingScreen, event, title, titleFont, version, resSetup, modeSetup, customResX, customResY, startButton, settingGUI);
+	setup(settingScreen, title, titleFont, version, resSetup, modeSetup, customResX, customResY, startButton, settingGUI);
 	getPrevSettings(customResX,customResY,resSetup,modeSetup);
 
 	while (settingScreen.isOpen())

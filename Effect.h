@@ -50,12 +50,12 @@ class Explosion : public Effect
 private:
 
 public:
-	Explosion::Explosion(sf::Vector2f p, double s, int i, sf::Vector2f v, int l) : Effect(p, s, i, v, l)
+	Explosion(sf::Vector2f p, double s, int i, sf::Vector2f v, int l) : Effect(p, s, i, v, l)
 	{
 		setcol(sf::Color::Yellow);
 	}
 
-	void Explosion::print(sf::RenderWindow &w, int xm, int ym)
+	void print(sf::RenderWindow &w, int xm, int ym)
 	{
 
 
@@ -99,28 +99,30 @@ public:
 	}
 };
 
-class Royk : public Effect
+class Smoke : public Effect
 {
 private:
 	bool destroyme = false;
 	double xpos[10];
 	double ypos[10];
-	double rad =  STOVRAD + RANDOMPERCENTAGESIZE/10*modernRandomWithLimits(-10*STOVRAD, 10*STOVRAD);
+	double rad =  EXPLOSION_SIZE + RANDOMPERCENTAGESIZE/10*modernRandomWithLimits(-10*EXPLOSION_SIZE, 10*EXPLOSION_SIZE);
 	sf::CircleShape royk;
 
 public:
-	Royk(sf::Vector2f p, double s, int i, sf::Vector2f v, int l) : Effect(p, s, i, v, l + modernRandomWithLimits(-0.3*l, 0.3*l))
+	Smoke(sf::Vector2f p, double s, int i, sf::Vector2f v, int l) : Effect(p, s, i, v, l + modernRandomWithLimits(-0.3*l, 0.3*l))
 	{
+#if PARTICLES_PER_SMOKE != 0
 		setcol(sf::Color(200,200,200,100));
 		royk.setRadius(rad);
 		royk.setOrigin(rad, rad);
 		royk.setFillColor(getcol());
 
-		for (int i = 0; i < ANTALLPARTIKLERPERROYK; i++)
+		for (int i = 0; i < PARTICLES_PER_SMOKE; i++)
 		{
-			xpos[i] = (double) modernRandomWithLimits(-STOVRAD, STOVRAD) / ANTALLPARTIKLERPERROYK;
-			ypos[i] = (double) modernRandomWithLimits(-STOVRAD, STOVRAD) / ANTALLPARTIKLERPERROYK;
+			xpos[i] = (double) modernRandomWithLimits(-EXPLOSION_SIZE, EXPLOSION_SIZE) / PARTICLES_PER_SMOKE;
+			ypos[i] = (double) modernRandomWithLimits(-EXPLOSION_SIZE, EXPLOSION_SIZE) / PARTICLES_PER_SMOKE;
 		}
+#endif
 	}
 
 	void print(sf::RenderWindow &w, int xm, int ym)
@@ -128,10 +130,10 @@ public:
 		royk.setPosition(getpos().x - xm, getpos().y - ym);
 		w.draw(royk);
 
-		if (ANTALLPARTIKLERPERROYK > 0)
+		if (PARTICLES_PER_SMOKE > 0)
 		{
 			sf::CircleShape p(0.5);
-			for (int i = 0; i < ANTALLPARTIKLERPERROYK; i++)
+			for (int i = 0; i < PARTICLES_PER_SMOKE; i++)
 			{
 				p.setPosition(sf::Vector2f(getpos().x + xpos[i], getpos().y + ypos[i]));
 				w.draw(p);
@@ -139,7 +141,7 @@ public:
 		}
 
 	}
-	void pullOfGravity(Planet forcer, int tidsskritt)
+	void pullOfGravity(Planet forcer, int timeStep)
 	{
 
 		//CHECK IF PLANET IS MASSIVE ENOUGH FOR US TO CARE
@@ -150,10 +152,10 @@ public:
 		double distanceSquared = (forcer.getx() - getpos().x)*(forcer.getx() - getpos().x) + (forcer.gety() - getpos().y) * (forcer.gety() - getpos().y);
 		double angle = atan2(forcer.gety() - getpos().y, forcer.getx() - getpos().x);
 		double f = forcer.getG() * forcer.getmass() / (distanceSquared);
-		f *= SMK_ACCURACY*tidsskritt;
+		f *= SMK_ACCURACY*timeStep;
 
 		//DOING THE BUSINESS
-		if (distSquared > forcer.getRad()*forcer.getRad())
+		if (distanceSquared > forcer.getRad()*forcer.getRad())
 		{
 			setVel(sf::Vector2f(f*cos(angle), f*sin(angle)));
 		}

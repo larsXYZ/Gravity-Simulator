@@ -94,12 +94,16 @@ std::string Planet::getFlavorTextLife()
 		{
 			return "An outpost made by the organisms. With time it will\ngrow to a fully capable part of the civilization.";
 		}
+    default:
+        {
+            return "Do not look into the void.";
+        }
 	}
 }
 
 //SIMULATION FUNCTIONS
 
-void Planet::updateVel(Planet forcer, double tidsskritt)
+void Planet::updateVel(Planet forcer, double timeStep)
 {
 	double aks = 0;
 	double distanceSquared = (forcer.getx() - getx())*(forcer.getx() - getx()) + (forcer.gety() - gety()) * (forcer.gety() - gety());
@@ -112,8 +116,8 @@ void Planet::updateVel(Planet forcer, double tidsskritt)
 		ID_strongest_attractor = forcer.getId();
 	}
 
-	xv += cos(angle) * aks * tidsskritt;
-	yv += sin(angle) * aks * tidsskritt;
+	xv += cos(angle) * aks * timeStep;
+	yv += sin(angle) * aks * timeStep;
 
 }
 
@@ -122,10 +126,10 @@ void Planet::updateTemp()
 	temperature = temp();
 }
 
-void Planet::move(double tidsskritt)	
+void Planet::move(double timeStep)	
 {
-	x += xv * tidsskritt;
-	y += yv * tidsskritt;
+	x += xv * timeStep;
+	y += yv * timeStep;
 	circle.setPosition(x, y);
 }
 
@@ -240,7 +244,7 @@ void Planet::draw(sf::RenderWindow &w, double xx, double yy)
 	else
 	{
 		w.draw(circle);
-		for (int i = 0; i < atmoLinesBrightness.size(); i++)
+		for (size_t i = 0; i < atmoLinesBrightness.size(); i++)
 		{
 			sf::CircleShape atmoLine;
 
@@ -316,7 +320,7 @@ std::string convertDoubleToString(double number)
 {
 	std::string Result;
 
-	std::stringstream convert; 
+	std::stringstream convert;
 
 	convert << number;
 

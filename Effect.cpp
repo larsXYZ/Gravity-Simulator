@@ -2,6 +2,8 @@
 
 Effect::Effect(sf::Vector2f p, double s, int i, sf::Vector2f v,int l)
 {
+    (void) i;
+
 	timeExist = 0;
 	setpos(p);
 	setsize(s);

@@ -202,7 +202,10 @@ public:
 		{
 			return "Colony";
 		}
-
+        default:
+        {
+            return "Kraken";
+        }
 		}
 	}
 	int getId()
