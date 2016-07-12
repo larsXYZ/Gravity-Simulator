@@ -6,7 +6,7 @@
 
 //FUNKSJONER
 
-void start(tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode, tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2);
+void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2);
 
 void getPrevSettings(tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode)
 {
@@ -118,7 +118,7 @@ void setup(sf::RenderWindow& s, sf::Event& e, sf::Text& t, sf::Font& tf, sf::Tex
 
 }
 
-void start(tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode, tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2)
+void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2)
 {
 
 	//CHECKING FOR FULLSCREEN
