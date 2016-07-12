@@ -35,11 +35,11 @@ public:
 	bool getState() { return isActive; }
 
 	//CHECK IF OBJECT IS OUTSIDE BOUND
-	bool isOutside(sf::Vector2f p) 
+	bool isOutside(sf::Vector2f p)
 	{
-		if (sqrt((p.x - getPos().x)*(p.x - getPos().x) + (p.y - getPos().y)*(p.y - getPos().y)) > omr.getRadius()) 
+		if (sqrt((p.x - getPos().x)*(p.x - getPos().x) + (p.y - getPos().y)*(p.y - getPos().y)) > omr.getRadius())
 		{
-			return true; 
+			return true;
 		}
 		else
 		{
@@ -52,7 +52,7 @@ public:
 	{
 		omr.setOutlineThickness(BOUND_THICKNESS*z);
 		omr.setPosition(sf::Vector2f(getPos().x - xx, getPos().y - yy));
-		w.draw(omr); 
+		w.draw(omr);
 		omr.setPosition(sf::Vector2f(getPos().x + xx, getPos().y + yy));
 	}
 

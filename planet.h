@@ -1,6 +1,6 @@
 #pragma once
 #include <cmath>
-#include <math.h> 
+#include <math.h>
 #include <iostream>
 #include "CONSTANTS.h"
 #include <SFML/Graphics.hpp>

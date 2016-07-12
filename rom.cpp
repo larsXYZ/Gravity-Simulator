@@ -649,7 +649,7 @@ void Rom::setInfo()
 	if (tempChooser->getSelectedIndex() < 2) tempEnhet = tempChooser->getSelectedIndex() + 1;
 	else tempEnhet = 3;
 
-	//Hiding new planet 
+	//Hiding new planet
 	if (functions->getSelectedItemIndex() != 0 && functions->getSelectedItemIndex() != 1 && functions->getSelectedItemIndex() != 2)
 	{
 		massSlider->hide();

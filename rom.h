@@ -230,7 +230,7 @@ public:
 	{
 		double result;
 
-		std::stringstream convert; 
+		std::stringstream convert;
 
 		convert << string;
 

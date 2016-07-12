@@ -316,7 +316,7 @@ std::string convertDoubleToString(double number)
 {
 	std::string Result;
 
-	std::stringstream convert; 
+	std::stringstream convert;
 
 	convert << number;
 
