@@ -164,7 +164,7 @@ void Rom::update()
 				}
 
 				//GRAVITY, COLLISIONS AND ROCHE LIMIT
-				if (dist < ROCHE_LIMIT_DIST_MULTIPLIER*radDist && pListe[i].getmass() > MINIMUMBREAKUPSIZE && pListe[i].getmass() / pListe[p].getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+				if (pListe[i].getPlanetType() != BLACKHOLE && dist < ROCHE_LIMIT_DIST_MULTIPLIER*radDist && pListe[i].getmass() > MINIMUMBREAKUPSIZE && pListe[i].getmass() / pListe[p].getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 				{
 					explodePlanetOld(i);
 					break;

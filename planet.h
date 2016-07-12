@@ -338,4 +338,8 @@ public:
 	}
 	std::string genName();
 
+	pType getPlanetType()
+	{
+		return planetType;
+	}
 };
