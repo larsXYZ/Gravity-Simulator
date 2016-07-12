@@ -94,10 +94,10 @@ std::string Planet::getFlavorTextLife()
 		{
 			return "An outpost made by the organisms. With time it will\ngrow to a fully capable part of the civilization.";
 		}
-    default:
-        {
-            return "Do not look into the void.";
-        }
+	default:
+		{
+			return "Do not look into the void.";
+		}
 	}
 }
 
@@ -184,13 +184,23 @@ void Planet::updateRadiAndType()
 	else
 	{
 		planetType = BLACKHOLE;
-		density = 10;
+		density = INFINITY;
+		circle.setOutlineColor(sf::Color(255, 255, 255, 255));
 		circle.setFillColor(sf::Color(20, 20, 20));
-		circle.setOutlineThickness(0);
+		circle.setOutlineThickness(2);
 		circle.setPointCount(20);
 	}
 
-	radi = cbrt(mass) / density;
+	if (planetType == BLACKHOLE)
+	{
+		// Schwarzschild radius
+		radi = 2 * mass * G / (SPEED_OF_LIGHT * SPEED_OF_LIGHT);
+		radi *= 3e16;
+	}
+	else
+	{
+		radi = cbrt(mass) / density;
+	}
 	circle.setRadius(radi);
 	circle.setOrigin(radi, radi);
 }
