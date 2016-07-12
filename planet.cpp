@@ -102,9 +102,9 @@ std::string Planet::getFlavorTextLife()
 void Planet::updateVel(Planet forcer, double tidsskritt)
 {
 	double aks = 0;
-	double distance = sqrt((forcer.getx() - getx())*(forcer.getx() - getx()) + (forcer.gety() - gety()) * (forcer.gety() - gety()));
+	double distanceSquared = (forcer.getx() - getx())*(forcer.getx() - getx()) + (forcer.gety() - gety()) * (forcer.gety() - gety());
 	double angle = atan2(forcer.gety() - gety(), forcer.getx() - getx());
-	if (distance != 0) aks = G * forcer.getmass() / (distance*distance);
+	if (distanceSquared != 0) aks = G * forcer.getmass() / (distanceSquared);
 
 	if (aks > STRENGTH_strongest_attractor)
 	{
