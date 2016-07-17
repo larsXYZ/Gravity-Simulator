@@ -634,10 +634,10 @@ void Rom::runSim()
 						
 						for (int i = 0; i < midlPListe.size(); i++)
 						{
-							if (finnPlanet(midlPListe[i]).getmass() != -1)
+							if (findPlanet(midlPListe[i]).getmass() != -1)
 							{
-								finnPlanetRef(midlPListe[i]).getxv() -= fixhast*cos(angle + 1.507);
-								finnPlanetRef(midlPListe[i]).getyv() -= fixhast*sin(angle + 1.507);
+								findPlanetRef(midlPListe[i]).getxv() -= fixhast*cos(angle + 1.507);
+								findPlanetRef(midlPListe[i]).getyv() -= fixhast*sin(angle + 1.507);
 							}
 						}
 
