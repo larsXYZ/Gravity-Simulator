@@ -111,12 +111,12 @@ private:
 public:
 	Smoke(sf::Vector2f p, double s, int i, sf::Vector2f v, int l) : Effect(p, s, i, v, l + modernRandomWithLimits(-0.3*l, 0.3*l))
 	{
-#if PARTICLES_PER_SMOKE != 0
+
 		setcol(sf::Color(200,200,200,100));
 		royk.setRadius(rad);
 		royk.setOrigin(rad, rad);
 		royk.setFillColor(getcol());
-
+#if PARTICLES_PER_SMOKE != 0
 		for (int i = 0; i < PARTICLES_PER_SMOKE; i++)
 		{
 			xpos[i] = (double) modernRandomWithLimits(-EXPLOSION_SIZE, EXPLOSION_SIZE) / PARTICLES_PER_SMOKE;

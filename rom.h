@@ -120,7 +120,7 @@ public:
 	void lightSkjermPrint(sf::RenderWindow& window);
 	void giveId(Planet &p);
 	Planet findPlanet(double id);
-	Planet findPlanetRef(double id);
+	Planet& findPlanetRef(double id);
 	int findBestPlanet(int q);
 	void romskipHandling();
 	double getTherEnergyAtPos(sf::Vector2f pos);

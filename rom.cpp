@@ -140,7 +140,7 @@ void Rom::update()
 
 	//SMOKE MOVE
 #pragma omp parallel for schedule(dynamic)
-	for (size_t i = 0; i < pListe.size(); i++)
+	for (int i = 0; i < pListe.size(); i++)
 	{
 		if (pListe[i].getmass() > MINIMUMBREAKUPSIZE && updateSMK) GravitySmoke(pListe[i], timeStep);
 	}
@@ -203,7 +203,7 @@ void Rom::update()
 
 	//OTHER
 #pragma omp parallel for schedule(dynamic)
-	for (size_t i = 0; i < pListe.size(); i++)
+	for (int i = 0; i < pListe.size(); i++)
 	{
 		//TEMPERATURE
 		pListe[i].coolDOWN(timeStep);
@@ -229,7 +229,7 @@ void Rom::update()
 
 	//MOVE
 #pragma omp parallel for schedule(dynamic)
-	for (size_t i = 0; i < pListe.size(); i++)
+	for (int i = 0; i < pListe.size(); i++)
 	{
 		pListe[i].move(timeStep);
 		pListe[i].resetAttractorMeasure();
@@ -457,7 +457,7 @@ Planet Rom::findPlanet(double id)
 	return Planet(-1);
 }
 
-Planet Rom::findPlanetRef(double id)
+Planet& Rom::findPlanetRef(double id)
 {
 	for(size_t i = 0; i < pListe.size(); i++)
 	{
@@ -945,11 +945,15 @@ void Rom::effectSkjermPrint(sf::RenderWindow &window)
 			removeExplosion(i);
 		}
 	}
+	
 	//DUST
-	for(size_t i = 0; i < smkListe.size(); i++)
+	for(int i = 0; i < smkListe.size(); i++)
 	{
 		smkListe[i].move(timeStep);
-		if (smkListe[i].getAge(timeStep) < smkListe[i].levetidmax() && !smkListe[i].killMe()) smkListe[i].print(window, xmidltrans, ymidltrans);
+		if (smkListe[i].getAge(timeStep) < smkListe[i].levetidmax() && !smkListe[i].killMe())
+		{
+			smkListe[i].print(window, xmidltrans, ymidltrans);
+		}
 		else
 		{
 			removeSmoke(i);
