@@ -498,11 +498,11 @@ void Rom::addTrail(sf::Vector2f p, int l)
 	trlListe.push_back(Trail(p, l));
 }
 
-void Rom::GravitySmoke(Planet forcer, int t)
+void Rom::GravitySmoke(Planet& forcer, int t)
 {
-	for (size_t i = 0; i < smkListe.size(); i++)
+	for (auto& smoke : smkListe)
 	{
-		smkListe[i].pullOfGravity(forcer, t);
+		smoke.pullOfGravity(forcer, t);
 	}
 }
 
