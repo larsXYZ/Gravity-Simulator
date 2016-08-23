@@ -109,7 +109,7 @@ public:
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addTrail(sf::Vector2f p, int l);
-	void GravitySmoke(Planet forcer, int t);
+	void GravitySmoke(Planet& forcer, int t);
 	void giveRings(Planet p, int inner, int outer);
 	
 	//SIMULATION FUNCTIONS
