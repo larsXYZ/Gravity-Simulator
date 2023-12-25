@@ -1,5 +1,5 @@
 #include "rom.h"
-#include <iostream>
+#include <sansation.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
@@ -47,7 +47,11 @@ void saveSettings(int x, int y, bool m)
 
 void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode, tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::Button::Ptr& b, tgui::Gui& sg)
 {
-	tf.loadFromFile("sansation.ttf");
+	if (!tf.loadFromMemory(sansation_ttf, sansation_ttf_len))
+	{
+		std::cerr << "Error loading font from memory\n";
+		exit(1);
+	}
 
 	//WINDOW
 	s.setFramerateLimit(10);
@@ -57,7 +61,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	t.setPosition(-5, 0);
 	t.setStyle(sf::Text::Underlined);
 	t.setString(" GRAVITY SIMULATOR ");
-	t.setCharacterSize(30);
+	t.setCharacterSize(60);
 
 	//VERSIONTEXT
 	v.setFont(tf);

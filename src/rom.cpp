@@ -466,7 +466,9 @@ Planet& Rom::findPlanetRef(double id)
 			return pListe[i];
 		}
 	}
-	return Planet(-1);
+	// Return a reference to a static "not found" planet
+	static Planet notFoundPlanet(-1);
+	return notFoundPlanet;
 }
 
 int Rom::findBestPlanet(int q)
@@ -533,11 +535,11 @@ std::string Rom::calcTemperature(double q, int e)
 	}
 	else if (e == 2)
 	{
-		return convertDoubleToString((int)(q - 273.15)) + "°C";
+		return convertDoubleToString((int)(q - 273.15)) + "ï¿½C";
 	}
 	else if (e == 3)
 	{
-		return convertDoubleToString((int)((q - 273.15)* 1.8000 + 32.00)) + "°F";
+		return convertDoubleToString((int)((q - 273.15)* 1.8000 + 32.00)) + "ï¿½F";
 	}
 	return "-";
 }
@@ -735,8 +737,8 @@ void Rom::initSetup()
 	timeStepSlider->setMaximum(TIMESTEP_VALUE_RANGE);
 
 	tempChooser->add("K");
-	tempChooser->add("°C");
-	tempChooser->add("°F");
+	tempChooser->add("ï¿½C");
+	tempChooser->add("ï¿½F");
 	tempChooser->select("K");
 	tempChooser->setTabHeight(12);
 	tempChooser->setPosition(155, 50);

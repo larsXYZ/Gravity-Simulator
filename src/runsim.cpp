@@ -1,4 +1,6 @@
 #include "rom.h"
+#include "sansation.hpp"
+
 
 void Rom::runSim()
 {
@@ -22,9 +24,10 @@ void Rom::runSim()
 	sf::Clock clock;
 
 	//LOADING FONT
-	if (!font.loadFromFile("sansation.ttf"))
+	if (!font.loadFromMemory(sansation_ttf, sansation_ttf_len))
 	{
-		std::cout << "FONT-LOADING ERROR" << std::endl;
+		std::cerr << "Error loading font from memory\n";
+		exit(1);
 	}
 	text.setFont(font);
 	text.setCharacterSize(14);
@@ -34,7 +37,7 @@ void Rom::runSim()
 
 	//LOADING GUI
 	tgui::Gui gui{ window };
-	gui.setFont("sansation.ttf");
+	gui.setFont(font);
 	initSetup();
 	gui.add(simInfo), gui.add(functions), gui.add(newPlanetInfo), gui.add(massSlider), gui.add(timeStepSlider), gui.add(tempChooser), gui.add(currPlanetInfo), gui.add(massExistingObjectSlider), gui.add(autoBound);
 

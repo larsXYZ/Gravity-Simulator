@@ -2,3 +2,4 @@
 *.o
 gravity-simulator
 prevSettings.txt
+/cmake-build-*
