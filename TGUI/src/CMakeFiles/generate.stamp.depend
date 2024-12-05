@@ -1,0 +1,9 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-3.25/Modules/BasicConfigVersion-SameMajorVersion.cmake.in
+C:/Program Files/CMake/share/cmake-3.25/Modules/CMakePackageConfigHelpers.cmake
+C:/Program Files/CMake/share/cmake-3.25/Modules/ProcessorCount.cmake
+C:/Program Files/CMake/share/cmake-3.25/Modules/WriteBasicConfigVersionFile.cmake
+C:/Users/thehu/Documents/Temporary/gsim/Gravity-Simulator/TGUI/cmake/TGUIConfig.cmake.in
+C:/Users/thehu/Documents/Temporary/gsim/Gravity-Simulator/TGUI/include/TGUI/Config.hpp.in
+C:/Users/thehu/Documents/Temporary/gsim/Gravity-Simulator/TGUI/src/Backend/CMakeLists.txt
+C:/Users/thehu/Documents/Temporary/gsim/Gravity-Simulator/TGUI/src/CMakeLists.txt
