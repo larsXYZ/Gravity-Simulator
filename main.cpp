@@ -75,7 +75,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	sg.add(b);
 
 	//VIDEOMODE
-	mode->setScrollbar(nullptr);
+	//mode->setScrollbar(nullptr);
 	mode->setPosition(20, 80);
 	mode->setItemHeight(15);
 	mode->setSize(95, 30);
@@ -85,7 +85,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	mode->setSelectedItemByIndex(0);
 
 	//RESOLUTIONS
-	res->setScrollbar(nullptr);
+	//res->setScrollbar(nullptr);
 	res->setPosition(20, 115);
 	res->setItemHeight(15);
 	res->setTextSize(15);
@@ -114,7 +114,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	b->setSize(95, 35);
 	b->setText("START");
 	b->setTextSize(15);
-	b->connect("pressed", start, res, mode, c1, c2);
+	//b->connect("pressed", start, res, mode, c1, c2);
 
 }
 
@@ -147,8 +147,8 @@ void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c
 	}
 	else 	if (res->getSelectedItem() == ("CUSTOM"))
 	{
-		x = Rom::convertStringToDouble(c1->getText());
-		y = Rom::convertStringToDouble(c2->getText());
+		x = Rom::convertStringToDouble(c1->getText().toStdString());
+		y = Rom::convertStringToDouble(c2->getText().toStdString());
 	}
 	else
 	{
@@ -213,13 +213,13 @@ int main()
 		}
 
 		//SKJULER CUSTOM RESOLUTION OPTIONS
-		if (resSetup->getSelectedItem() != "CUSTOM") customResX->hide(), customResY->hide();
-		else customResX->show(), customResY->show();
+		if (resSetup->getSelectedItem() != "CUSTOM") customResX->setVisible(false), customResY->setVisible(false);
+		else customResX->setVisible(true), customResY->setVisible(true);
 
 		//SKJULER START BUTTON
-		if (resSetup->getSelectedItem() == "") startButton->hide();
-		else if (resSetup->getSelectedItem() == "CUSTOM" && (customResX->getText() == "" || customResY->getText() == "")) startButton->hide();
-		else startButton->show();
+		if (resSetup->getSelectedItem() == "") startButton->setVisible(false);
+		else if (resSetup->getSelectedItem() == "CUSTOM" && (customResX->getText() == "" || customResY->getText() == "")) startButton->setVisible(false);
+		else startButton->setVisible(true);
 
 		settingScreen.draw(title);
 		settingScreen.draw(version);

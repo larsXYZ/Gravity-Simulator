@@ -595,8 +595,8 @@ void Rom::setInfo()
 	//Current planet sliders
 	if (findPlanet(fokusId).getmass() == -1)
 	{
-		currPlanetInfo->hide();
-		massExistingObjectSlider->hide();
+		currPlanetInfo->setVisible(false);
+		massExistingObjectSlider->setVisible(false);
 	}
 	else
 	{
@@ -636,8 +636,8 @@ void Rom::setInfo()
 
 		currPlanetInfo->setText("FOCUSED OBJECT \nMass:   " + convertDoubleToString((int) findPlanet(fokusId).getmass()) + "\nType:      " + typeplanet);
 
-		currPlanetInfo->show();
-		massExistingObjectSlider->show();
+		currPlanetInfo->setVisible(true);
+		massExistingObjectSlider->setVisible(true);
 	}
 	
 	//Temp unit
@@ -647,13 +647,13 @@ void Rom::setInfo()
 	//Hiding new planet
 	if (functions->getSelectedItemIndex() != 0 && functions->getSelectedItemIndex() != 1 && functions->getSelectedItemIndex() != 2)
 	{
-		massSlider->hide();
-		newPlanetInfo->hide();
+		massSlider->setVisible(false);
+		newPlanetInfo->setVisible(false);
 	}
 	else
 	{
-		massSlider->show();
-		newPlanetInfo->show();
+		massSlider->setVisible(true);
+		newPlanetInfo->setVisible(true);
 
 		std::string typeplanet = "Black hole";
 		if (size < ROCKYLIMIT)
@@ -691,13 +691,13 @@ void Rom::setInfo()
 
 void Rom::initSetup()
 {
-	simInfo->setScrollbar(nullptr);
+	//simInfo->setScrollbar(nullptr);
 	simInfo->setSize(145, 91);
 	simInfo->setPosition(5, 5);
 	simInfo->setTextSize(14);
 
 	functions->setItemHeight(14);
-	functions->setScrollbar(nullptr);
+	//functions->setScrollbar(nullptr);
 	functions->setTextSize(14);
 	functions->setPosition(5, simInfo->getFullSize().y + 2*UI_SEPERATION_DISTANCE);
 	functions->addItem("Object (F)");
@@ -715,9 +715,9 @@ void Rom::initSetup()
 
 	autoBound->setPosition(155, 86 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
 	autoBound->setSize(14, 14);
-	autoBound->check();
+	autoBound->setChecked(true);
 
-	newPlanetInfo->setScrollbar(nullptr);
+	//newPlanetInfo->setScrollbar(nullptr);
 	newPlanetInfo->setSize(145, 45);
 	newPlanetInfo->setPosition(5, 5 + simInfo->getFullSize().y + functions->getItemCount()*functions->getItemHeight() + UI_SEPERATION_DISTANCE * 4);
 	newPlanetInfo->setTextSize(14);
@@ -741,7 +741,7 @@ void Rom::initSetup()
 	tempChooser->setTabHeight(12);
 	tempChooser->setPosition(155, 50);
 
-	currPlanetInfo->setScrollbar(nullptr);
+	//currPlanetInfo->setScrollbar(nullptr);
 	currPlanetInfo->setSize(145, 45);
 	currPlanetInfo->setPosition(5, 75 + simInfo->getFullSize().y + functions->getItemCount()*functions->getItemHeight() + UI_SEPERATION_DISTANCE * 6);
 	currPlanetInfo->setTextSize(14);

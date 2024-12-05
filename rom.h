@@ -80,11 +80,11 @@ private:
 	Bound bound;
 
 	//GUI
-	tgui::TextBox::Ptr simInfo = std::make_shared<tgui::TextBox>();
-	tgui::TextBox::Ptr newPlanetInfo = std::make_shared<tgui::TextBox>();
-	tgui::TextBox::Ptr currPlanetInfo = std::make_shared<tgui::TextBox>();
+	tgui::TextArea::Ptr simInfo = std::make_shared<tgui::TextArea>();
+	tgui::TextArea::Ptr newPlanetInfo = std::make_shared<tgui::TextArea>();
+	tgui::TextArea::Ptr currPlanetInfo = std::make_shared<tgui::TextArea>();
 	tgui::ListBox::Ptr functions = std::make_shared<tgui::ListBox>();
-	tgui::Tab::Ptr tempChooser = std::make_shared<tgui::Tab>();
+	tgui::Tabs::Ptr tempChooser = std::make_shared<tgui::Tabs>();
 	tgui::Slider::Ptr massSlider = std::make_shared<tgui::Slider>();
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
 	tgui::Slider::Ptr massExistingObjectSlider = std::make_shared<tgui::Slider>();

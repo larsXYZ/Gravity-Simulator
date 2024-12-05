@@ -83,7 +83,7 @@ void Rom::runSim()
 		else harTrykket = false;
 
 		mouseOnMassSliderSelected = false;
-		if (massExistingObjectSlider->mouseOnWidget(mousePos.x,mousePos.y)) mouseOnMassSliderSelected = true;
+		if (massExistingObjectSlider->isMouseOnWidget(sf::Vector2f{ (float)mousePos.x,(float)mousePos.y })) mouseOnMassSliderSelected = true;
 		if (!harTrykket2 && sf::Mouse::isButtonPressed(sf::Mouse::Left) && mouseOnMassSliderSelected) { harTrykket2 = true; }
 		else if (harTrykket2 && sf::Mouse::isButtonPressed(sf::Mouse::Left)) { harTrykket2 = true, mouseOnMassSliderSelected = true; }
 		else harTrykket2 = false;
