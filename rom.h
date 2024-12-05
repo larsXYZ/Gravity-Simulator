@@ -7,6 +7,7 @@
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
 #include <SFML/System.hpp>
+#include <TGUI/Backend/SFML-Graphics.hpp>
 #include <string>
 #include <sstream>
 #include <algorithm>

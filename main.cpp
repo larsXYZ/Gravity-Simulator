@@ -67,7 +67,8 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	v.setCharacterSize(25);
 
 	//GUI
-	sg.setFont(tf);
+	tgui::Font font("sansation.ttf");
+	sg.setFont(font);
 	sg.add(res);
 	sg.add(mode);
 	sg.add(c1);

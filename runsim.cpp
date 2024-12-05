@@ -76,7 +76,8 @@ void Rom::runSim()
 		mouseOnWidgets = false;
 		for (size_t i = 0; i < gui.getWidgets().size(); i++)
 		{
-			if (gui.getWidgets()[i]->mouseOnWidget(mousePos.x,mousePos.y)) mouseOnWidgets = true;
+			if (gui.getWidgets()[i]->isMouseOnWidget(sf::Vector2f(mousePos.x,mousePos.y)))
+				mouseOnWidgets = true;
 		}
 		if (!harTrykket && sf::Mouse::isButtonPressed(sf::Mouse::Left) && mouseOnWidgets) { harTrykket = true; }
 		else if (harTrykket && sf::Mouse::isButtonPressed(sf::Mouse::Left)) { harTrykket = true, mouseOnWidgets = true;}
