@@ -692,13 +692,13 @@ void Rom::setInfo()
 void Rom::initSetup()
 {
 	simInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
-	simInfo->setSize(145, 91);
+	simInfo->setSize(160, 110);
 	simInfo->setPosition(5, 5);
 	simInfo->setTextSize(14);
 
 	functions->setItemHeight(14);
 	functions->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
-	functions->setTextSize(14);
+	functions->setTextSize(13);
 	functions->setPosition(5, simInfo->getFullSize().y + 2*UI_SEPERATION_DISTANCE);
 	functions->addItem("Object (F)");
 	functions->addItem("Object in orbit (O)");
@@ -711,14 +711,14 @@ void Rom::initSetup()
 	functions->addItem("Info (I)");
 	functions->addItem("Follow object (T)");
 	functions->addItem("Bound (B)");
-	functions->setSize(145, functions->getItemCount()*functions->getItemHeight());
+	functions->setSize(160, functions->getItemCount()*functions->getItemHeight()+5);
 
-	autoBound->setPosition(155, 86 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
+	autoBound->setPosition(170, 105 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
 	autoBound->setSize(14, 14);
 	autoBound->setChecked(true);
 
 	newPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
-	newPlanetInfo->setSize(145, 45);
+	newPlanetInfo->setSize(160, 45);
 	newPlanetInfo->setPosition(5, 5 + simInfo->getFullSize().y + functions->getItemCount()*functions->getItemHeight() + UI_SEPERATION_DISTANCE * 4);
 	newPlanetInfo->setTextSize(14);
 
@@ -728,8 +728,8 @@ void Rom::initSetup()
 	massSlider->setMinimum(MASS_SLIDER_MIN_VALUE);
 	massSlider->setMaximum(MASS_SLIDER_MAX_VALUE);
 
-	timeStepSlider->setPosition(155, 40);
-	timeStepSlider->setSize(145, 5);
+	timeStepSlider->setPosition(165, 40);
+	timeStepSlider->setSize(160, 5);
 	timeStepSlider->setValue(TIMESTEP_VALUE_START);
 	timeStepSlider->setMinimum(-TIMESTEP_VALUE_RANGE);
 	timeStepSlider->setMaximum(TIMESTEP_VALUE_RANGE);
@@ -738,8 +738,9 @@ void Rom::initSetup()
 	tempChooser->add("°C");
 	tempChooser->add("°F");
 	tempChooser->select("K");
+	tempChooser->setTextSize(10);
 	tempChooser->setTabHeight(12);
-	tempChooser->setPosition(155, 50);
+	tempChooser->setPosition(165, 50);
 
 	currPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
 	currPlanetInfo->setSize(145, 45);
