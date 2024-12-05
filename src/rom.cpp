@@ -691,13 +691,13 @@ void Rom::setInfo()
 
 void Rom::initSetup()
 {
-	//simInfo->setScrollbar(nullptr);
+	simInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
 	simInfo->setSize(145, 91);
 	simInfo->setPosition(5, 5);
 	simInfo->setTextSize(14);
 
 	functions->setItemHeight(14);
-	//functions->setScrollbar(nullptr);
+	functions->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
 	functions->setTextSize(14);
 	functions->setPosition(5, simInfo->getFullSize().y + 2*UI_SEPERATION_DISTANCE);
 	functions->addItem("Object (F)");
@@ -717,7 +717,7 @@ void Rom::initSetup()
 	autoBound->setSize(14, 14);
 	autoBound->setChecked(true);
 
-	//newPlanetInfo->setScrollbar(nullptr);
+	newPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
 	newPlanetInfo->setSize(145, 45);
 	newPlanetInfo->setPosition(5, 5 + simInfo->getFullSize().y + functions->getItemCount()*functions->getItemHeight() + UI_SEPERATION_DISTANCE * 4);
 	newPlanetInfo->setTextSize(14);
@@ -741,7 +741,7 @@ void Rom::initSetup()
 	tempChooser->setTabHeight(12);
 	tempChooser->setPosition(155, 50);
 
-	//currPlanetInfo->setScrollbar(nullptr);
+	currPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
 	currPlanetInfo->setSize(145, 45);
 	currPlanetInfo->setPosition(5, 75 + simInfo->getFullSize().y + functions->getItemCount()*functions->getItemHeight() + UI_SEPERATION_DISTANCE * 6);
 	currPlanetInfo->setTextSize(14);

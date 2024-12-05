@@ -76,7 +76,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	sg.add(b);
 
 	//VIDEOMODE
-	//mode->setScrollbar(nullptr);
+	mode->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
 	mode->setPosition(20, 80);
 	mode->setItemHeight(15);
 	mode->setSize(95, 30);
@@ -86,7 +86,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	mode->setSelectedItemByIndex(0);
 
 	//RESOLUTIONS
-	//res->setScrollbar(nullptr);
+	res->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
 	res->setPosition(20, 115);
 	res->setItemHeight(15);
 	res->setTextSize(15);
