@@ -116,7 +116,6 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	b->setText("START");
 	b->setTextSize(15);
 	b->onPress([=](){start(res, mode, c1, c2); });
-
 }
 
 void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2)

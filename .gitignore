@@ -71,6 +71,10 @@ CombinedSources*.cpp
 *.cxx
 build/
 
+*.res
+*.exp
+Release/
+
 prevSettings.txt
 
 *.rc
