@@ -69,6 +69,9 @@ CombinedSources*.cpp
 .DS_Store
 *~
 
+*.rc
+*.depend
+
 # Prerequisites
 *.d
 
