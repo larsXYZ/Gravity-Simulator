@@ -31,14 +31,11 @@
 *.out
 *.app
 
-.vs/*
-CMakeFiles/*
-SFML/CMakeFiles/*
-TGUI/CMakeFiles/*
+.vs/
 *cmake.in
-cmake_modules/*
+cmake_modules/
 Gravity-Simulator.dir/*
-x64/*
+x64/
 *.tlog
 *.cmake
 *.rule
@@ -49,16 +46,8 @@ CMakeCache.txt
 *.user
 *.log
 *.recipe
-SFML/x64/*
-SFML/.github/*
-TGUI/x64/*
-TGUI/.github/*
-Debug/*
-SFML/Debug/*
-TGUI/Debug/*
-SFML/lib/Debug/*
-TGUI/lib/Debug/*
-
+.github/
+Debug/
 /include/TGUI/Config.hpp
 /build*
 /obj
@@ -131,3 +120,5 @@ TGUI/gui-builder/gui-builder.dir/Debug/*
 
 Debug/
 .dir/
+
+CMakeFiles/
