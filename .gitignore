@@ -71,6 +71,8 @@ CombinedSources*.cpp
 *.cxx
 build/
 
+prevSettings.txt
+
 *.rc
 *.depend
 

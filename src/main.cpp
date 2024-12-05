@@ -115,7 +115,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	b->setSize(95, 35);
 	b->setText("START");
 	b->setTextSize(15);
-	//b->connect("pressed", start, res, mode, c1, c2);
+	b->onPress([=](){start(res, mode, c1, c2); });
 
 }
 
@@ -187,44 +187,47 @@ int main()
 
 	while (settingScreen.isOpen())
 	{
-		settingScreen.clear(sf::Color(20, 20, 20));
-		settingGUI.handleEvent(event);
-
 		while (settingScreen.pollEvent(event))
 		{
-			//LUKKER VINDUET
-			if (settingScreen.hasFocus())
+			settingScreen.clear(sf::Color(20, 20, 20));
+			settingGUI.handleEvent(event);
+
+			while (settingScreen.pollEvent(event))
 			{
-				if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) settingScreen.close();
+				//LUKKER VINDUET
+				if (settingScreen.hasFocus())
+				{
+					if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) settingScreen.close();
+				}
+				else if (event.type == sf::Event::Closed) settingScreen.close();
 			}
-			else if (event.type == sf::Event::Closed) settingScreen.close();
+
+			//DELETE CUSTOM RESOLUTION INPUT
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace))
+			{
+				if (customResX->isFocused()) customResX->setText("");
+				if (customResY->isFocused()) customResY->setText("");
+			}
+
+			//ENTER STARTER SIM
+			if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+			{
+				start(resSetup, modeSetup, customResX, customResY);
+			}
+
+			//SKJULER CUSTOM RESOLUTION OPTIONS
+			if (resSetup->getSelectedItem() != "CUSTOM") customResX->setVisible(false), customResY->setVisible(false);
+			else customResX->setVisible(true), customResY->setVisible(true);
+
+			//SKJULER START BUTTON
+			if (resSetup->getSelectedItem() == "") startButton->setVisible(false);
+			else if (resSetup->getSelectedItem() == "CUSTOM" && (customResX->getText() == "" || customResY->getText() == "")) startButton->setVisible(false);
+			else startButton->setVisible(true);
+
+			settingScreen.draw(title);
+			settingScreen.draw(version);
+			settingGUI.draw();
+			settingScreen.display();
 		}
-
-		//DELETE CUSTOM RESOLUTION INPUT
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace))
-		{
-			if (customResX->isFocused()) customResX->setText("");
-			if (customResY->isFocused()) customResY->setText("");
-		}
-
-		//ENTER STARTER SIM
-		if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
-		{
-			start(resSetup,modeSetup,customResX,customResY);
-		}
-
-		//SKJULER CUSTOM RESOLUTION OPTIONS
-		if (resSetup->getSelectedItem() != "CUSTOM") customResX->setVisible(false), customResY->setVisible(false);
-		else customResX->setVisible(true), customResY->setVisible(true);
-
-		//SKJULER START BUTTON
-		if (resSetup->getSelectedItem() == "") startButton->setVisible(false);
-		else if (resSetup->getSelectedItem() == "CUSTOM" && (customResX->getText() == "" || customResY->getText() == "")) startButton->setVisible(false);
-		else startButton->setVisible(true);
-
-		settingScreen.draw(title);
-		settingScreen.draw(version);
-		settingGUI.draw();
-		settingScreen.display();
 	}
 }
