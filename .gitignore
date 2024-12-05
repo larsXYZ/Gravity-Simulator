@@ -69,6 +69,7 @@ CombinedSources*.cpp
 .DS_Store
 *~
 *.cxx
+build/
 
 *.rc
 *.depend
