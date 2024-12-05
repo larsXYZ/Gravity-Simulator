@@ -68,6 +68,7 @@ CmakeSettings.json
 CombinedSources*.cpp
 .DS_Store
 *~
+*.cxx
 
 *.rc
 *.depend
