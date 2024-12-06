@@ -8,8 +8,8 @@ easier to understand. https://www.youtube.com/channel/UCslIyA4_1rciR3loFI09pZQ
 
 # Compiling for Debian
 
-Gravity-Simulator uses the graphics library [SFML 2.3.2](http://www.sfml-dev.org/)
-and the user interface library [TGUI 0.7](https://www.tgui.eu/).
+Gravity-Simulator uses the graphics library [SFML 2.6.2](http://www.sfml-dev.org/)
+and the user interface library [TGUI 1.6.1](https://www.tgui.eu/).
 
 ## Dependencies
 

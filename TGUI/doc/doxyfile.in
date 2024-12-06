@@ -1,0 +1,94 @@
+# Doxyfile 1.9.1
+
+PROJECT_NAME           = "TGUI"
+PROJECT_NUMBER         = 1.x-dev
+
+OUTPUT_DIRECTORY       = "@CMAKE_CURRENT_BINARY_DIR@"
+STRIP_FROM_INC_PATH    = "@PROJECT_SOURCE_DIR@/include/"
+
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+
+GENERATE_TODOLIST      = NO
+GENERATE_TESTLIST      = NO
+GENERATE_BUGLIST       = NO
+GENERATE_DEPRECATEDLIST= YES
+
+INPUT                  = "@PROJECT_SOURCE_DIR@/include/TGUI" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Loading" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Widgets" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Renderers" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Font" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Font/FreeType" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Font/SDL_ttf" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Font/SFML-Graphics" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Font/Raylib" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Renderer" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Renderer/GLES2" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Renderer/OpenGL3" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Renderer/SDL_Renderer" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Renderer/SFML-Graphics" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Renderer/Raylib" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Window" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Window/GLFW" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Window/SDL" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Window/SFML" \
+                         "@PROJECT_SOURCE_DIR@/include/TGUI/Backend/Window/Raylib" \
+                         "@PROJECT_SOURCE_DIR@/doc/mainpage.hpp"
+
+EXCLUDE                = "@PROJECT_SOURCE_DIR@/include/TGUI/DefaultFont.hpp"
+
+EXCLUDE_SYMBOLS        = priv \
+                         DataIO \
+                         TextureData \
+                         TextureDataHolder \
+                         GuiContainer \
+                         GuiResources
+
+HTML_EXTRA_STYLESHEET  = "@PROJECT_SOURCE_DIR@/doc/doxygen-awesome.css" \
+                         "@PROJECT_SOURCE_DIR@/doc/custom.css"
+HTML_HEADER            = "@PROJECT_SOURCE_DIR@/doc/header.html"
+HTML_FOOTER            = "@PROJECT_SOURCE_DIR@/doc/footer.html"
+
+HTML_TIMESTAMP         = YES
+
+GENERATE_HTMLHELP      = @DOXYGEN_GENERATE_HTMLHELP@
+CHM_FILE               = ../TGUI.chm
+HHC_LOCATION           = "@DOXYGEN_HHC_PROGRAM@"
+
+GENERATE_LATEX         = NO
+
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = TGUI_DEPRECATED(x)= \
+                         TGUI_COMPILED_WITH_CPP_VER=23 \
+                         TGUI_BUILD_AS_CXX_MODULE=0 \
+                         TGUI_HAS_WINDOW_BACKEND_SFML=1 \
+                         TGUI_HAS_WINDOW_BACKEND_SDL=1 \
+                         TGUI_HAS_WINDOW_BACKEND_GLFW=1 \
+                         TGUI_HAS_WINDOW_BACKEND_RAYLIB=1 \
+                         TGUI_HAS_RENDERER_BACKEND_SFML_GRAPHICS=1 \
+                         TGUI_HAS_RENDERER_BACKEND_SDL_RENDERER=1 \
+                         TGUI_HAS_RENDERER_BACKEND_OPENGL3=1 \
+                         TGUI_HAS_RENDERER_BACKEND_GLES2=1 \
+                         TGUI_HAS_RENDERER_BACKEND_RAYLIB=1 \
+                         TGUI_HAS_FONT_BACKEND_SFML_GRAPHICS=1 \
+                         TGUI_HAS_FONT_BACKEND_SDL_TTF=1 \
+                         TGUI_HAS_FONT_BACKEND_FREETYPE=1 \
+                         TGUI_HAS_FONT_BACKEND_RAYLIB=1 \
+                         TGUI_HAS_BACKEND_SFML_GRAPHICS=1 \
+                         TGUI_HAS_BACKEND_SFML_OPENGL3=1 \
+                         TGUI_HAS_BACKEND_SDL_RENDERER=1 \
+                         TGUI_HAS_BACKEND_SDL_OPENGL3=1 \
+                         TGUI_HAS_BACKEND_SDL_GLES2=1 \
+                         TGUI_HAS_BACKEND_SDL_TTF_OPENGL3=1 \
+                         TGUI_HAS_BACKEND_SDL_TTF_GLES2=1 \
+                         TGUI_HAS_BACKEND_GLFW_OPENGL3=1 \
+                         TGUI_HAS_BACKEND_GLFW_GLES2=1 \
+                         TGUI_HAS_BACKEND_RAYLIB=1 \
+                         TGUI_NODISCARD=[[nodiscard]]
+
+SHOW_NAMESPACES        = NO
+HIDE_UNDOC_RELATIONS   = NO
