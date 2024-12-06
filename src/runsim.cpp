@@ -1,22 +1,22 @@
 #include "rom.h"
 
-void Rom::runSim()
+void Space::runSim()
 {
 	sf::RenderWindow window;
 
 	//LAGER VINDU
 	if (fullScreen)
 	{
-		window.create(sf::VideoMode(xstorrelse, ystorrelse), "Gravity Simulator", sf::Style::Fullscreen);
+		window.create(sf::VideoMode(xsize, ysize), "Gravity Simulator", sf::Style::Fullscreen);
 	}
 	else
 	{
-		window.create(sf::VideoMode(xstorrelse, ystorrelse), "Gravity Simulator", sf::Style::Default);
+		window.create(sf::VideoMode(xsize, ysize), "Gravity Simulator", sf::Style::Default);
 	}
 
 	sf::View view1;
 	window.setFramerateLimit(framerate);
-	view1.setSize(xstorrelse, ystorrelse);
+	view1.setSize(xsize, ysize);
 	view1.setCenter(0, 0);
 	window.setView(view1);
 	sf::Clock clock;

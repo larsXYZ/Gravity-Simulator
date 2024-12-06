@@ -147,8 +147,8 @@ void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c
 	}
 	else 	if (res->getSelectedItem() == ("CUSTOM"))
 	{
-		x = Rom::convertStringToDouble(c1->getText().toStdString());
-		y = Rom::convertStringToDouble(c2->getText().toStdString());
+		x = Space::convertStringToDouble(c1->getText().toStdString());
+		y = Space::convertStringToDouble(c2->getText().toStdString());
 	}
 	else
 	{
@@ -157,7 +157,7 @@ void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c
 	}
 
 	//STARTING
-	Rom sim(x, y, fullscreen);
+	Space sim(x, y, fullscreen);
 	saveSettings(x, y, fullscreen);
 	
 	sim.runSim();

@@ -1,13 +1,13 @@
 #include "rom.h"
 
-Rom::Rom(int x, int y, bool f)
+Space::Space(int x, int y, bool f)
 {
-	xstorrelse = x;
-	ystorrelse = y;
+	xsize = x;
+	ysize = y;
 	fullScreen = f;
 }
 
-void Rom::addPlanet(Planet p)
+void Space::addPlanet(Planet p)
 {
 	giveId(p);
 	p.setTemp((p.fusionEnergy() / (p.getRad()*p.getRad()*SBconst)) + getTherEnergyAtPos(sf::Vector2f(p.getx(), p.gety()))*tempConstTwo/SBconst);
@@ -16,17 +16,17 @@ void Rom::addPlanet(Planet p)
 	pListe.push_back(p);
 }
 
-void Rom::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
+void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
 {
 	expListe.push_back(Explosion(p, s, 0, v, l));
 }
 
-void Rom::addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l)
+void Space::addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l)
 {
 	smkListe.push_back(Smoke(p, s, 0, v, l));
 }
 
-void Rom::printPListe()
+void Space::printPListe()
 {
 	if (pListe.size() > 0)
 	{
@@ -44,7 +44,7 @@ void Rom::printPListe()
 	std::cout << std::endl;
 }
 
-sf::Vector3f Rom::centerOfMass(std::vector<int> midlPList)
+sf::Vector3f Space::centerOfMass(std::vector<int> midlPList)
 {
 	double tMass = 0;
 	double xCont = 0;
@@ -69,7 +69,7 @@ sf::Vector3f Rom::centerOfMass(std::vector<int> midlPList)
 
 }
 
-sf::Vector2f Rom::centerOfMassVelocity(std::vector<int> midlPList)
+sf::Vector2f Space::centerOfMassVelocity(std::vector<int> midlPList)
 {
 	double tMass = 0;
 	double xCont = 0;
@@ -93,7 +93,7 @@ sf::Vector2f Rom::centerOfMassVelocity(std::vector<int> midlPList)
 	return sf::Vector2f(xCont / tMass, yCont / tMass);
 }
 
-sf::Vector2f Rom::centerOfMassAll()
+sf::Vector2f Space::centerOfMassAll()
 {
 	double tMass = 0;
 	double xCont = 0;
@@ -117,7 +117,7 @@ sf::Vector2f Rom::centerOfMassAll()
 	return sf::Vector2f(xCont / tMass, yCont / tMass);
 }
 
-void Rom::update()
+void Space::update()
 {
 	//SETUP & OTHER
 	totalMass = 0;
@@ -268,12 +268,12 @@ void Rom::update()
 
 }
 
-std::vector<Planet> Rom::getPListe()
+std::vector<Planet> Space::getPListe()
 {
 	return pListe;
 }
 
-void Rom::randomPlaneter(int totmass,int antall, double radius, sf::Vector2f pos)
+void Space::randomPlaneter(int totmass,int antall, double radius, sf::Vector2f pos)
 {
 	double speedmultRandom = 0.00000085 * modernRandomWithLimits(120*totmass, 150*totmass);
 	double angle = 0;
@@ -303,7 +303,7 @@ void Rom::randomPlaneter(int totmass,int antall, double radius, sf::Vector2f pos
 
 }
 
-void Rom::removePlanet(int ind)
+void Space::removePlanet(int ind)
 {
 	if (ind >= (int) pListe.size() || ind < 0) return;
 
@@ -312,7 +312,7 @@ void Rom::removePlanet(int ind)
 	pListe.pop_back();
 }
 
-void Rom::removeTrail(int ind)
+void Space::removeTrail(int ind)
 {
 	if (ind >= (int) trlListe.size() || ind < 0) return;
 
@@ -322,7 +322,7 @@ void Rom::removeTrail(int ind)
 
 }
 
-void Rom::removeExplosion(int ind)
+void Space::removeExplosion(int ind)
 {
 	if (ind >= (int) expListe.size() || ind < 0) return;
 
@@ -331,7 +331,7 @@ void Rom::removeExplosion(int ind)
 	expListe.pop_back();
 }
 
-void Rom::removeSmoke(int ind)
+void Space::removeSmoke(int ind)
 {
 	if (ind >= (int) smkListe.size() || ind < 0) return;
 
@@ -342,7 +342,7 @@ void Rom::removeSmoke(int ind)
 	smkListe.pop_back();
 }
 
-void Rom::clear(sf::View& v, sf::Window& w)
+void Space::clear(sf::View& v, sf::Window& w)
 {
 	(void) w;
 
@@ -358,14 +358,14 @@ void Rom::clear(sf::View& v, sf::Window& w)
 	ymidltrans = 0;
 	zoom = 1;
 	v = sf::View();
-	v.setSize(sf::Vector2f(xstorrelse, ystorrelse));
+	v.setSize(sf::Vector2f(xsize, ysize));
 	v.setCenter(0, 0);
 	ship.reset(sf::Vector2f(0, 0));
 	iterasjon = 0;
 	fokusId = -1;
 }
 
-void Rom::explodePlanet(int ind)
+void Space::explodePlanet(int ind)
 {
 	if (pListe.size() > 0 && pListe[ind].getmass() > MINIMUMBREAKUPSIZE)
 	{
@@ -408,7 +408,7 @@ void Rom::explodePlanet(int ind)
 	}
 }
 
-void Rom::explodePlanetOld(int ind)
+void Space::explodePlanetOld(int ind)
 {
 	if (pListe.size() > 0)
 	{
@@ -434,18 +434,18 @@ void Rom::explodePlanetOld(int ind)
 	}
 }
 
-double Rom::range(double x1, double y1, double x2, double y2)
+double Space::range(double x1, double y1, double x2, double y2)
 {
 	return sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
 }
 
-void Rom::giveId(Planet &p)
+void Space::giveId(Planet &p)
 {
 	p.mark(nesteid);
 	nesteid += 1;
 }
 
-Planet Rom::findPlanet(double id)
+Planet Space::findPlanet(double id)
 {
 	for(size_t i = 0; i < pListe.size(); i++)
 	{
@@ -457,7 +457,7 @@ Planet Rom::findPlanet(double id)
 	return Planet(-1);
 }
 
-Planet& Rom::findPlanetRef(double id)
+Planet& Space::findPlanetRef(double id)
 {
 	for(size_t i = 0; i < pListe.size(); i++)
 	{
@@ -469,7 +469,7 @@ Planet& Rom::findPlanetRef(double id)
 	return Planet(-1);
 }
 
-int Rom::findBestPlanet(int q)
+int Space::findBestPlanet(int q)
 {
 	int ind = -1;
 	double highest = -1;
@@ -493,12 +493,12 @@ int Rom::findBestPlanet(int q)
 	return ind;
 }
 
-void Rom::addTrail(sf::Vector2f p, int l)
+void Space::addTrail(sf::Vector2f p, int l)
 {
 	trlListe.push_back(Trail(p, l));
 }
 
-void Rom::GravitySmoke(Planet& forcer, int t)
+void Space::GravitySmoke(Planet& forcer, int t)
 {
 	for (auto& smoke : smkListe)
 	{
@@ -506,7 +506,7 @@ void Rom::GravitySmoke(Planet& forcer, int t)
 	}
 }
 
-void Rom::giveRings(Planet p, int inner, int outer)
+void Space::giveRings(Planet p, int inner, int outer)
 {
 	int antall = 0.05*outer*outer;
 	double angle = 0;
@@ -525,7 +525,7 @@ void Rom::giveRings(Planet p, int inner, int outer)
 
 }
 
-std::string Rom::calcTemperature(double q, int e)
+std::string Space::calcTemperature(double q, int e)
 {
 	if (e == 1)
 	{
@@ -542,7 +542,7 @@ std::string Rom::calcTemperature(double q, int e)
 	return "-";
 }
 
-void Rom::romskipHandling()
+void Space::romskipHandling()
 {
 	int mode = ship.move(timeStep);
 	if (mode == 1)
@@ -583,7 +583,7 @@ void Rom::romskipHandling()
 	}
 }
 
-void Rom::setInfo()
+void Space::setInfo()
 {
 	//Mass
 	size = massSlider->getValue();
@@ -689,7 +689,7 @@ void Rom::setInfo()
 
 }
 
-void Rom::initSetup()
+void Space::initSetup()
 {
 	simInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
 	simInfo->setSize(160, 110);
@@ -755,7 +755,7 @@ void Rom::initSetup()
 
 }
 
-void Rom::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
+void Space::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
 {
 	(void) v;
 
@@ -920,7 +920,7 @@ void Rom::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
 	}
 }
 
-void Rom::PlanetSkjermPrint(sf::RenderWindow &window)
+void Space::PlanetSkjermPrint(sf::RenderWindow &window)
 {
 	//DRAWING PLANETS																										
 	for(size_t i = 0; i < pListe.size(); i++)
@@ -929,7 +929,7 @@ void Rom::PlanetSkjermPrint(sf::RenderWindow &window)
 	}
 }
 
-void Rom::effectSkjermPrint(sf::RenderWindow &window)
+void Space::effectSkjermPrint(sf::RenderWindow &window)
 {
 
 	//EXPLOSIONS
@@ -973,7 +973,7 @@ void Rom::effectSkjermPrint(sf::RenderWindow &window)
 
 }
 
-void Rom::lightSkjermPrint(sf::RenderWindow& window)
+void Space::lightSkjermPrint(sf::RenderWindow& window)
 {
 	for(size_t i = 0; i < pListe.size(); i++)
 	{
@@ -1023,7 +1023,7 @@ void Rom::lightSkjermPrint(sf::RenderWindow& window)
 	}
 }
 
-void Rom::lockToObject(sf::RenderWindow& w, sf::View& v)
+void Space::lockToObject(sf::RenderWindow& w, sf::View& v)
 {
 	//FINDING NEW OBJECT TO FOCUS ON
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && functions->getSelectedItem() == "Follow object (T)" && !mouseOnWidgets)
@@ -1052,7 +1052,7 @@ void Rom::lockToObject(sf::RenderWindow& w, sf::View& v)
 	}
 }
 
-double Rom::getTherEnergyAtPos(sf::Vector2f pos)
+double Space::getTherEnergyAtPos(sf::Vector2f pos)
 {
 	double tEnergyFromOutside = 0;
 

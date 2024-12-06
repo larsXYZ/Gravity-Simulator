@@ -19,12 +19,12 @@
 #include <fstream>
 #include <iomanip>
 
-class Rom
+class Space
 {
 private:
 	//CONSTANTS
-	int xstorrelse;
-	int ystorrelse;
+	int xsize;
+	int ysize;
 	const static int framerate = FRAMERATE;
 	double createPlanetSpeedmult = CREATEPLANETSPEEDMULT;
 	double maxSize = MAXSIZEPLANETCREATOR;
@@ -93,7 +93,7 @@ private:
 
 public:
 
-	Rom(int x, int y, bool f);
+	Space(int x, int y, bool f);
 
 	//PLANET FUNCTIONS
 	void addPlanet(Planet p);
