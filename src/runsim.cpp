@@ -4,15 +4,10 @@ void Space::runSim()
 {
 	sf::RenderWindow window;
 
-	//LAGER VINDU
 	if (fullScreen)
-	{
 		window.create(sf::VideoMode(xsize, ysize), "Gravity Simulator", sf::Style::Fullscreen);
-	}
 	else
-	{
 		window.create(sf::VideoMode(xsize, ysize), "Gravity Simulator", sf::Style::Default);
-	}
 
 	sf::View view1;
 	window.setFramerateLimit(framerate);
@@ -21,11 +16,7 @@ void Space::runSim()
 	window.setView(view1);
 	sf::Clock clock;
 
-	//LOADING FONT
-	if (!font.loadFromFile("sansation.ttf"))
-	{
-		std::cout << "FONT-LOADING ERROR" << std::endl;
-	}
+	font.loadFromFile("sansation.ttf");
 	text.setFont(font);
 	text.setCharacterSize(14);
 	text2.setFont(font);
@@ -38,7 +29,6 @@ void Space::runSim()
 	initSetup();
 	gui.add(simInfo), gui.add(functions), gui.add(newPlanetInfo), gui.add(massSlider), gui.add(timeStepSlider), gui.add(tempChooser), gui.add(currPlanetInfo), gui.add(massExistingObjectSlider), gui.add(autoBound);
 
-	//PREPARING EVENTS AND OTHER THINGS	
 	int xx = 0;
 	int yy = 0;
 	xtrans = 0;
@@ -60,12 +50,11 @@ void Space::runSim()
 	double ringOuterRad;
 	int createInOrbitCounter = 0;
 	int advCreateInOrbitCounter = 0;
-	bool harTrykket = false;
-	bool harTrykket2 = false;
+	bool buttonPressed = false;
+	bool buttonPressed2 = false;
 
 	int boundCounter = 0;
 
-	
 	while (window.isOpen())
 	{
 		//CLEARING WINDOW AND GETTING MOUSEPOS
@@ -79,15 +68,15 @@ void Space::runSim()
 			if (gui.getWidgets()[i]->isMouseOnWidget(sf::Vector2f(mousePos.x,mousePos.y)))
 				mouseOnWidgets = true;
 		}
-		if (!harTrykket && sf::Mouse::isButtonPressed(sf::Mouse::Left) && mouseOnWidgets) { harTrykket = true; }
-		else if (harTrykket && sf::Mouse::isButtonPressed(sf::Mouse::Left)) { harTrykket = true, mouseOnWidgets = true;}
-		else harTrykket = false;
+		if (!buttonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Left) && mouseOnWidgets) { buttonPressed = true; }
+		else if (buttonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Left)) { buttonPressed = true, mouseOnWidgets = true;}
+		else buttonPressed = false;
 
 		mouseOnMassSliderSelected = false;
 		if (massExistingObjectSlider->isMouseOnWidget(sf::Vector2f{ (float)mousePos.x,(float)mousePos.y })) mouseOnMassSliderSelected = true;
-		if (!harTrykket2 && sf::Mouse::isButtonPressed(sf::Mouse::Left) && mouseOnMassSliderSelected) { harTrykket2 = true; }
-		else if (harTrykket2 && sf::Mouse::isButtonPressed(sf::Mouse::Left)) { harTrykket2 = true, mouseOnMassSliderSelected = true; }
-		else harTrykket2 = false;
+		if (!buttonPressed2 && sf::Mouse::isButtonPressed(sf::Mouse::Left) && mouseOnMassSliderSelected) { buttonPressed2 = true; }
+		else if (buttonPressed2 && sf::Mouse::isButtonPressed(sf::Mouse::Left)) { buttonPressed2 = true, mouseOnMassSliderSelected = true; }
+		else buttonPressed2 = false;
 
 		//HOTKEYS
 		hotkeys(window, view1);
@@ -176,16 +165,13 @@ void Space::runSim()
 									alreadyIn = true;
 									break;
 								}
-
 							}
 
 							if (!alreadyIn) midlPListe.push_back(pListe[i].getId());
 							break;
-
 						}
 					}
 				}
-
 			}
 
 
