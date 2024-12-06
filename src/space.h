@@ -32,7 +32,6 @@ private:
 	double deltaMasse = DELTAMASSE;
 	double timeStepInc = TIDSKRITTINC;
 
-
 	//WINDOW
 	double totalMass = 0;
 	int xtrans = 0;
@@ -61,7 +60,6 @@ private:
 	bool randomizeToggle = true;
 	bool mouseToggle = false;
 	bool transToggle = true;
-	bool eksplosjonToggle = true;
 	bool updatetoggle = true;
 
 	bool drawtext2 = false;
