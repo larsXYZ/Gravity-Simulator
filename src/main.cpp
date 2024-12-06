@@ -63,7 +63,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	v.setFont(tf);
 	v.setColor(sf::Color(51, 255, 255));
 	v.setPosition(247, 33);
-	v.setString("v1.0");
+	v.setString("v1.0.1");
 	v.setCharacterSize(25);
 
 	//GUI
@@ -96,6 +96,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	res->addItem("1366 x 768");
 	res->addItem("CUSTOM");
 	res->setSize(95, res->getItemCount() * 15);
+	res->setFocusable(false);
 
 	//CUSTOM RESOLUTION
 	c1->setDefaultText("X");
@@ -120,54 +121,64 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 
 void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2)
 {
-
-	//CHECKING FOR FULLSCREEN
-	bool fullscreen;
-	if (mode->getSelectedItemIndex() == 0) fullscreen = true;
-	else fullscreen = false;
-
-	//CHECKING FOR RESOLUTION
-	int x;
-	int y;
+	int x = 640;
+	int y = 480;
 
 	if (res->getSelectedItem() == ("2560 x 1440"))
 	{
 		x = 2560;
 		y = 1440;
 	}
-	else 	if (res->getSelectedItem() == ("1920 x 1080"))
+	else if (res->getSelectedItem() == ("1920 x 1080"))
 	{
 		x = 1920;
 		y = 1080;
 	}
-	else 	if (res->getSelectedItem() == ("1366 x 768"))
+	else if (res->getSelectedItem() == ("1366 x 768"))
 	{
 		x = 1366;
 		y = 768;
 	}
-	else 	if (res->getSelectedItem() == ("CUSTOM"))
+	else if (res->getSelectedItem() == ("CUSTOM"))
 	{
 		x = Space::convertStringToDouble(c1->getText().toStdString());
 		y = Space::convertStringToDouble(c2->getText().toStdString());
 	}
-	else
-	{
-		x = 640;
-		y = 480;
-	}
 
 	//STARTING
+	bool fullscreen = (mode->getSelectedItemIndex() == 0);
 	Space sim(x, y, fullscreen);
 	saveSettings(x, y, fullscreen);
 	
 	sim.runSim();
 	exit(0);
+}
 
+void evaluateCustomResolutionInputsVisibility(tgui::ListBox::Ptr resSetup,
+	tgui::EditBox::Ptr customResX,
+	tgui::EditBox::Ptr customResY)
+{
+	customResX->setVisible(true);
+	customResY->setVisible(true);
+	if (resSetup->getSelectedItem() != "CUSTOM")
+	{
+		customResX->setVisible(false);
+		customResY->setVisible(false);
+	}
+}
+
+void evaluateStartButtonVisibility(tgui::ListBox::Ptr resSetup,
+	tgui::EditBox::Ptr customResX,
+	tgui::EditBox::Ptr customResY,
+	tgui::Button::Ptr startButton)
+{
+	startButton->setVisible(true);
+	if (resSetup->getSelectedItem() == "" || (resSetup->getSelectedItem() == "CUSTOM" && (customResX->getText() == "" || customResY->getText() == "")))
+		startButton->setVisible(false);
 }
 
 int main()
 {
-
 	sf::RenderWindow settingScreen;
 	settingScreen.create(sf::VideoMode(300, 195), "", sf::Style::None);
 	tgui::Gui settingGUI{ settingScreen };
@@ -186,47 +197,27 @@ int main()
 
 	while (settingScreen.isOpen())
 	{
-		while (settingScreen.pollEvent(event))
+		if (settingScreen.pollEvent(event))
 		{
 			settingScreen.clear(sf::Color(20, 20, 20));
 			settingGUI.handleEvent(event);
 
-			while (settingScreen.pollEvent(event))
+			if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
 			{
-				//LUKKER VINDUET
-				if (settingScreen.hasFocus())
-				{
-					if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) settingScreen.close();
-				}
-				else if (event.type == sf::Event::Closed) settingScreen.close();
+				settingScreen.close();
+				exit(0);
 			}
-
-			//DELETE CUSTOM RESOLUTION INPUT
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace))
-			{
-				if (customResX->isFocused()) customResX->setText("");
-				if (customResY->isFocused()) customResY->setText("");
-			}
-
-			//ENTER STARTER SIM
-			if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
-			{
-				start(resSetup, modeSetup, customResX, customResY);
-			}
-
-			//SKJULER CUSTOM RESOLUTION OPTIONS
-			if (resSetup->getSelectedItem() != "CUSTOM") customResX->setVisible(false), customResY->setVisible(false);
-			else customResX->setVisible(true), customResY->setVisible(true);
-
-			//SKJULER START BUTTON
-			if (resSetup->getSelectedItem() == "") startButton->setVisible(false);
-			else if (resSetup->getSelectedItem() == "CUSTOM" && (customResX->getText() == "" || customResY->getText() == "")) startButton->setVisible(false);
-			else startButton->setVisible(true);
-
+				
+			evaluateCustomResolutionInputsVisibility(resSetup, customResX, customResY);
+			evaluateStartButtonVisibility(resSetup, customResX, customResY, startButton);
+			
 			settingScreen.draw(title);
 			settingScreen.draw(version);
 			settingGUI.draw();
 			settingScreen.display();
+
+			if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+				start(resSetup, modeSetup, customResX, customResY);
 		}
 	}
 }
