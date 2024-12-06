@@ -1,4 +1,4 @@
-#include "rom.h"
+#include "space.h"
 
 Space::Space(int x, int y, bool f)
 {
