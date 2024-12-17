@@ -114,7 +114,7 @@ public:
 	Planet findPlanet(double id);
 	Planet& findPlanetRef(double id);
 	int findBestPlanet(int q);
-	void updateSpaceship();
+	void romskipHandling();
 	double thermalEnergyAtPosition(sf::Vector2f pos);
 	sf::Vector3f centerOfMass(std::vector<int> midlPList);
 	sf::Vector2f centerOfMassAll();

@@ -280,50 +280,26 @@ void Space::hotkeys(sf::Window& w, sf::View& v)
 		timeStepSlider->setValue(timeStepSlider->getValue() + 1);
 		if (timeStepSlider->getValue() > timeStepSlider->getMaximum()) timeStepSlider->setValue(timeStepSlider->getMaximum());
 	}
-	
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+
+	const static std::map<sf::Keyboard::Key, std::string> hotkey_map
 	{
-		functions->setSelectedItem("Object (F)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::O))
+		{sf::Keyboard::F, "Object (F)"},
+		{sf::Keyboard::O, "Object in orbit (O)"},
+		{sf::Keyboard::S, "Adv Object in orbit (S)"},
+		{sf::Keyboard::D, "Remove object (D)"},
+		{sf::Keyboard::C, "Explode object (C)"},
+		{sf::Keyboard::G, "Random system (G)"},
+		{sf::Keyboard::Q, "Rings (Q)"},
+		{sf::Keyboard::E, "Spawn ship (E)"},
+		{sf::Keyboard::I, "Info (I)"},
+		{sf::Keyboard::T, "Follow object (T)"},
+		{sf::Keyboard::B, "Bound (B)"}
+	};
+
+	for (const auto& [key, action] : hotkey_map)
 	{
-		functions->setSelectedItem("Object in orbit (O)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-	{
-		functions->setSelectedItem("Adv Object in orbit (S)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-	{
-		functions->setSelectedItem("Remove object (D)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
-	{
-		functions->setSelectedItem("Explode object (C)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::G))
-	{
-		functions->setSelectedItem("Random system (G)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
-	{
-		functions->setSelectedItem("Rings (Q)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
-	{
-		functions->setSelectedItem("Spawn ship (E)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::I))
-	{
-		functions->setSelectedItem("Info (I)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::T))
-	{
-		functions->setSelectedItem("Follow object (T)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::B))
-	{
-		functions->setSelectedItem("Bound (B)");
+		if (sf::Keyboard::isKeyPressed(key))
+			functions->setSelectedItem(action);
 	}
 }
 
@@ -601,7 +577,7 @@ std::string Space::calcTemperature(double q, int e)
 	return "-";
 }
 
-void Space::updateSpaceship()
+void Space::romskipHandling()
 {
 	int mode = ship.move(timeStep);
 	if (mode == 1)

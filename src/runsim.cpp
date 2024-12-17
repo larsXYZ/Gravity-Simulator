@@ -578,7 +578,7 @@ void Space::runSim()
 			}
 
 			//DEALING WITH THE SPACESHIP
-			updateSpaceship();
+			romskipHandling();
 
 			//ADV IN ORBIT ADDER
 			if (functions->getSelectedItem() == "Adv Object in orbit (S)" && !mouseOnWidgets && sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
