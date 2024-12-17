@@ -75,7 +75,7 @@ const double DELTAMASSE = 1;
 //PHYSICS DELTA TIME
 const int TIMESTEP_VALUE_START = 10;
 const int TIDSKRITTINC = 5;
-const int TIMESTEP_VALUE_RANGE = 50;
+const int MAX_TIMESTEP = 50;
 
 //TRAIL
 const double TRAILRAD = 1.2;

@@ -27,7 +27,15 @@ void Space::runSim()
 	tgui::Gui gui{ window };
 	gui.setFont("sansation.ttf");
 	initSetup();
-	gui.add(simInfo), gui.add(functions), gui.add(newPlanetInfo), gui.add(massSlider), gui.add(timeStepSlider), gui.add(tempChooser), gui.add(currPlanetInfo), gui.add(massExistingObjectSlider), gui.add(autoBound);
+	gui.add(simInfo);
+	gui.add(functions);
+	gui.add(newPlanetInfo);
+	gui.add(massSlider);
+	gui.add(timeStepSlider);
+	gui.add(tempChooser);
+	gui.add(currPlanetInfo);
+	gui.add(massExistingObjectSlider);
+	gui.add(autoBound);
 
 	int xx = 0;
 	int yy = 0;

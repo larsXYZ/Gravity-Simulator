@@ -767,8 +767,8 @@ void Space::initSetup()
 	timeStepSlider->setPosition(165, 40);
 	timeStepSlider->setSize(160, 5);
 	timeStepSlider->setValue(TIMESTEP_VALUE_START);
-	timeStepSlider->setMinimum(-TIMESTEP_VALUE_RANGE);
-	timeStepSlider->setMaximum(TIMESTEP_VALUE_RANGE);
+	timeStepSlider->setMinimum(0);
+	timeStepSlider->setMaximum(MAX_TIMESTEP);
 
 	tempChooser->add("K");
 	tempChooser->add("°C");
