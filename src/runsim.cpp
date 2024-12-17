@@ -355,17 +355,17 @@ void Space::runSim()
 					window.draw(omr);
 
 					//DRAWING MASS CENTER
-					sf::CircleShape midtpunkt(2);
-					midtpunkt.setOrigin(2, 2);
-					Planet annen = findPlanet(planetFuncId);
-					midtpunkt.setFillColor(sf::Color(255, 0, 0));
+					sf::CircleShape center_point(2);
+					center_point.setOrigin(2, 2);
+					Planet other_planet = findPlanet(planetFuncId);
+					center_point.setFillColor(sf::Color(255, 0, 0));
 
-					double avst = sqrt((new_mouse_pos.x - annen.getx())*(new_mouse_pos.x - annen.getx()) + (new_mouse_pos.y - annen.gety())*(new_mouse_pos.y - annen.gety()));
-					avst = avst*(midlP.getmass()) / (midlP.getmass() + annen.getmass());
-					double angleb = atan2(new_mouse_pos.y - annen.gety(), new_mouse_pos.x - annen.getx());
+					double avst = sqrt((new_mouse_pos.x - other_planet.getx())*(new_mouse_pos.x - other_planet.getx()) + (new_mouse_pos.y - other_planet.gety())*(new_mouse_pos.y - other_planet.gety()));
+					avst = avst*(midlP.getmass()) / (midlP.getmass() + other_planet.getmass());
+					double angleb = atan2(new_mouse_pos.y - other_planet.gety(), new_mouse_pos.x - other_planet.getx());
 
-					midtpunkt.setPosition(annen.getx() + avst*cos(angleb), annen.gety() + avst*sin(angleb));
-					window.draw(midtpunkt);
+					center_point.setPosition(other_planet.getx() + avst*cos(angleb), other_planet.gety() + avst*sin(angleb));
+					window.draw(center_point);
 
 					//DRAWING ROCHE LIMIT
 					if (size > MINIMUMBREAKUPSIZE && size / findPlanet(planetFuncId).getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
