@@ -151,7 +151,7 @@ void Space::update()
 		if (thisPlanet.isMarkedForRemoval())
 			continue;
 
-		for (const auto& otherPlanet : pListe)
+		for (auto& otherPlanet : pListe)
 		{
 			if (otherPlanet.isMarkedForRemoval() ||
 				thisPlanet.getId() == otherPlanet.getId())
@@ -179,32 +179,30 @@ void Space::update()
 
 			if (dist < radDist)
 			{
-				if (thisPlanet.getmass() >= otherPlanet.getmass())
+				if (thisPlanet.getmass() <= otherPlanet.getmass())
 				{
+					removePlanet(thisPlanet.getId());
+
 					if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_COLLISION) 
 						for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++) 
-							addSmoke(sf::Vector2f(otherPlanet.getx(), otherPlanet.gety()), 10, sf::Vector2f(otherPlanet.getxv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4), otherPlanet.getyv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4)), DUSTLEVETID);
-					addExplosion(sf::Vector2f(otherPlanet.getx(), otherPlanet.gety()), 2 * otherPlanet.getRad(), sf::Vector2f(otherPlanet.getxv() * 0.5, otherPlanet.getyv() * 0.5), sqrt(thisPlanet.getmass()) / 2);
-					thisPlanet.collision(otherPlanet);
-					thisPlanet.incMass(otherPlanet.getmass());
-					removePlanet(otherPlanet.getId());
+							addSmoke(sf::Vector2f(thisPlanet.getx(), thisPlanet.gety()), 10, sf::Vector2f(thisPlanet.getxv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4), thisPlanet.getyv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4)), DUSTLEVETID);
+					addExplosion(sf::Vector2f(thisPlanet.getx(), thisPlanet.gety()), 2 * thisPlanet.getRad(), sf::Vector2f(thisPlanet.getxv() * 0.5, thisPlanet.getyv() * 0.5), sqrt(thisPlanet.getmass()) / 2);
+					otherPlanet.collision(thisPlanet);
+					otherPlanet.incMass(thisPlanet.getmass());
+					break;
 				}
-				continue;
 			}
 
-			double aks = 0;
+			const auto acceleration = G * otherPlanet.getmass() / std::max(dist*dist, 0.01);
 			const auto angle = atan2(dy, dx);
+			thisPlanet.setxv(thisPlanet.getxv() + cos(angle) * acceleration * timeStep);
+			thisPlanet.setyv(thisPlanet.getyv() + sin(angle) * acceleration * timeStep);
 
-			if (dist != 0)
-				aks = G * otherPlanet.getmass() / (dist * dist);
-
-			if (aks > thisPlanet.getStrongestAttractorStrength())
+			if (acceleration > thisPlanet.getStrongestAttractorStrength())
 			{
-				thisPlanet.setStrongestAttractorStrength(aks);
+				thisPlanet.setStrongestAttractorStrength(acceleration);
 				thisPlanet.setStrongestAttractorIdRef(otherPlanet.getId());
 			}
-			thisPlanet.setxv(thisPlanet.getxv() + cos(angle) * aks * timeStep);
-			thisPlanet.setyv(thisPlanet.getyv() + sin(angle) * aks * timeStep);
 		}
 	}
 
