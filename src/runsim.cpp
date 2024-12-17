@@ -44,7 +44,6 @@ void Space::runSim()
 	int planetFuncId = 0;
 
 	sf::Vector2f mouse_rand_pos;
-	sf::Vector2f mouse_ring_pos;
 
 	double ringInnerRad = 0;
 	double ringOuterRad;
