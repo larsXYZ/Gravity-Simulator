@@ -1,5 +1,5 @@
 #include "space.h"
-#include <iostream>
+#include <fstream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>

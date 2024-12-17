@@ -1,23 +1,16 @@
 #pragma once
-#include <iostream>
 #include <vector>
 #include "planet.h"
 #include <random>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
-#include <SFML/System.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <string>
-#include <sstream>
-#include <algorithm>
 #include "Spaceship.h"
 #include "Effect.h"
 #include "CONSTANTS.h"
 #include "Bound.h"
-#include <omp.h>
-#include <fstream>
-#include <iomanip>
 
 class Space
 {
