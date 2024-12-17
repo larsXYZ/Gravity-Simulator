@@ -1082,13 +1082,12 @@ void Space::effectSkjermPrint(sf::RenderWindow &window)
 
 }
 
-void Space::lightSkjermPrint(sf::RenderWindow& window)
+void Space::drawLightEffects(sf::RenderWindow& window)
 {
 	for(size_t i = 0; i < pListe.size(); i++)
 	{
 		Planet p = pListe[i];
 		
-
 		if (p.getmass() >= GASGIANTLIMIT && p.getmass() < BIGSTARLIMIT)
 		{
 			sf::Color col = p.getStarCol();
@@ -1125,9 +1124,6 @@ void Space::lightSkjermPrint(sf::RenderWindow& window)
 			}
 			vertexArr2.append(sf::Vertex(sf::Vector2f(p.getx() - xmidltrans + rad, p.gety() - ymidltrans), col));
 			window.draw(vertexArr2);
-
-
-
 		}
 	}
 }

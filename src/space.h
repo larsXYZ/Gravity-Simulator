@@ -116,7 +116,7 @@ public:
 	void runSim();
 	void PlanetSkjermPrint(sf::RenderWindow &window);
 	void effectSkjermPrint(sf::RenderWindow & window);
-	void lightSkjermPrint(sf::RenderWindow& window);
+	void drawLightEffects(sf::RenderWindow& window);
 	void giveId(Planet &p);
 	Planet findPlanet(double id);
 	Planet& findPlanetRef(double id);
