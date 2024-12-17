@@ -405,8 +405,9 @@ void Space::runSim()
 						double angle = atan2(new_mouse_pos.y - findPlanet(planetFuncId).gety(), new_mouse_pos.x - findPlanet(planetFuncId).getx());
 						double fixhast = size*hast / (size + findPlanet(planetFuncId).getmass());
 
-						if (Planet planet; findPlanetRef(planet, planetFuncId))
+						if (Planet* ptr = findPlanetPtr(planetFuncId))
 						{
+							auto& planet = *ptr;
 							planet.setxv(planet.getxv() - fixhast * cos(angle + 1.507));
 							planet.setyv(planet.getyv() - fixhast * sin(angle + 1.507));
 						}
@@ -433,7 +434,7 @@ void Space::runSim()
 					{
 
 						addExplosion(sf::Vector2f(pListe[i].getx(), pListe[i].gety()), 2 * pListe[i].getRad(), sf::Vector2f(pListe[i].getxv(), pListe[i].getyv()), pListe[i].getmass() / 2);
-						removePlanet(i);
+						removePlanet(pListe[i].getId());
 						break;
 					}
 				}
@@ -634,8 +635,9 @@ void Space::runSim()
 						
 					for (int i = 0; i < midlPListe.size(); i++)
 					{
-						if (Planet planet; findPlanetRef(planet, planetFuncId))
+						if (Planet* ptr = findPlanetPtr(planetFuncId))
 						{
+							auto& planet = *ptr;
 							planet.setxv(planet.getxv() - fixhast * cos(angle + 1.507));
 							planet.setyv(planet.getyv() - fixhast * sin(angle + 1.507));
 						}

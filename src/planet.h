@@ -47,7 +47,7 @@ private:
 	double id;
 	int ID_strongest_attractor;
 	double STRENGTH_strongest_attractor = 0;
-	bool killState = false;
+	bool marked_for_removal = false;
 
 	//GRAPHICS
 	sf::CircleShape circle;
@@ -168,6 +168,8 @@ public:
 		return name;
 	}
 
+	bool emitsHeat() const;
+
 	std::string getFlavorTextLife() const;
 
 	sf::Color getStarCol() const
@@ -189,7 +191,8 @@ public:
 		return (sf::Color(186, 208, 255));
 	}
 
-	bool& killStateRef() { return killState; }
+	void markForRemoval() { marked_for_removal = true; }
+	bool isMarkedForRemoval() const { return marked_for_removal; }
 	double getStrongestAttractorStrength() { return STRENGTH_strongest_attractor; }
 	void setStrongestAttractorStrength(double strength) { STRENGTH_strongest_attractor = strength; }
 
@@ -258,12 +261,12 @@ public:
 		tEnergy -= t * (SBconst * (radi * radi * temp()) - fusionEnergy());
 	}
 
-	void heatUP(double e, int t)
+	void absorbHeat(double e, int t)
 	{
 		tEnergy += (e * (1 + greenHouseEffectMult * atmoCur));
 	}
 
-	double giveTEnergy(int t)
+	double giveTEnergy(int t) const
 	{
 		return t * (SBconst * (radi * radi * temp()));
 	}
@@ -360,12 +363,7 @@ public:
 	}
 
 	std::string genName();
-
-	pType getPlanetType() const
-	{
-		return planetType;
-	}
-
+	
 	void setxv(double v);
 	void setyv(double v);
 };

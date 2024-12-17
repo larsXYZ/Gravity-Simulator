@@ -59,6 +59,23 @@ void Planet::mark(double i)
 	life.giveId(i);
 }
 
+bool Planet::emitsHeat() const
+{
+	switch (getType())
+	{
+	case SMALLSTAR:
+	case STAR:
+	case BIGSTAR:
+	case BLACKHOLE:
+		return true;
+	case ROCKY:
+	case TERRESTIAL:
+	case GASGIANT:
+	default:
+		return false;
+	}
+}
+
 std::string Planet::getFlavorTextLife() const
 {
 	switch (static_cast<int>(getLife().getTypeEnum()))

@@ -90,13 +90,13 @@ public:
 	void addPlanet(Planet p);
 	void printPListe();
 	std::vector<Planet> getPListe();
-	void removePlanet(int index);
+	void removePlanet(const int id);
 	void removeExplosion(int ind);
 	void removeSmoke(int ind);
 	void removeTrail(int ind);
 	void clear(sf::View& v, sf::Window& w);
 	void explodePlanet(int ind);
-	void explodePlanetOld(int ind);
+	void explodePlanetOld(int id);
 	void randomPlanets(int totmass, int antall,double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l);
@@ -112,7 +112,7 @@ public:
 	void drawLightEffects(sf::RenderWindow& window);
 	void giveId(Planet &p);
 	Planet findPlanet(double id);
-	bool findPlanetRef(Planet & planet, double id);
+	Planet* findPlanetPtr(double id);
 	int findBestPlanet(int q);
 	void updateSpaceship();
 	double thermalEnergyAtPosition(sf::Vector2f pos);
