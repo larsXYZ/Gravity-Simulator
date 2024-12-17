@@ -4,7 +4,7 @@
 class Bound
 {
 	bool isActive;
-	sf::CircleShape omr;
+	sf::CircleShape indicator;
 
 public:
 
