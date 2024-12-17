@@ -726,7 +726,7 @@ void Space::runSim()
 
 		}
 		if (bound.getState()) bound.draw(window,xmidltrans,ymidltrans, zoom);
-		printInfoPlanet(window, view1);
+		drawPlanetInfo(window, view1);
 		if (drawtext2 && findPlanet(fokusId).getmass() != -1) window.draw(text2);
 		if (showGUI) gui.draw();
 

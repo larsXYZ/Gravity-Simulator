@@ -127,7 +127,7 @@ public:
 	//GUI
 	void initSetup();
 	void setInfo();
-	void printInfoPlanet(sf::RenderWindow& w, sf::View& v);
+	void drawPlanetInfo(sf::RenderWindow& w, sf::View& v);
 
 	//OTHER
 	int modernRandomWithLimits(int min, int max);

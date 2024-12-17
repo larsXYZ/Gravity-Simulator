@@ -795,7 +795,7 @@ void Space::initSetup()
 
 }
 
-void Space::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
+void Space::drawPlanetInfo(sf::RenderWindow& w, sf::View& v)
 {
 	(void) v;
 
