@@ -195,7 +195,7 @@ public:
 	void draw(sf::RenderWindow &w, double xx , double yy);
 	void incMass(double m);
 	double getDist(Planet forcer);
-	void kollisjon(Planet p);
+	void collision(Planet p);
 	void mark(double i);
 	void updateTemp();
 

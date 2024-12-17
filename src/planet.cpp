@@ -233,7 +233,7 @@ void Planet::printInfoShort()
 	std::cout << "ID: " << getId() << " // " << "M: " << getmass() << "    X: " << getx() << "    | " << getxv() << "    Y: " << gety() << "    | " << getyv() << "    | " << std::endl;
 }
 
-void Planet::kollisjon(Planet p)
+void Planet::collision(Planet p)
 {
 	xv = (mass*xv + p.mass*p.getxv()) / (mass + p.getmass());
 	yv = (mass*yv + p.mass*p.getyv()) / (mass + p.getmass());

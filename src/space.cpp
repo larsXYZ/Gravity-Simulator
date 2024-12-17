@@ -175,7 +175,7 @@ void Space::update()
 					{
 						if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_COLLISION) for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++) addSmoke(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 10, sf::Vector2f(pListe[p].getxv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4), pListe[p].getyv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4)), DUSTLEVETID);
 						addExplosion(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 2 * pListe[p].getRad(), sf::Vector2f(pListe[p].getxv()*0.5, pListe[p].getyv()*0.5), sqrt(pListe[i].getmass()) / 2);
-						pListe[i].kollisjon(pListe[p]);
+						pListe[i].collision(pListe[p]);
 						pListe[i].incMass(pListe[p].getmass());
 						removePlanet(p);
 					}
