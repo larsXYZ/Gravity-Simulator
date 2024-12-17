@@ -112,7 +112,7 @@ public:
 	void drawLightEffects(sf::RenderWindow& window);
 	void giveId(Planet &p);
 	Planet findPlanet(double id);
-	Planet& findPlanetRef(double id);
+	bool findPlanetRef(Planet & planet, double id);
 	int findBestPlanet(int q);
 	void romskipHandling();
 	double thermalEnergyAtPosition(sf::Vector2f pos);

@@ -397,8 +397,11 @@ void Space::runSim()
 						double angle = atan2(new_mouse_pos.y - findPlanet(planetFuncId).gety(), new_mouse_pos.x - findPlanet(planetFuncId).getx());
 						double fixhast = size*hast / (size + findPlanet(planetFuncId).getmass());
 
-						findPlanetRef(planetFuncId).getxv() -= fixhast*cos(angle + 1.507);
-						findPlanetRef(planetFuncId).getyv() -= fixhast*sin(angle + 1.507);
+						if (Planet planet; findPlanetRef(planet, planetFuncId))
+						{
+							planet.getxv() -= fixhast * cos(angle + 1.507);
+							planet.getyv() -= fixhast * sin(angle + 1.507);
+						}
 
 						addPlanet(Planet(size, findPlanet(planetFuncId).getx() + rad*cos(angle), findPlanet(planetFuncId).gety() + rad*sin(angle), (findPlanet(planetFuncId).getxv() + hast*cos(angle + 1.507)), (findPlanet(planetFuncId).getyv() + hast*sin(angle + 1.507))));
 						createInOrbitCounter = 0;
@@ -623,10 +626,10 @@ void Space::runSim()
 						
 					for (int i = 0; i < midlPListe.size(); i++)
 					{
-						if (findPlanet(midlPListe[i]).getmass() != -1)
+						if (Planet planet; findPlanetRef(planet, midlPListe[i]))
 						{
-							findPlanetRef(midlPListe[i]).getxv() -= fixhast*cos(angle + 1.507);
-							findPlanetRef(midlPListe[i]).getyv() -= fixhast*sin(angle + 1.507);
+							planet.getxv() -= fixhast*cos(angle + 1.507);
+							planet.getyv() -= fixhast*sin(angle + 1.507);
 						}
 					}
 

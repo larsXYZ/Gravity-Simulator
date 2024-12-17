@@ -492,16 +492,17 @@ Planet Space::findPlanet(double id)
 	return Planet(-1);
 }
 
-Planet& Space::findPlanetRef(double id)
+bool Space::findPlanetRef(Planet & planet, double id)
 {
-	for(size_t i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < pListe.size(); i++)
 	{
 		if (pListe[i].getId() == id)
 		{
-			return pListe[i];
+			planet = pListe[i];
+			return true;
 		}
 	}
-	return Planet(-1);
+	return false;
 }
 
 int Space::findBestPlanet(int q)
@@ -638,8 +639,12 @@ void Space::setInfo()
 		//Gathering current object mass slider info
 		if (mouseOnMassSliderSelected && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
-			findPlanetRef(fokusId).setMass(massExistingObjectSlider->getValue());
-			findPlanetRef(fokusId).updateRadiAndType();
+			if (Planet planet; findPlanetRef(planet, fokusId))
+			{
+				planet.setMass(massExistingObjectSlider->getValue());
+				planet.updateRadiAndType();
+			}
+			
 		}
 		else massExistingObjectSlider->setValue(findPlanet(fokusId).getmass());
 
