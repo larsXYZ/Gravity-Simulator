@@ -114,15 +114,15 @@ public:
 	//SIMULATION FUNCTIONS
 	void update();
 	void runSim();
-	void PlanetSkjermPrint(sf::RenderWindow &window);
-	void effectSkjermPrint(sf::RenderWindow & window);
+	void drawPlanets(sf::RenderWindow &window);
+	void drawEffects(sf::RenderWindow & window);
 	void drawLightEffects(sf::RenderWindow& window);
 	void giveId(Planet &p);
 	Planet findPlanet(double id);
 	Planet& findPlanetRef(double id);
 	int findBestPlanet(int q);
 	void romskipHandling();
-	double getTherEnergyAtPos(sf::Vector2f pos);
+	double thermalEnergyAtPosition(sf::Vector2f pos);
 	sf::Vector3f centerOfMass(std::vector<int> midlPList);
 	sf::Vector2f centerOfMassAll();
 	sf::Vector2f centerOfMassVelocity(std::vector<int> midlPList);

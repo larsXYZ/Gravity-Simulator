@@ -667,8 +667,8 @@ void Space::runSim()
 		}
 		
 		//PRINTING TO WINDOW
-		PlanetSkjermPrint(window);
-		effectSkjermPrint(window);
+		drawPlanets(window);
+		drawEffects(window);
 		ship.draw(window, xmidltrans, ymidltrans);
 		drawLightEffects(window);
 		if (functions->getSelectedItem() != "Adv Object in orbit (S)")

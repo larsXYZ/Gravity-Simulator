@@ -10,7 +10,7 @@ Space::Space(int x, int y, bool f)
 void Space::addPlanet(Planet p)
 {
 	giveId(p);
-	p.setTemp((p.fusionEnergy() / (p.getRad()*p.getRad()*SBconst)) + getTherEnergyAtPos(sf::Vector2f(p.getx(), p.gety()))*tempConstTwo/SBconst);
+	p.setTemp((p.fusionEnergy() / (p.getRad()*p.getRad()*SBconst)) + thermalEnergyAtPosition(sf::Vector2f(p.getx(), p.gety()))*tempConstTwo/SBconst);
 	
 	p.setColor();
 	pListe.push_back(p);
@@ -1029,7 +1029,7 @@ double Space::convertStringToDouble(std::string string)
 	return result;
 }
 
-void Space::PlanetSkjermPrint(sf::RenderWindow &window)
+void Space::drawPlanets(sf::RenderWindow &window)
 {
 	//DRAWING PLANETS																										
 	for(size_t i = 0; i < pListe.size(); i++)
@@ -1038,7 +1038,7 @@ void Space::PlanetSkjermPrint(sf::RenderWindow &window)
 	}
 }
 
-void Space::effectSkjermPrint(sf::RenderWindow &window)
+void Space::drawEffects(sf::RenderWindow &window)
 {
 
 	//EXPLOSIONS
@@ -1157,7 +1157,7 @@ void Space::lockToObject(sf::RenderWindow& w, sf::View& v)
 	}
 }
 
-double Space::getTherEnergyAtPos(sf::Vector2f pos)
+double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 {
 	double tEnergyFromOutside = 0;
 
