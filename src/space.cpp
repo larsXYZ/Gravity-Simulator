@@ -601,7 +601,7 @@ std::string Space::calcTemperature(double q, int e)
 	return "-";
 }
 
-void Space::romskipHandling()
+void Space::updateSpaceship()
 {
 	int mode = ship.move(timeStep);
 	if (mode == 1)
