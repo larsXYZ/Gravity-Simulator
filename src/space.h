@@ -1,23 +1,16 @@
 #pragma once
-#include <iostream>
 #include <vector>
 #include "planet.h"
 #include <random>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
-#include <SFML/System.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <string>
-#include <sstream>
-#include <algorithm>
 #include "Spaceship.h"
 #include "Effect.h"
 #include "CONSTANTS.h"
 #include "Bound.h"
-#include <omp.h>
-#include <fstream>
-#include <iomanip>
 
 class Space
 {
@@ -97,13 +90,13 @@ public:
 	void addPlanet(Planet p);
 	void printPListe();
 	std::vector<Planet> getPListe();
-	void removePlanet(int index);
+	void removePlanet(const int id);
 	void removeExplosion(int ind);
 	void removeSmoke(int ind);
 	void removeTrail(int ind);
 	void clear(sf::View& v, sf::Window& w);
 	void explodePlanet(int ind);
-	void explodePlanetOld(int ind);
+	void explodePlanetOld(int id);
 	void randomPlanets(int totmass, int antall,double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l);
@@ -114,15 +107,15 @@ public:
 	//SIMULATION FUNCTIONS
 	void update();
 	void runSim();
-	void PlanetSkjermPrint(sf::RenderWindow &window);
-	void effectSkjermPrint(sf::RenderWindow & window);
-	void lightSkjermPrint(sf::RenderWindow& window);
+	void drawPlanets(sf::RenderWindow &window);
+	void drawEffects(sf::RenderWindow & window);
+	void drawLightEffects(sf::RenderWindow& window);
 	void giveId(Planet &p);
 	Planet findPlanet(double id);
-	Planet& findPlanetRef(double id);
+	Planet* findPlanetPtr(double id);
 	int findBestPlanet(int q);
-	void romskipHandling();
-	double getTherEnergyAtPos(sf::Vector2f pos);
+	void updateSpaceship();
+	double thermalEnergyAtPosition(sf::Vector2f pos);
 	sf::Vector3f centerOfMass(std::vector<int> midlPList);
 	sf::Vector2f centerOfMassAll();
 	sf::Vector2f centerOfMassVelocity(std::vector<int> midlPList);
@@ -134,7 +127,7 @@ public:
 	//GUI
 	void initSetup();
 	void setInfo();
-	void printInfoPlanet(sf::RenderWindow& w, sf::View& v);
+	void drawPlanetInfo(sf::RenderWindow& w, sf::View& v);
 
 	//OTHER
 	int modernRandomWithLimits(int min, int max);

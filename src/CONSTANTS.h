@@ -50,7 +50,7 @@ const double SHIP_GAS_EJECT_SPEED = 0.06;
 
 //DUST
 const int DUSTLEVETID = 10000;
-const int MAXANTALLDUST = 2000;
+const int MAXANTALLDUST = 5000;
 const double EXPLOSION_SIZE = 1;
 const double RANDOMPERCENTAGESIZE = 0.4;
 const int PARTICULES_PER_EXPLOSION = 15;
@@ -75,7 +75,7 @@ const double DELTAMASSE = 1;
 //PHYSICS DELTA TIME
 const int TIMESTEP_VALUE_START = 10;
 const int TIDSKRITTINC = 5;
-const int TIMESTEP_VALUE_RANGE = 50;
+const int MAX_TIMESTEP = 50;
 
 //TRAIL
 const double TRAILRAD = 1.2;

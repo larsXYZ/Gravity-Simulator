@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.0)
 
 project(Gravity-Simulator)
 
+set(CMAKE_CXX_STANDARD 20) 
+set(CMAKE_CXX_STANDARD_REQUIRED True) 
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 set(CMAKE_BUILD_TYPE Debug) 
 
 set(SFML_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SFML/Include)

@@ -10,7 +10,7 @@ Space::Space(int x, int y, bool f)
 void Space::addPlanet(Planet p)
 {
 	giveId(p);
-	p.setTemp((p.fusionEnergy() / (p.getRad()*p.getRad()*SBconst)) + getTherEnergyAtPos(sf::Vector2f(p.getx(), p.gety()))*tempConstTwo/SBconst);
+	p.setTemp((p.fusionEnergy() / (p.getRad()*p.getRad()*SBconst)) + thermalEnergyAtPosition(sf::Vector2f(p.getx(), p.gety()))*tempConstTwo/SBconst);
 	
 	p.setColor();
 	pListe.push_back(p);
@@ -145,61 +145,70 @@ void Space::update()
 		if (pListe[i].getmass() > MINIMUMBREAKUPSIZE && updateSMK) GravitySmoke(pListe[i], timeStep);
 	}
 
-	//GRAVITY, COLLISIONS, ROCHE, AND TEMP
-	for (size_t i = 0; i < pListe.size(); i++)
+	 //GRAVITY, COLLISIONS, ROCHE, AND TEMP
+#pragma omp parallel for schedule(dynamic)
+	for (auto & thisPlanet  : pListe)
 	{
-		for (size_t p = 0; p < pListe.size(); p++)
+		if (thisPlanet.isMarkedForRemoval())
+			continue;
+
+		for (auto& otherPlanet : pListe)
 		{
-			if (p != i)
+			if (otherPlanet.isMarkedForRemoval() ||
+				thisPlanet.getId() == otherPlanet.getId())
+				continue;
+
+			const auto dx = otherPlanet.getx() - thisPlanet.getx();
+			const auto dy = otherPlanet.gety() - thisPlanet.gety();
+			const auto dist = sqrt(dx * dx + dy * dy);
+			const auto radDist = thisPlanet.getRad() + otherPlanet.getRad();
+
+			if (otherPlanet.emitsHeat())
 			{
-				double dx = pListe[p].getx() - pListe[i].getx();
-				double dy = pListe[p].gety() - pListe[i].gety();
-				double dist = sqrt(dx*dx + dy*dy);
-				double radDist = pListe[i].getRad() + pListe[p].getRad();
+				const auto heat = tempConstTwo * thisPlanet.getRad() * thisPlanet.getRad() * otherPlanet.giveTEnergy(timeStep) / dist;
+				thisPlanet.absorbHeat(heat, timeStep);
+			}
 
-				//TEMP
-				if (p != i && pListe[p].getType() != ROCKY && pListe[p].getType() != TERRESTIAL && pListe[p].getType() != GASGIANT)
-				{
-					pListe[i].heatUP(tempConstTwo*pListe[i].getRad()*pListe[i].getRad()*pListe[p].giveTEnergy(timeStep) / (dist), timeStep);
-				}
+			if (thisPlanet.getType() != BLACKHOLE && 
+				dist < ROCHE_LIMIT_DIST_MULTIPLIER * radDist && 
+				thisPlanet.getmass() > MINIMUMBREAKUPSIZE &&
+				thisPlanet.getmass() / otherPlanet.getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+			{
+				explodePlanetOld(thisPlanet.getId());
+				break;
+			}
 
-				//GRAVITY, COLLISIONS AND ROCHE LIMIT
-				if (pListe[i].getPlanetType() != BLACKHOLE && dist < ROCHE_LIMIT_DIST_MULTIPLIER*radDist && pListe[i].getmass() > MINIMUMBREAKUPSIZE && pListe[i].getmass() / pListe[p].getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+			if (dist < radDist)
+			{
+				if (thisPlanet.getmass() <= otherPlanet.getmass())
 				{
-					explodePlanetOld(i);
+					removePlanet(thisPlanet.getId());
+
+					if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_COLLISION) 
+						for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++) 
+							addSmoke(sf::Vector2f(thisPlanet.getx(), thisPlanet.gety()), 10, sf::Vector2f(thisPlanet.getxv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4), thisPlanet.getyv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4)), DUSTLEVETID);
+					addExplosion(sf::Vector2f(thisPlanet.getx(), thisPlanet.gety()), 2 * thisPlanet.getRad(), sf::Vector2f(thisPlanet.getxv() * 0.5, thisPlanet.getyv() * 0.5), sqrt(thisPlanet.getmass()) / 2);
+					otherPlanet.collision(thisPlanet);
+					otherPlanet.incMass(thisPlanet.getmass());
 					break;
 				}
-				else if (dist < radDist)
-				{
-					if (pListe[i].getmass() >= pListe[p].getmass())
-					{
-						if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_COLLISION) for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++) addSmoke(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 10, sf::Vector2f(pListe[p].getxv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4), pListe[p].getyv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4)), DUSTLEVETID);
-						addExplosion(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 2 * pListe[p].getRad(), sf::Vector2f(pListe[p].getxv()*0.5, pListe[p].getyv()*0.5), sqrt(pListe[i].getmass()) / 2);
-						pListe[i].kollisjon(pListe[p]);
-						pListe[i].incMass(pListe[p].getmass());
-						removePlanet(p);
-					}
-					break;
-				}
-				else
-				{
-					double aks = 0;
-					double angle = atan2(dy, dx);
+			}
 
-					if (dist != 0) aks = G * pListe[p].getmass() / (dist*dist);
+			const auto acceleration = G * otherPlanet.getmass() / std::max(dist*dist, 0.01);
+			const auto angle = atan2(dy, dx);
+			thisPlanet.setxv(thisPlanet.getxv() + cos(angle) * acceleration * timeStep);
+			thisPlanet.setyv(thisPlanet.getyv() + sin(angle) * acceleration * timeStep);
 
-					if (aks > pListe[i].strAttr())
-					{
-						pListe[i].strAttr() = aks;
-						pListe[i].getStrongestAttractorIdRef() = pListe[p].getId();
-					}
-
-					pListe[i].getxv() += cos(angle) * aks * timeStep;
-					pListe[i].getyv() += sin(angle) * aks * timeStep;
-				}
+			if (acceleration > thisPlanet.getStrongestAttractorStrength())
+			{
+				thisPlanet.setStrongestAttractorStrength(acceleration);
+				thisPlanet.setStrongestAttractorIdRef(otherPlanet.getId());
 			}
 		}
 	}
+
+	std::erase_if(pListe, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
+
 
 	//OTHER
 #pragma omp parallel for schedule(dynamic)
@@ -241,7 +250,8 @@ void Space::update()
 		//PLANETS
 		for (size_t i = 0; i < pListe.size(); i++)
 		{
-			if (bound.isOutside(sf::Vector2f(pListe[i].getx(), pListe[i].gety()))) removePlanet(i);
+			if (bound.isOutside(sf::Vector2f(pListe[i].getx(), pListe[i].gety())))
+				removePlanet(pListe[i].getId());
 		}
 
 		//DUST
@@ -264,27 +274,12 @@ void Space::update()
 	}
 
 	//CHECKING TOTAL MASS
-	for (size_t i = 0; i < pListe.size(); i++) totalMass += pListe[i].getmass();
-
+	for (size_t i = 0; i < pListe.size(); i++)
+		totalMass += pListe[i].getmass();
 }
 
 void Space::hotkeys(sf::Window& w, sf::View& v)
 {
-	(void)w;
-
-	//ZOOM
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) && zoom < 15)
-	{
-		zoom = zoom * 1.05;
-		v.zoom(1.05);
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::X) && zoom > 0.03)
-	{
-		zoom = zoom / 1.05;
-		v.zoom(1 / 1.05);
-	}
-
-	//TIMESTEP
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) && timeStepSlider->getValue() > timeStepSlider->getMinimum())
 	{
 		timeStepSlider->setValue(timeStepSlider->getValue() - 1);
@@ -296,50 +291,25 @@ void Space::hotkeys(sf::Window& w, sf::View& v)
 		if (timeStepSlider->getValue() > timeStepSlider->getMaximum()) timeStepSlider->setValue(timeStepSlider->getMaximum());
 	}
 
-	//FUNCTIONS
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+	const static std::map<sf::Keyboard::Key, std::string> hotkey_map
 	{
-		functions->setSelectedItem("Object (F)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::O))
+		{sf::Keyboard::F, "Object (F)"},
+		{sf::Keyboard::O, "Object in orbit (O)"},
+		{sf::Keyboard::S, "Adv Object in orbit (S)"},
+		{sf::Keyboard::D, "Remove object (D)"},
+		{sf::Keyboard::C, "Explode object (C)"},
+		{sf::Keyboard::G, "Random system (G)"},
+		{sf::Keyboard::Q, "Rings (Q)"},
+		{sf::Keyboard::E, "Spawn ship (E)"},
+		{sf::Keyboard::I, "Info (I)"},
+		{sf::Keyboard::T, "Follow object (T)"},
+		{sf::Keyboard::B, "Bound (B)"}
+	};
+
+	for (const auto& [key, action] : hotkey_map)
 	{
-		functions->setSelectedItem("Object in orbit (O)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-	{
-		functions->setSelectedItem("Adv Object in orbit (S)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-	{
-		functions->setSelectedItem("Remove object (D)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
-	{
-		functions->setSelectedItem("Explode object (C)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::G))
-	{
-		functions->setSelectedItem("Random system (G)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
-	{
-		functions->setSelectedItem("Rings (Q)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
-	{
-		functions->setSelectedItem("Spawn ship (E)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::I))
-	{
-		functions->setSelectedItem("Info (I)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::T))
-	{
-		functions->setSelectedItem("Follow object (T)");
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::B))
-	{
-		functions->setSelectedItem("Bound (B)");
+		if (sf::Keyboard::isKeyPressed(key))
+			functions->setSelectedItem(action);
 	}
 }
 
@@ -378,13 +348,10 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 
 }
 
-void Space::removePlanet(int ind)
+void Space::removePlanet(const int id)
 {
-	if (ind >= (int) pListe.size() || ind < 0) return;
-
-	auto it = pListe.begin() + ind;
-	*it = std::move(pListe.back());
-	pListe.pop_back();
+	if (Planet *planet = findPlanetPtr(id))
+		planet->markForRemoval();
 }
 
 void Space::removeTrail(int ind)
@@ -453,7 +420,7 @@ void Space::explodePlanet(int ind)
 		double xv = pListe[ind].getxv();
 		double yv = pListe[ind].getyv();
 
-		removePlanet(ind);
+		removePlanet(pListe[ind].getId());
 		addExplosion(sf::Vector2f(x, y), 90, sf::Vector2f(xv, yv), 10);
 
 		double kanter = 5;
@@ -483,30 +450,37 @@ void Space::explodePlanet(int ind)
 	}
 }
 
-void Space::explodePlanetOld(int ind)
+void Space::explodePlanetOld(int id)
 {
-	if (pListe.size() > 0)
+	Planet* ptr = findPlanetPtr(id);
+	if (!ptr)
+		return;
+	const auto& planet = *ptr;
+
+	const double antall = modernRandomWithLimits(4, 8);
+	double masse = planet.getmass();
+	int x = planet.getx();
+	double y = planet.gety();
+	double radius = planet.getRad();
+
+	double angle = 0;
+
+	for (size_t i = 0; i < antall; i++)
 	{
-		double antall = modernRandomWithLimits(4, 8);
-		double masse = pListe[ind].getmass();
-		int x = pListe[ind].getx();
-		double y = pListe[ind].gety();
-		double radius = pListe[ind].getRad();
-
-		double angle = 0;
-
-		for(size_t i = 0; i < antall; i++)
-		{
-
-			Planet Q(masse / antall, x + 2 * cbrt(radius)*cos(angle), y + 2 * cbrt(radius)*sin(angle), pListe[ind].getxv() + EXPLODE_PLANET_SPEEDMULT* sqrt(masse) *cos(angle), pListe[ind].getyv() + EXPLODE_PLANET_SPEEDMULT * sqrt(masse) *sin(angle));
-			Q.setTemp(1500);
-			angle += 2 * PI / antall;
-			addPlanet(Q);
-		}
-		removePlanet(ind);
-		if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_EXPLOSION) for(size_t i = 0; i < PARTICULES_PER_EXPLOSION; i++) addSmoke(sf::Vector2f(x, y), 10, sf::Vector2f(pListe[ind].getxv() + CREATEDUSTSPEEDMULT*(((double)modernRandomWithLimits(-400, 400)) / 100), pListe[ind].getyv() + CREATEDUSTSPEEDMULT*(((double)modernRandomWithLimits(-400, 400)) / 100)), DUSTLEVETID);
-
+		Planet Q(masse / antall, 
+			x + 2 * cbrt(radius) * cos(angle), 
+			y + 2 * cbrt(radius) * sin(angle), 
+			planet.getxv() + EXPLODE_PLANET_SPEEDMULT * sqrt(masse) * cos(angle), 
+			planet.getyv() + EXPLODE_PLANET_SPEEDMULT * sqrt(masse) * sin(angle));
+		Q.setTemp(1500);
+		angle += 2 * PI / antall;
+		addPlanet(Q);
 	}
+	removePlanet(id);
+	if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_EXPLOSION)
+		for (size_t i = 0; i < PARTICULES_PER_EXPLOSION; i++)
+			addSmoke(sf::Vector2f(x, y), 10, sf::Vector2f(planet.getxv() + CREATEDUSTSPEEDMULT * (((double)modernRandomWithLimits(-400, 400)) / 100), 
+				planet.getyv() + CREATEDUSTSPEEDMULT * (((double)modernRandomWithLimits(-400, 400)) / 100)), DUSTLEVETID);
 }
 
 double Space::range(double x1, double y1, double x2, double y2)
@@ -532,16 +506,14 @@ Planet Space::findPlanet(double id)
 	return Planet(-1);
 }
 
-Planet& Space::findPlanetRef(double id)
+Planet* Space::findPlanetPtr(double id)
 {
-	for(size_t i = 0; i < pListe.size(); i++)
+	for (auto & planet : pListe)
 	{
-		if (pListe[i].getId() == id)
-		{
-			return pListe[i];
-		}
+		if (planet.getId() == id)
+			return &planet;
 	}
-	return Planet(-1);
+	return nullptr;
 }
 
 int Space::findBestPlanet(int q)
@@ -617,7 +589,7 @@ std::string Space::calcTemperature(double q, int e)
 	return "-";
 }
 
-void Space::romskipHandling()
+void Space::updateSpaceship()
 {
 	int mode = ship.move(timeStep);
 	if (mode == 1)
@@ -678,8 +650,14 @@ void Space::setInfo()
 		//Gathering current object mass slider info
 		if (mouseOnMassSliderSelected && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
-			findPlanetRef(fokusId).setMass(massExistingObjectSlider->getValue());
-			findPlanetRef(fokusId).updateRadiAndType();
+			if (Planet* ptr = findPlanetPtr(fokusId))
+			{
+				auto& planet = *ptr;
+
+				planet.setMass(massExistingObjectSlider->getValue());
+				planet.updateRadiAndType();
+			}
+			
 		}
 		else massExistingObjectSlider->setValue(findPlanet(fokusId).getmass());
 
@@ -760,7 +738,7 @@ void Space::setInfo()
 		}
 
 	//Displaying sim-info
-	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(pListe.size()) + "\nParticles: " + convertDoubleToString(smkListe.size()) + "\nZoom (Z/X): " + convertDoubleToString(1 / zoom));
+	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(pListe.size()) + "\nParticles: " + convertDoubleToString(smkListe.size()) + "\nZoom: " + convertDoubleToString(1 / zoom));
 
 }
 
@@ -806,8 +784,8 @@ void Space::initSetup()
 	timeStepSlider->setPosition(165, 40);
 	timeStepSlider->setSize(160, 5);
 	timeStepSlider->setValue(TIMESTEP_VALUE_START);
-	timeStepSlider->setMinimum(-TIMESTEP_VALUE_RANGE);
-	timeStepSlider->setMaximum(TIMESTEP_VALUE_RANGE);
+	timeStepSlider->setMinimum(0);
+	timeStepSlider->setMaximum(MAX_TIMESTEP);
 
 	tempChooser->add("K");
 	tempChooser->add("°C");
@@ -830,7 +808,7 @@ void Space::initSetup()
 
 }
 
-void Space::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
+void Space::drawPlanetInfo(sf::RenderWindow& w, sf::View& v)
 {
 	(void) v;
 
@@ -1029,7 +1007,7 @@ double Space::convertStringToDouble(std::string string)
 	return result;
 }
 
-void Space::PlanetSkjermPrint(sf::RenderWindow &window)
+void Space::drawPlanets(sf::RenderWindow &window)
 {
 	//DRAWING PLANETS																										
 	for(size_t i = 0; i < pListe.size(); i++)
@@ -1038,7 +1016,7 @@ void Space::PlanetSkjermPrint(sf::RenderWindow &window)
 	}
 }
 
-void Space::effectSkjermPrint(sf::RenderWindow &window)
+void Space::drawEffects(sf::RenderWindow &window)
 {
 
 	//EXPLOSIONS
@@ -1082,13 +1060,12 @@ void Space::effectSkjermPrint(sf::RenderWindow &window)
 
 }
 
-void Space::lightSkjermPrint(sf::RenderWindow& window)
+void Space::drawLightEffects(sf::RenderWindow& window)
 {
 	for(size_t i = 0; i < pListe.size(); i++)
 	{
 		Planet p = pListe[i];
 		
-
 		if (p.getmass() >= GASGIANTLIMIT && p.getmass() < BIGSTARLIMIT)
 		{
 			sf::Color col = p.getStarCol();
@@ -1125,9 +1102,6 @@ void Space::lightSkjermPrint(sf::RenderWindow& window)
 			}
 			vertexArr2.append(sf::Vertex(sf::Vector2f(p.getx() - xmidltrans + rad, p.gety() - ymidltrans), col));
 			window.draw(vertexArr2);
-
-
-
 		}
 	}
 }
@@ -1161,7 +1135,7 @@ void Space::lockToObject(sf::RenderWindow& w, sf::View& v)
 	}
 }
 
-double Space::getTherEnergyAtPos(sf::Vector2f pos)
+double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 {
 	double tEnergyFromOutside = 0;
 

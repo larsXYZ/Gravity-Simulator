@@ -27,7 +27,15 @@ void Space::runSim()
 	tgui::Gui gui{ window };
 	gui.setFont("sansation.ttf");
 	initSetup();
-	gui.add(simInfo), gui.add(functions), gui.add(newPlanetInfo), gui.add(massSlider), gui.add(timeStepSlider), gui.add(tempChooser), gui.add(currPlanetInfo), gui.add(massExistingObjectSlider), gui.add(autoBound);
+	gui.add(simInfo);
+	gui.add(functions);
+	gui.add(newPlanetInfo);
+	gui.add(massSlider);
+	gui.add(timeStepSlider);
+	gui.add(tempChooser);
+	gui.add(currPlanetInfo);
+	gui.add(massExistingObjectSlider);
+	gui.add(autoBound);
 
 	int xx = 0;
 	int yy = 0;
@@ -44,7 +52,6 @@ void Space::runSim()
 	int planetFuncId = 0;
 
 	sf::Vector2f mouse_rand_pos;
-	sf::Vector2f mouse_ring_pos;
 
 	double ringInnerRad = 0;
 	double ringOuterRad;
@@ -88,91 +95,105 @@ void Space::runSim()
 
 		//EVENTS
 		while (window.pollEvent(event))
+		{
+			//CLOSING WINDOW
+			if (window.hasFocus() && event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+				window.close();
+			else if (event.type == sf::Event::Closed) 
+				window.close();
+
+			//SCROLLING CHANGES MASS
+			if (event.type == sf::Event::MouseWheelMoved)
 			{
-				//CLOSING WINDOW
-				if (window.hasFocus() && event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-					window.close();
-				else if (event.type == sf::Event::Closed) 
-					window.close();
-
-				//SCROLLING CHANGES MASS
-				if (event.type == sf::Event::MouseWheelMoved)
-					massSlider->setValue(massSlider->getValue() + 5 * pow(event.mouseWheel.delta, 3));
-
-				//HIDES UI
-				if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::H))
-					showGUI = !showGUI;
-
-				//LOCK CAMERA TO OBJECT
-				if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Left))
-					lockToObject(window, view1);
-
-				//EXPLODE OBJECT FUNCTION
-				if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Explode object (C)" && !mouseOnWidgets)
+				auto delta_zoom = 1.15 * event.mouseWheel.delta / std::abs(event.mouseWheel.delta);
+				if (delta_zoom < 0)
 				{
-					sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-					for (size_t i = 0; i < pListe.size(); i++)
-					{
-						if (range(mPos.x, mPos.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
-							explodePlanet(i);
-					}
+					delta_zoom = std::abs(delta_zoom);
+					zoom *= delta_zoom;
+					view1.zoom(delta_zoom);
 				}
-
-				//FOCUSING ON A NEW OBJECT
-				if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Info (I)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				else if (delta_zoom > 0)
 				{
-					bool found = false;
-					sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-					for (size_t i = 0; i < pListe.size(); i++)
+					delta_zoom = std::abs(delta_zoom);
+					zoom /= delta_zoom;
+					view1.zoom(1/delta_zoom);
+				}
+			}
+
+			//HIDES UI
+			if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::H))
+				showGUI = !showGUI;
+
+			//LOCK CAMERA TO OBJECT
+			if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				lockToObject(window, view1);
+
+			//EXPLODE OBJECT FUNCTION
+			if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Explode object (C)" && !mouseOnWidgets)
+			{
+				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
+				for (size_t i = 0; i < pListe.size(); i++)
+				{
+					if (range(mPos.x, mPos.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
+						explodePlanet(i);
+				}
+			}
+
+			//FOCUSING ON A NEW OBJECT
+			if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Info (I)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			{
+				bool found = false;
+				sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
+				for (size_t i = 0; i < pListe.size(); i++)
+				{
+					if (range(localPosition.x, localPosition.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
 					{
-						if (range(localPosition.x, localPosition.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
+						if (fokusId != pListe[i].getId())
 						{
-							if (fokusId != pListe[i].getId())
-							{
-								trlListe.clear();
-								fokusId = pListe[i].getId();
-							}
-							found = true;
-							break;
-						}
-						if (!found)
-						{
-							fokusId = -1;
 							trlListe.clear();
+							fokusId = pListe[i].getId();
 						}
+						found = true;
+						break;
 					}
-				}
-
-				//ADVANCED IN ORBIT ADDER
-				if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Adv Object in orbit (S)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
-				{
-					//SEARCHING FOR PLANET
-					sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-					for (size_t i = 0; i < pListe.size(); i++)
+					if (!found)
 					{
-						if (range(pListe[i].getx(), pListe[i].gety(), mPos.x, mPos.y) < pListe[i].getRad())
-						{
-
-							//CHECKING IF IT ALREADY IS IN THE LIST
-							bool alreadyIn = false;
-							for (size_t q = 0; q < midlPListe.size(); q++)
-							{
-								if (midlPListe[q] == pListe[i].getId())
-								{
-									auto it = midlPListe.begin() + q;
-									*it = std::move(midlPListe.back());
-									midlPListe.pop_back();
-									alreadyIn = true;
-									break;
-								}
-							}
-
-							if (!alreadyIn) midlPListe.push_back(pListe[i].getId());
-							break;
-						}
+						fokusId = -1;
+						trlListe.clear();
 					}
 				}
 			}
+
+			//ADVANCED IN ORBIT ADDER
+			if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Adv Object in orbit (S)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
+			{
+				//SEARCHING FOR PLANET
+				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
+				for (size_t i = 0; i < pListe.size(); i++)
+				{
+					if (range(pListe[i].getx(), pListe[i].gety(), mPos.x, mPos.y) < pListe[i].getRad())
+					{
+
+						//CHECKING IF IT ALREADY IS IN THE LIST
+						bool alreadyIn = false;
+						for (size_t q = 0; q < midlPListe.size(); q++)
+						{
+							if (midlPListe[q] == pListe[i].getId())
+							{
+								auto it = midlPListe.begin() + q;
+								*it = std::move(midlPListe.back());
+								midlPListe.pop_back();
+								alreadyIn = true;
+								break;
+							}
+						}
+
+						if (!alreadyIn) midlPListe.push_back(pListe[i].getId());
+						break;
+					}
+				}
+			}
+		}
 
 
 		//FUNCTIONS
@@ -342,17 +363,17 @@ void Space::runSim()
 					window.draw(omr);
 
 					//DRAWING MASS CENTER
-					sf::CircleShape midtpunkt(2);
-					midtpunkt.setOrigin(2, 2);
-					Planet annen = findPlanet(planetFuncId);
-					midtpunkt.setFillColor(sf::Color(255, 0, 0));
+					sf::CircleShape center_point(2);
+					center_point.setOrigin(2, 2);
+					Planet other_planet = findPlanet(planetFuncId);
+					center_point.setFillColor(sf::Color(255, 0, 0));
 
-					double avst = sqrt((new_mouse_pos.x - annen.getx())*(new_mouse_pos.x - annen.getx()) + (new_mouse_pos.y - annen.gety())*(new_mouse_pos.y - annen.gety()));
-					avst = avst*(midlP.getmass()) / (midlP.getmass() + annen.getmass());
-					double angleb = atan2(new_mouse_pos.y - annen.gety(), new_mouse_pos.x - annen.getx());
+					double avst = sqrt((new_mouse_pos.x - other_planet.getx())*(new_mouse_pos.x - other_planet.getx()) + (new_mouse_pos.y - other_planet.gety())*(new_mouse_pos.y - other_planet.gety()));
+					avst = avst*(midlP.getmass()) / (midlP.getmass() + other_planet.getmass());
+					double angleb = atan2(new_mouse_pos.y - other_planet.gety(), new_mouse_pos.x - other_planet.getx());
 
-					midtpunkt.setPosition(annen.getx() + avst*cos(angleb), annen.gety() + avst*sin(angleb));
-					window.draw(midtpunkt);
+					center_point.setPosition(other_planet.getx() + avst*cos(angleb), other_planet.gety() + avst*sin(angleb));
+					window.draw(center_point);
 
 					//DRAWING ROCHE LIMIT
 					if (size > MINIMUMBREAKUPSIZE && size / findPlanet(planetFuncId).getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
@@ -384,8 +405,12 @@ void Space::runSim()
 						double angle = atan2(new_mouse_pos.y - findPlanet(planetFuncId).gety(), new_mouse_pos.x - findPlanet(planetFuncId).getx());
 						double fixhast = size*hast / (size + findPlanet(planetFuncId).getmass());
 
-						findPlanetRef(planetFuncId).getxv() -= fixhast*cos(angle + 1.507);
-						findPlanetRef(planetFuncId).getyv() -= fixhast*sin(angle + 1.507);
+						if (Planet* ptr = findPlanetPtr(planetFuncId))
+						{
+							auto& planet = *ptr;
+							planet.setxv(planet.getxv() - fixhast * cos(angle + 1.507));
+							planet.setyv(planet.getyv() - fixhast * sin(angle + 1.507));
+						}
 
 						addPlanet(Planet(size, findPlanet(planetFuncId).getx() + rad*cos(angle), findPlanet(planetFuncId).gety() + rad*sin(angle), (findPlanet(planetFuncId).getxv() + hast*cos(angle + 1.507)), (findPlanet(planetFuncId).getyv() + hast*sin(angle + 1.507))));
 						createInOrbitCounter = 0;
@@ -409,7 +434,7 @@ void Space::runSim()
 					{
 
 						addExplosion(sf::Vector2f(pListe[i].getx(), pListe[i].gety()), 2 * pListe[i].getRad(), sf::Vector2f(pListe[i].getxv(), pListe[i].getyv()), pListe[i].getmass() / 2);
-						removePlanet(i);
+						removePlanet(pListe[i].getId());
 						break;
 					}
 				}
@@ -565,7 +590,7 @@ void Space::runSim()
 			}
 
 			//DEALING WITH THE SPACESHIP
-			romskipHandling();
+			updateSpaceship();
 
 			//ADV IN ORBIT ADDER
 			if (functions->getSelectedItem() == "Adv Object in orbit (S)" && !mouseOnWidgets && sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
@@ -610,10 +635,11 @@ void Space::runSim()
 						
 					for (int i = 0; i < midlPListe.size(); i++)
 					{
-						if (findPlanet(midlPListe[i]).getmass() != -1)
+						if (Planet* ptr = findPlanetPtr(planetFuncId))
 						{
-							findPlanetRef(midlPListe[i]).getxv() -= fixhast*cos(angle + 1.507);
-							findPlanetRef(midlPListe[i]).getyv() -= fixhast*sin(angle + 1.507);
+							auto& planet = *ptr;
+							planet.setxv(planet.getxv() - fixhast * cos(angle + 1.507));
+							planet.setyv(planet.getyv() - fixhast * sin(angle + 1.507));
 						}
 					}
 
@@ -667,10 +693,10 @@ void Space::runSim()
 		}
 		
 		//PRINTING TO WINDOW
-		PlanetSkjermPrint(window);
-		effectSkjermPrint(window);
+		drawPlanets(window);
+		drawEffects(window);
 		ship.draw(window, xmidltrans, ymidltrans);
-		lightSkjermPrint(window);
+		drawLightEffects(window);
 		if (functions->getSelectedItem() != "Adv Object in orbit (S)")
 		{
 			midlPListe.clear();
@@ -710,7 +736,7 @@ void Space::runSim()
 
 		}
 		if (bound.getState()) bound.draw(window,xmidltrans,ymidltrans, zoom);
-		printInfoPlanet(window, view1);
+		drawPlanetInfo(window, view1);
 		if (drawtext2 && findPlanet(fokusId).getmass() != -1) window.draw(text2);
 		if (showGUI) gui.draw();
 

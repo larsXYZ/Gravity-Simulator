@@ -1,10 +1,9 @@
 #include "space.h"
-#include <iostream>
+#include <fstream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
 
-//FUNKSJONER
 
 void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2);
 
@@ -63,7 +62,7 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	v.setFont(tf);
 	v.setColor(sf::Color(51, 255, 255));
 	v.setPosition(247, 33);
-	v.setString("v1.0.1");
+	v.setString("v1.1");
 	v.setCharacterSize(25);
 
 	//GUI
