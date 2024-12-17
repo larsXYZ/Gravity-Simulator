@@ -87,105 +87,105 @@ void Space::runSim()
 
 		//EVENTS
 		while (window.pollEvent(event))
+		{
+			//CLOSING WINDOW
+			if (window.hasFocus() && event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+				window.close();
+			else if (event.type == sf::Event::Closed) 
+				window.close();
+
+			//SCROLLING CHANGES MASS
+			if (event.type == sf::Event::MouseWheelMoved)
 			{
-				//CLOSING WINDOW
-				if (window.hasFocus() && event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-					window.close();
-				else if (event.type == sf::Event::Closed) 
-					window.close();
-
-				//SCROLLING CHANGES MASS
-				if (event.type == sf::Event::MouseWheelMoved)
+				auto delta_zoom = 1.15 * event.mouseWheel.delta / std::abs(event.mouseWheel.delta);
+				if (delta_zoom < 0)
 				{
-					auto delta_zoom = 1.15 * event.mouseWheel.delta / std::abs(event.mouseWheel.delta);
-					if (delta_zoom < 0)
-					{
-						delta_zoom = std::abs(delta_zoom);
-						zoom *= delta_zoom;
-						view1.zoom(delta_zoom);
-					}
-					else if (delta_zoom > 0)
-					{
-						delta_zoom = std::abs(delta_zoom);
-						zoom /= delta_zoom;
-						view1.zoom(1/delta_zoom);
-					}
+					delta_zoom = std::abs(delta_zoom);
+					zoom *= delta_zoom;
+					view1.zoom(delta_zoom);
 				}
-
-				//HIDES UI
-				if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::H))
-					showGUI = !showGUI;
-
-				//LOCK CAMERA TO OBJECT
-				if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Left))
-					lockToObject(window, view1);
-
-				//EXPLODE OBJECT FUNCTION
-				if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Explode object (C)" && !mouseOnWidgets)
+				else if (delta_zoom > 0)
 				{
-					sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-					for (size_t i = 0; i < pListe.size(); i++)
-					{
-						if (range(mPos.x, mPos.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
-							explodePlanet(i);
-					}
+					delta_zoom = std::abs(delta_zoom);
+					zoom /= delta_zoom;
+					view1.zoom(1/delta_zoom);
 				}
+			}
 
-				//FOCUSING ON A NEW OBJECT
-				if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Info (I)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			//HIDES UI
+			if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::H))
+				showGUI = !showGUI;
+
+			//LOCK CAMERA TO OBJECT
+			if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				lockToObject(window, view1);
+
+			//EXPLODE OBJECT FUNCTION
+			if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Explode object (C)" && !mouseOnWidgets)
+			{
+				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
+				for (size_t i = 0; i < pListe.size(); i++)
 				{
-					bool found = false;
-					sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-					for (size_t i = 0; i < pListe.size(); i++)
+					if (range(mPos.x, mPos.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
+						explodePlanet(i);
+				}
+			}
+
+			//FOCUSING ON A NEW OBJECT
+			if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Info (I)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			{
+				bool found = false;
+				sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
+				for (size_t i = 0; i < pListe.size(); i++)
+				{
+					if (range(localPosition.x, localPosition.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
 					{
-						if (range(localPosition.x, localPosition.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
+						if (fokusId != pListe[i].getId())
 						{
-							if (fokusId != pListe[i].getId())
-							{
-								trlListe.clear();
-								fokusId = pListe[i].getId();
-							}
-							found = true;
-							break;
-						}
-						if (!found)
-						{
-							fokusId = -1;
 							trlListe.clear();
+							fokusId = pListe[i].getId();
 						}
+						found = true;
+						break;
 					}
-				}
-
-				//ADVANCED IN ORBIT ADDER
-				if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Adv Object in orbit (S)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
-				{
-					//SEARCHING FOR PLANET
-					sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-					for (size_t i = 0; i < pListe.size(); i++)
+					if (!found)
 					{
-						if (range(pListe[i].getx(), pListe[i].gety(), mPos.x, mPos.y) < pListe[i].getRad())
-						{
-
-							//CHECKING IF IT ALREADY IS IN THE LIST
-							bool alreadyIn = false;
-							for (size_t q = 0; q < midlPListe.size(); q++)
-							{
-								if (midlPListe[q] == pListe[i].getId())
-								{
-									auto it = midlPListe.begin() + q;
-									*it = std::move(midlPListe.back());
-									midlPListe.pop_back();
-									alreadyIn = true;
-									break;
-								}
-							}
-
-							if (!alreadyIn) midlPListe.push_back(pListe[i].getId());
-							break;
-						}
+						fokusId = -1;
+						trlListe.clear();
 					}
 				}
 			}
+
+			//ADVANCED IN ORBIT ADDER
+			if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Adv Object in orbit (S)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
+			{
+				//SEARCHING FOR PLANET
+				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
+				for (size_t i = 0; i < pListe.size(); i++)
+				{
+					if (range(pListe[i].getx(), pListe[i].gety(), mPos.x, mPos.y) < pListe[i].getRad())
+					{
+
+						//CHECKING IF IT ALREADY IS IN THE LIST
+						bool alreadyIn = false;
+						for (size_t q = 0; q < midlPListe.size(); q++)
+						{
+							if (midlPListe[q] == pListe[i].getId())
+							{
+								auto it = midlPListe.begin() + q;
+								*it = std::move(midlPListe.back());
+								midlPListe.pop_back();
+								alreadyIn = true;
+								break;
+							}
+						}
+
+						if (!alreadyIn) midlPListe.push_back(pListe[i].getId());
+						break;
+					}
+				}
+			}
+		}
 
 
 		//FUNCTIONS
