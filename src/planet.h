@@ -136,33 +136,35 @@ public:
 		for (int i = 0; i < numAtmoLines; i++) atmoLinesBrightness.push_back(modernRandomWithLimits(-brightnessVariance, brightnessVariance));
 	}
 
-
-	//GET FUNCTIONS
-	double getx();
-	double gety();
-	double& getxv();
-	double& getyv();
-	double getmass();
-	void printInfo();
-	void printInfoShort();
-	double getRad();
-	pType getType();
-	double getId();
-	double getG();
-	int getStrongestAttractorId()
+	double getx() const;
+	double gety() const;
+	double getxv() const;
+	double getyv() const;
+	double getmass() const;
+	void printInfo() const;
+	void printInfoShort() const;
+	double getRad() const;
+	pType getType() const;
+	double getId() const;
+	double getG() const;
+	int getStrongestAttractorId() const
 	{
 		return ID_strongest_attractor;
 	}
-	int& getStrongestAttractorIdRef()
+	int getStrongestAttractorIdRef() const
 	{
 		return ID_strongest_attractor;
 	}
-	std::string getName()
+	void setStrongestAttractorIdRef(int id)
+	{
+		ID_strongest_attractor = id;
+	}
+	std::string getName() const
 	{
 		return name;
 	}
-	std::string getFlavorTextLife();
-	sf::Color getStarCol()
+	std::string getFlavorTextLife() const;
+	sf::Color getStarCol() const
 	{
 		if (temperature < 1600) return (sf::Color(255, 38, 00));
 		else if (temperature < 2400) return (sf::Color(255, 118, 00));
@@ -181,11 +183,12 @@ public:
 		else return (sf::Color(186, 208, 255));
 	}
 	bool& killStateRef() { return killState; }
-	double& strAttr() { return STRENGTH_strongest_attractor; }
+	double getStrongestAttractorStrength() { return STRENGTH_strongest_attractor; }
+	void setStrongestAttractorStrength(double strength) { STRENGTH_strongest_attractor = strength; }
 
 	//LIFE FUNCTIONS
 
-	void updateVel(Planet forcer, double timeStep);
+	void updateVel(const Planet & forcer, double timeStep);
 	void move(double timeStep);
 	void updateRadiAndType();
 	void resetAttractorMeasure()
@@ -194,17 +197,17 @@ public:
 	}
 	void draw(sf::RenderWindow &w, double xx , double yy);
 	void incMass(double m);
-	double getDist(Planet forcer);
-	void collision(Planet p);
+	double getDist(const Planet & forcer) const;
+	void collision(const Planet & p);
 	void mark(double i);
 	void updateTemp();
 
 	//TEMPERATURE
-	double temp()
+	double temp() const
 	{
 		return tEnergy / (mass*tCapacity);
 	}
-	double getTemp()
+	double getTemp() const
 	{
 		return temperature;
 	}
@@ -212,7 +215,7 @@ public:
 	{
 		tEnergy = mass*t*tCapacity;
 	}
-	double fusionEnergy()
+	double fusionEnergy() const
 	{
 		switch (planetType)
 		{
@@ -232,7 +235,7 @@ public:
 			return 0;
 		}
 	}
-	double thermalEnergy()
+	double thermalEnergy() const
 	{
 		return tEnergy;
 	}
@@ -242,7 +245,6 @@ public:
 	}
 	void heatUP(double e, int t)
 	{
-		(void) t;
 		tEnergy += (e*(1+greenHouseEffectMult*atmoCur));
 	}
 	double giveTEnergy(int t)
@@ -254,7 +256,7 @@ public:
 		tEnergy += e;
 	}
 	void setColor();
-	double getTCap() { return tCapacity; };
+	double getTCap() const { return tCapacity; };
 	void setMass(double m) { mass = m; }
 
 	//ATMOSPHERE
@@ -289,11 +291,11 @@ public:
 		circle.setOutlineThickness(sqrt(atmoCur)*atmoThicknessMult);
 
 	}
-	double getAtmoCur()
+	double getAtmoCur() const
 	{
 		return atmoCur;
 	}
-	double getAtmoPot()
+	double getAtmoPot() const
 	{
 		return atmoPot;
 	}
@@ -320,16 +322,16 @@ public:
 		life.giveDesc(d);
 	}
 
-	Life getLife()
+	Life getLife() const
 	{
 		return life;
 	}
-	double getSupportedBiomass()
+	double getSupportedBiomass() const
 	{
 		return supportedBiomass;
 	}
 
-	int modernRandomWithLimits(int min, int max)
+	int modernRandomWithLimits(int min, int max) const
 	{
 		std::random_device seeder;
 		std::default_random_engine generator(seeder());
@@ -338,8 +340,11 @@ public:
 	}
 	std::string genName();
 
-	pType getPlanetType()
+	pType getPlanetType() const
 	{
 		return planetType;
 	}
+
+	void setxv(double v);
+	void setyv(double v);
 };

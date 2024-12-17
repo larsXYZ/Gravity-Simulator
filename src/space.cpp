@@ -188,14 +188,13 @@ void Space::update()
 
 					if (dist != 0) aks = G * pListe[p].getmass() / (dist*dist);
 
-					if (aks > pListe[i].strAttr())
+					if (aks > pListe[i].getStrongestAttractorStrength())
 					{
-						pListe[i].strAttr() = aks;
-						pListe[i].getStrongestAttractorIdRef() = pListe[p].getId();
+						pListe[i].setStrongestAttractorStrength(aks);
+						pListe[i].setStrongestAttractorIdRef(pListe[p].getId());
 					}
-
-					pListe[i].getxv() += cos(angle) * aks * timeStep;
-					pListe[i].getyv() += sin(angle) * aks * timeStep;
+					pListe[i].setxv(pListe[i].getxv() + cos(angle) * aks * timeStep);
+					pListe[i].setyv(pListe[i].getyv() + sin(angle) * aks * timeStep);
 				}
 			}
 		}

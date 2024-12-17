@@ -399,8 +399,8 @@ void Space::runSim()
 
 						if (Planet planet; findPlanetRef(planet, planetFuncId))
 						{
-							planet.getxv() -= fixhast * cos(angle + 1.507);
-							planet.getyv() -= fixhast * sin(angle + 1.507);
+							planet.setxv(planet.getxv() - fixhast * cos(angle + 1.507));
+							planet.setyv(planet.getyv() - fixhast * sin(angle + 1.507));
 						}
 
 						addPlanet(Planet(size, findPlanet(planetFuncId).getx() + rad*cos(angle), findPlanet(planetFuncId).gety() + rad*sin(angle), (findPlanet(planetFuncId).getxv() + hast*cos(angle + 1.507)), (findPlanet(planetFuncId).getyv() + hast*sin(angle + 1.507))));
@@ -626,10 +626,10 @@ void Space::runSim()
 						
 					for (int i = 0; i < midlPListe.size(); i++)
 					{
-						if (Planet planet; findPlanetRef(planet, midlPListe[i]))
+						if (Planet planet; findPlanetRef(planet, planetFuncId))
 						{
-							planet.getxv() -= fixhast*cos(angle + 1.507);
-							planet.getyv() -= fixhast*sin(angle + 1.507);
+							planet.setxv(planet.getxv() - fixhast * cos(angle + 1.507));
+							planet.setyv(planet.getyv() - fixhast * sin(angle + 1.507));
 						}
 					}
 

@@ -2,52 +2,52 @@
 
 //GET FUNCTIONS
 
-double Planet::getx()
+double Planet::getx() const
 {
 	return x;
 }
 
-double Planet::gety()
+double Planet::gety() const
 {
 	return y;
 }
 
-double& Planet::getxv()
+double Planet::getxv() const
 {
 	return xv;
 }
 
-double& Planet::getyv()
+double Planet::getyv() const
 {
 	return yv;
 }
 
-double Planet::getmass()
+double Planet::getmass() const
 {
 	return mass;
 }
 
-double Planet::getDist(Planet forcer)
+double Planet::getDist(const Planet & forcer) const
 {
 	return sqrt((forcer.getx() - getx())*(forcer.getx() - getx()) + (forcer.gety() - gety()) * (forcer.gety() - gety()));
 }
 
-double Planet::getRad()
+double Planet::getRad() const
 {
 	return radi;
 }
 
-pType Planet::getType()
+pType Planet::getType() const
 {
 	return planetType;
 }
 
-double Planet::getId()
+double Planet::getId() const
 {
 	return id;
 }
 
-double Planet::getG()
+double Planet::getG() const
 {
 	return G;
 }
@@ -58,7 +58,7 @@ void Planet::mark(double i)
 	life.giveId(i);
 }
 
-std::string Planet::getFlavorTextLife()
+std::string Planet::getFlavorTextLife() const
 {
 	switch ((int) getLife().getTypeEnum())
 	{
@@ -103,7 +103,7 @@ std::string Planet::getFlavorTextLife()
 
 //SIMULATION FUNCTIONS
 
-void Planet::updateVel(Planet forcer, double timeStep)
+void Planet::updateVel(const Planet & forcer, double timeStep)
 {
 	double aks = 0;
 	double distanceSquared = (forcer.getx() - getx())*(forcer.getx() - getx()) + (forcer.gety() - gety()) * (forcer.gety() - gety());
@@ -211,7 +211,7 @@ void Planet::incMass(double m)
 	updateRadiAndType();
 }
 
-void Planet::printInfo()
+void Planet::printInfo() const
 {
 	std::cout << "\n#############\n" << std::endl;
 
@@ -228,12 +228,12 @@ void Planet::printInfo()
 	std::cout << "\n#############\n" << std::endl;
 }
 
-void Planet::printInfoShort()
+void Planet::printInfoShort() const
 {
 	std::cout << "ID: " << getId() << " // " << "M: " << getmass() << "    X: " << getx() << "    | " << getxv() << "    Y: " << gety() << "    | " << getyv() << "    | " << std::endl;
 }
 
-void Planet::collision(Planet p)
+void Planet::collision(const Planet & p)
 {
 	xv = (mass*xv + p.mass*p.getxv()) / (mass + p.getmass());
 	yv = (mass*yv + p.mass*p.getyv()) / (mass + p.getmass());
@@ -356,4 +356,14 @@ std::string Planet::genName()
 	std::string navn = navn_del_en[selectorOne] + navn_del_to[selectorTwo] + navn_del_tre[selectorThree] + number;
 
 	return navn;
+}
+
+void Planet::setxv(double v)
+{
+	xv = v;
+}
+
+void Planet::setyv(double v)
+{
+	yv = v;
 }
