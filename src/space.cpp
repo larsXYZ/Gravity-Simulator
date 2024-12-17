@@ -150,53 +150,50 @@ void Space::update()
 	{
 		for (size_t p = 0; p < pListe.size(); p++)
 		{
-			if (p != i)
+			if (p == i)
+				continue;
+
+			double dx = pListe[p].getx() - pListe[i].getx();
+			double dy = pListe[p].gety() - pListe[i].gety();
+			double dist = sqrt(dx * dx + dy * dy);
+			double radDist = pListe[i].getRad() + pListe[p].getRad();
+			
+			if (p != i && pListe[p].getType() != ROCKY && pListe[p].getType() != TERRESTIAL && pListe[p].getType() != GASGIANT)
 			{
-				double dx = pListe[p].getx() - pListe[i].getx();
-				double dy = pListe[p].gety() - pListe[i].gety();
-				double dist = sqrt(dx*dx + dy*dy);
-				double radDist = pListe[i].getRad() + pListe[p].getRad();
-
-				//TEMP
-				if (p != i && pListe[p].getType() != ROCKY && pListe[p].getType() != TERRESTIAL && pListe[p].getType() != GASGIANT)
-				{
-					pListe[i].heatUP(tempConstTwo*pListe[i].getRad()*pListe[i].getRad()*pListe[p].giveTEnergy(timeStep) / (dist), timeStep);
-				}
-
-				//GRAVITY, COLLISIONS AND ROCHE LIMIT
-				if (pListe[i].getPlanetType() != BLACKHOLE && dist < ROCHE_LIMIT_DIST_MULTIPLIER*radDist && pListe[i].getmass() > MINIMUMBREAKUPSIZE && pListe[i].getmass() / pListe[p].getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
-				{
-					explodePlanetOld(i);
-					break;
-				}
-				else if (dist < radDist)
-				{
-					if (pListe[i].getmass() >= pListe[p].getmass())
-					{
-						if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_COLLISION) for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++) addSmoke(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 10, sf::Vector2f(pListe[p].getxv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4), pListe[p].getyv() + CREATEDUSTSPEEDMULT*modernRandomWithLimits(-4, 4)), DUSTLEVETID);
-						addExplosion(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 2 * pListe[p].getRad(), sf::Vector2f(pListe[p].getxv()*0.5, pListe[p].getyv()*0.5), sqrt(pListe[i].getmass()) / 2);
-						pListe[i].collision(pListe[p]);
-						pListe[i].incMass(pListe[p].getmass());
-						removePlanet(p);
-					}
-					break;
-				}
-				else
-				{
-					double aks = 0;
-					double angle = atan2(dy, dx);
-
-					if (dist != 0) aks = G * pListe[p].getmass() / (dist*dist);
-
-					if (aks > pListe[i].getStrongestAttractorStrength())
-					{
-						pListe[i].setStrongestAttractorStrength(aks);
-						pListe[i].setStrongestAttractorIdRef(pListe[p].getId());
-					}
-					pListe[i].setxv(pListe[i].getxv() + cos(angle) * aks * timeStep);
-					pListe[i].setyv(pListe[i].getyv() + sin(angle) * aks * timeStep);
-				}
+				pListe[i].heatUP(tempConstTwo * pListe[i].getRad() * pListe[i].getRad() * pListe[p].giveTEnergy(timeStep) / (dist), timeStep);
 			}
+			
+			if (pListe[i].getPlanetType() != BLACKHOLE && dist < ROCHE_LIMIT_DIST_MULTIPLIER * radDist && pListe[i].getmass() > MINIMUMBREAKUPSIZE && pListe[i].getmass() / pListe[p].getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+			{
+				explodePlanetOld(i);
+				break;
+			}
+
+			if (dist < radDist)
+			{
+				if (pListe[i].getmass() >= pListe[p].getmass())
+				{
+					if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_COLLISION) for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++) addSmoke(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 10, sf::Vector2f(pListe[p].getxv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4), pListe[p].getyv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4)), DUSTLEVETID);
+					addExplosion(sf::Vector2f(pListe[p].getx(), pListe[p].gety()), 2 * pListe[p].getRad(), sf::Vector2f(pListe[p].getxv() * 0.5, pListe[p].getyv() * 0.5), sqrt(pListe[i].getmass()) / 2);
+					pListe[i].collision(pListe[p]);
+					pListe[i].incMass(pListe[p].getmass());
+					removePlanet(p);
+				}
+				break;
+			}
+
+			double aks = 0;
+			double angle = atan2(dy, dx);
+
+			if (dist != 0) aks = G * pListe[p].getmass() / (dist * dist);
+
+			if (aks > pListe[i].getStrongestAttractorStrength())
+			{
+				pListe[i].setStrongestAttractorStrength(aks);
+				pListe[i].setStrongestAttractorIdRef(pListe[p].getId());
+			}
+			pListe[i].setxv(pListe[i].getxv() + cos(angle) * aks * timeStep);
+			pListe[i].setyv(pListe[i].getyv() + sin(angle) * aks * timeStep);
 		}
 	}
 
