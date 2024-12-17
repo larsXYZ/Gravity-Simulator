@@ -4,7 +4,6 @@
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
 
-//FUNKSJONER
 
 void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2);
 
