@@ -555,7 +555,7 @@ void Space::runSim()
 				{
 					sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
 					double rad = sqrt((new_mouse_pos.x - mouse_rand_pos.x)*(new_mouse_pos.x - mouse_rand_pos.x) + (new_mouse_pos.y - mouse_rand_pos.y)*(new_mouse_pos.y - mouse_rand_pos.y));
-					randomPlaneter(MASS_MULTIPLIER * cbrt(rad), NUMBER_OF_OBJECT_MULTIPLIER*rad, rad, mouse_rand_pos);
+					randomPlanets(MASS_MULTIPLIER * cbrt(rad), NUMBER_OF_OBJECT_MULTIPLIER*rad, rad, mouse_rand_pos);
 					randomToggle = false;
 				}
 				else

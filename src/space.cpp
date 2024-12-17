@@ -273,7 +273,7 @@ std::vector<Planet> Space::getPListe()
 	return pListe;
 }
 
-void Space::randomPlaneter(int totmass,int antall, double radius, sf::Vector2f pos)
+void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f pos)
 {
 	double speedmultRandom = 0.00000085 * modernRandomWithLimits(120*totmass, 150*totmass);
 	double angle = 0;
