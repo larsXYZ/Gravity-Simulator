@@ -13,7 +13,7 @@ Bound::Bound()
 	omr.setPointCount(100);
 }
 
-sf::Vector2f Bound::getPos()
+sf::Vector2f Bound::getPos() const
 {
 	return omr.getPosition();
 }
@@ -29,7 +29,7 @@ void Bound::setRad(double r)
 	omr.setOrigin(r, r);
 }
 
-double Bound::getRad()
+double Bound::getRad() const
 {
 	return omr.getRadius();
 }
@@ -38,21 +38,14 @@ void Bound::setState(bool state)
 { 
 	isActive = state;
 }
-bool Bound::getState()
+bool Bound::getState() const
 {
 	return isActive;
 }
 
-bool Bound::isOutside(sf::Vector2f p)
+bool Bound::isOutside(sf::Vector2f p) const
 {
-	if (sqrt((p.x - getPos().x) * (p.x - getPos().x) + (p.y - getPos().y) * (p.y - getPos().y)) > omr.getRadius())
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return sqrt((p.x - getPos().x) * (p.x - getPos().x) + (p.y - getPos().y) * (p.y - getPos().y)) > omr.getRadius();
 }
 
 void Bound::draw(sf::RenderWindow& w, double xx, double yy, double z)
