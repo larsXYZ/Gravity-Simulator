@@ -146,6 +146,7 @@ void Space::update()
 	}
 
 	 //GRAVITY, COLLISIONS, ROCHE, AND TEMP
+#pragma omp parallel for schedule(dynamic)
 	for (auto & thisPlanet  : pListe)
 	{
 		if (thisPlanet.isMarkedForRemoval())
