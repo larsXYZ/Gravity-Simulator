@@ -268,6 +268,81 @@ void Space::update()
 
 }
 
+void Space::hotkeys(sf::Window& w, sf::View& v)
+{
+	(void)w;
+
+	//ZOOM
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) && zoom < 15)
+	{
+		zoom = zoom * 1.05;
+		v.zoom(1.05);
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::X) && zoom > 0.03)
+	{
+		zoom = zoom / 1.05;
+		v.zoom(1 / 1.05);
+	}
+
+	//TIMESTEP
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) && timeStepSlider->getValue() > timeStepSlider->getMinimum())
+	{
+		timeStepSlider->setValue(timeStepSlider->getValue() - 1);
+		if (timeStepSlider->getValue() < timeStepSlider->getMinimum()) timeStepSlider->setValue(timeStepSlider->getMinimum());
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Period) && timeStepSlider->getValue() < timeStepSlider->getMaximum())
+	{
+		timeStepSlider->setValue(timeStepSlider->getValue() + 1);
+		if (timeStepSlider->getValue() > timeStepSlider->getMaximum()) timeStepSlider->setValue(timeStepSlider->getMaximum());
+	}
+
+	//FUNCTIONS
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+	{
+		functions->setSelectedItem("Object (F)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::O))
+	{
+		functions->setSelectedItem("Object in orbit (O)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+	{
+		functions->setSelectedItem("Adv Object in orbit (S)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+	{
+		functions->setSelectedItem("Remove object (D)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
+	{
+		functions->setSelectedItem("Explode object (C)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::G))
+	{
+		functions->setSelectedItem("Random system (G)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+	{
+		functions->setSelectedItem("Rings (Q)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+	{
+		functions->setSelectedItem("Spawn ship (E)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::I))
+	{
+		functions->setSelectedItem("Info (I)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::T))
+	{
+		functions->setSelectedItem("Follow object (T)");
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::B))
+	{
+		functions->setSelectedItem("Bound (B)");
+	}
+}
+
 std::vector<Planet> Space::getPListe()
 {
 	return pListe;
@@ -918,6 +993,40 @@ void Space::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
 		text2.setColor(sf::Color(255, 255, 255));
 		drawtext2 = true;
 	}
+}
+
+//OTHER
+
+int Space::modernRandomWithLimits(int min, int max)
+{
+	std::random_device seeder;
+	std::default_random_engine generator(seeder());
+	std::uniform_int_distribution<int> uniform(min, max);
+	return uniform(generator);
+}
+
+std::string Space::convertDoubleToString(double number)
+{
+	std::string Result;
+
+	std::stringstream convert;
+
+	convert << std::setprecision(5) << number;
+
+	return convert.str();
+}
+
+double Space::convertStringToDouble(std::string string)
+{
+	double result;
+
+	std::stringstream convert;
+
+	convert << string;
+
+	convert >> result;
+
+	return result;
 }
 
 void Space::PlanetSkjermPrint(sf::RenderWindow &window)
