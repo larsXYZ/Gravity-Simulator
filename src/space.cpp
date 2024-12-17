@@ -264,27 +264,12 @@ void Space::update()
 	}
 
 	//CHECKING TOTAL MASS
-	for (size_t i = 0; i < pListe.size(); i++) totalMass += pListe[i].getmass();
-
+	for (size_t i = 0; i < pListe.size(); i++)
+		totalMass += pListe[i].getmass();
 }
 
 void Space::hotkeys(sf::Window& w, sf::View& v)
 {
-	(void)w;
-
-	//ZOOM
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) && zoom < 15)
-	{
-		zoom = zoom * 1.05;
-		v.zoom(1.05);
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::X) && zoom > 0.03)
-	{
-		zoom = zoom / 1.05;
-		v.zoom(1 / 1.05);
-	}
-
-	//TIMESTEP
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) && timeStepSlider->getValue() > timeStepSlider->getMinimum())
 	{
 		timeStepSlider->setValue(timeStepSlider->getValue() - 1);
@@ -295,8 +280,7 @@ void Space::hotkeys(sf::Window& w, sf::View& v)
 		timeStepSlider->setValue(timeStepSlider->getValue() + 1);
 		if (timeStepSlider->getValue() > timeStepSlider->getMaximum()) timeStepSlider->setValue(timeStepSlider->getMaximum());
 	}
-
-	//FUNCTIONS
+	
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
 	{
 		functions->setSelectedItem("Object (F)");
@@ -760,7 +744,7 @@ void Space::setInfo()
 		}
 
 	//Displaying sim-info
-	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(pListe.size()) + "\nParticles: " + convertDoubleToString(smkListe.size()) + "\nZoom (Z/X): " + convertDoubleToString(1 / zoom));
+	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(pListe.size()) + "\nParticles: " + convertDoubleToString(smkListe.size()) + "\nZoom: " + convertDoubleToString(1 / zoom));
 
 }
 

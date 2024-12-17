@@ -97,7 +97,21 @@ void Space::runSim()
 
 				//SCROLLING CHANGES MASS
 				if (event.type == sf::Event::MouseWheelMoved)
-					massSlider->setValue(massSlider->getValue() + 5 * pow(event.mouseWheel.delta, 3));
+				{
+					auto delta_zoom = 1.15 * event.mouseWheel.delta / std::abs(event.mouseWheel.delta);
+					if (delta_zoom < 0)
+					{
+						delta_zoom = std::abs(delta_zoom);
+						zoom *= delta_zoom;
+						view1.zoom(delta_zoom);
+					}
+					else if (delta_zoom > 0)
+					{
+						delta_zoom = std::abs(delta_zoom);
+						zoom /= delta_zoom;
+						view1.zoom(1/delta_zoom);
+					}
+				}
 
 				//HIDES UI
 				if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::H))
