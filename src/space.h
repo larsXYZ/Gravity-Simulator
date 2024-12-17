@@ -43,7 +43,7 @@ private:
 	int ys;
 	int nesteid = 0;
 	double timeStep = TIMESTEP_VALUE_START;
-	int iterasjon = 0;
+	int iteration = 0;
 	bool fullScreen;
 	double size = 1;
 	int tempEnhet = 1;

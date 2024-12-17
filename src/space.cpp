@@ -121,13 +121,13 @@ void Space::update()
 {
 	//SETUP & OTHER
 	totalMass = 0;
-	if (pListe.size() > 0) iterasjon += 1;
+	if (pListe.size() > 0) iteration += 1;
 	if (ship.getLandedState())
 	{
 		if (findPlanet(ship.getPlanetID()).getmass() == -1) ship.setLandedstate(false);
 	}
 	bool updateSMK = false;
-	if (iterasjon % SMK_ACCURACY == 0) updateSMK = true;
+	if (iteration % SMK_ACCURACY == 0) updateSMK = true;
 
 	//SHIPCHECK
 	for (size_t i = 0; i < pListe.size(); i++)
@@ -256,7 +256,7 @@ void Space::update()
 	}
 
 	//PLACING BOUND AROUND MASS CENTRE IF AUTOBOUND IS ENABLED
-	if (autoBound->isChecked() && iterasjon%BOUND_AUTO_UPDATE_RATE == 0)
+	if (autoBound->isChecked() && iteration%BOUND_AUTO_UPDATE_RATE == 0)
 	{
 		bound.setPos(centerOfMassAll());
 		bound.setState(true);
@@ -361,7 +361,7 @@ void Space::clear(sf::View& v, sf::Window& w)
 	v.setSize(sf::Vector2f(xsize, ysize));
 	v.setCenter(0, 0);
 	ship.reset(sf::Vector2f(0, 0));
-	iterasjon = 0;
+	iteration = 0;
 	fokusId = -1;
 }
 
@@ -685,7 +685,7 @@ void Space::setInfo()
 		}
 
 	//Displaying sim-info
-	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iterasjon) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(pListe.size()) + "\nParticles: " + convertDoubleToString(smkListe.size()) + "\nZoom (Z/X): " + convertDoubleToString(1 / zoom));
+	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(pListe.size()) + "\nParticles: " + convertDoubleToString(smkListe.size()) + "\nZoom (Z/X): " + convertDoubleToString(1 / zoom));
 
 }
 
@@ -798,7 +798,7 @@ void Space::printInfoPlanet(sf::RenderWindow& w, sf::View& v)
 		w.draw(v, 2, sf::Lines);
 
 		//DRAWING TRAILS
-		if (iterasjon % TRAILFREQ == 0) addTrail(pos, TRAILLIFE);
+		if (iteration % TRAILFREQ == 0) addTrail(pos, TRAILLIFE);
 
 		//POINTING TO STRONGEST GRAVITY SOURCE
 		if (pListe.size() > 1 && fokusP_Parent.getmass() != -1)

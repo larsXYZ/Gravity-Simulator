@@ -742,7 +742,7 @@ void Space::runSim()
 
 		//FRAMERATE OUT
 		sf::Time time = clock.getElapsedTime();
-		if (iterasjon % FRAMERATE_CHECK_DELTAFRAME == 0) fps = 1.0f / time.asSeconds();
+		if (iteration % FRAMERATE_CHECK_DELTAFRAME == 0) fps = 1.0f / time.asSeconds();
 		clock.restart().asSeconds();
 		}
 }
