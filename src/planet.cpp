@@ -128,34 +128,19 @@ std::string Planet::getFlavorTextLife() const
 
 //SIMULATION FUNCTIONS
 
-void Planet::updateVel(const Planet& forcer, double timeStep)
-{
-	double aks = 0;
-	double distanceSquared = (forcer.getx() - getx()) * (forcer.getx() - getx()) + (forcer.gety() - gety()) * (forcer.
-		gety() - gety());
-	double angle = atan2(forcer.gety() - gety(), forcer.getx() - getx());
-	if (distanceSquared != 0) aks = G * forcer.getmass() / (distanceSquared);
-
-	if (aks > STRENGTH_strongest_attractor)
-	{
-		STRENGTH_strongest_attractor = aks;
-		ID_strongest_attractor = forcer.getId();
-	}
-
-	xv += cos(angle) * aks * timeStep;
-	yv += sin(angle) * aks * timeStep;
-}
-
 void Planet::updateTemp()
 {
 	temperature = temp();
 }
 
-void Planet::move(double timeStep)
+void Planet::setx(double x_)
 {
-	x += xv * timeStep;
-	y += yv * timeStep;
-	circle.setPosition(x, y);
+	x = x_;
+}
+
+void Planet::sety(double y_)
+{
+	y = y_;
 }
 
 void Planet::updateRadiAndType()

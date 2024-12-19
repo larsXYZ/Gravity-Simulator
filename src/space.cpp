@@ -117,6 +117,29 @@ sf::Vector2f Space::centerOfMassAll()
 	return sf::Vector2f(xCont / tMass, yCont / tMass);
 }
 
+void calculateAccelerationForPlanet(const Planet & planet, const std::vector<Planet> & planets, double &acc_x, double &acc_y)
+{
+	acc_x, acc_y = 0.0, 0.0;
+
+	for (auto& otherPlanet : planets)
+	{
+		if (otherPlanet.isMarkedForRemoval() ||
+			planet.getId() == otherPlanet.getId())
+			continue;
+
+		const auto dx = otherPlanet.getx() - planet.getx();
+		const auto dy = otherPlanet.gety() - planet.gety();
+		const auto dist = std::hypot(dx, dy);
+		const auto radDist = planet.getRad() + otherPlanet.getRad();
+
+		const auto acceleration = G * otherPlanet.getmass() / std::max(dist * dist, 0.01);
+		const auto angle = atan2(dy, dx);
+
+		acc_x += cos(angle) * acceleration;
+		acc_y += sin(angle) * acceleration;
+	}
+}
+
 void Space::update()
 {
 	//SETUP & OTHER
@@ -145,69 +168,29 @@ void Space::update()
 		if (pListe[i].getmass() > MINIMUMBREAKUPSIZE && updateSMK) GravitySmoke(pListe[i], timeStep);
 	}
 
-	 //GRAVITY, COLLISIONS, ROCHE, AND TEMP
-#pragma omp parallel for schedule(dynamic)
+	//GRAVITY, COLLISIONS, ROCHE, AND TEMP
 	for (auto & thisPlanet : pListe)
 	{
 		if (thisPlanet.isMarkedForRemoval())
 			continue;
 
-		for (auto& otherPlanet : pListe)
-		{
-			if (otherPlanet.isMarkedForRemoval() ||
-				thisPlanet.getId() == otherPlanet.getId())
-				continue;
+		double acc_x_i{ 0.0 };
+		double acc_y_i{ 0.0 };
+		calculateAccelerationForPlanet(thisPlanet, pListe, acc_x_i, acc_y_i);
 
-			const auto dx = otherPlanet.getx() - thisPlanet.getx();
-			const auto dy = otherPlanet.gety() - thisPlanet.gety();
-			const auto dist = std::hypot(dx, dy);
-			const auto radDist = thisPlanet.getRad() + otherPlanet.getRad();
+		/* Integrate (first part) (Leapfrog) */
+		/* https://en.wikipedia.org/wiki/Leapfrog_integration */
 
-			if (thisPlanet.getType() != BLACKHOLE && 
-				dist < ROCHE_LIMIT_DIST_MULTIPLIER * radDist && 
-				thisPlanet.getmass() > MINIMUMBREAKUPSIZE &&
-				thisPlanet.getmass() / otherPlanet.getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
-			{
-				explodePlanetOld(thisPlanet.getId());
-				break;
-			}
+		thisPlanet.setx(thisPlanet.getx() + thisPlanet.getxv() * timeStep + 0.5 * acc_x_i * timeStep * timeStep);
+		thisPlanet.sety(thisPlanet.gety() + thisPlanet.getyv() * timeStep + 0.5 * acc_y_i * timeStep * timeStep);
 
-			if (dist < radDist)
-			{
-				if (thisPlanet.getmass() <= otherPlanet.getmass())
-				{
-					removePlanet(thisPlanet.getId());
+		double acc_x_i1{ 0.0 };
+		double acc_y_i1{ 0.0 };
+		calculateAccelerationForPlanet(thisPlanet, pListe, acc_x_i1, acc_y_i1);
 
-					if (MAX_N_DUST_PARTICLES > smkListe.size() + PARTICULES_PER_COLLISION) 
-						for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++) 
-							addSmoke(sf::Vector2f(thisPlanet.getx(), thisPlanet.gety()), 10, sf::Vector2f(thisPlanet.getxv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4), thisPlanet.getyv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4)), DUSTLEVETID);
-					addExplosion(sf::Vector2f(thisPlanet.getx(), thisPlanet.gety()), 2 * thisPlanet.getRad(), sf::Vector2f(thisPlanet.getxv() * 0.5, thisPlanet.getyv() * 0.5), sqrt(thisPlanet.getmass()) / 2);
-					otherPlanet.collision(thisPlanet);
-					otherPlanet.incMass(thisPlanet.getmass());
-					break;
-				}
-			}
-
-			const auto acceleration = G * otherPlanet.getmass() / std::max(dist*dist, 0.01);
-			const auto angle = atan2(dy, dx);
-			thisPlanet.setxv(thisPlanet.getxv() + cos(angle) * acceleration * timeStep);
-			thisPlanet.setyv(thisPlanet.getyv() + sin(angle) * acceleration * timeStep);
-
-			if (acceleration > thisPlanet.getStrongestAttractorStrength())
-			{
-				thisPlanet.setStrongestAttractorStrength(acceleration);
-				thisPlanet.setStrongestAttractorIdRef(otherPlanet.getId());
-			}
-
-			if (otherPlanet.emitsHeat())
-			{
-				const auto heat = tempConstTwo * thisPlanet.getRad() * thisPlanet.getRad() * otherPlanet.giveTEnergy(timeStep) / dist;
-				thisPlanet.absorbHeat(heat, timeStep);
-			}
-		}
-
-		thisPlanet.move(timeStep);
-		thisPlanet.resetAttractorMeasure();
+		/* Integrate (second part) (Leapfrog) */
+		thisPlanet.setxv(thisPlanet.getxv() + 0.5 * (acc_x_i + acc_x_i1) * timeStep);
+		thisPlanet.setyv(thisPlanet.getyv() + 0.5 * (acc_y_i + acc_y_i1) * timeStep);
 	}
 
 	std::erase_if(pListe, [](const Planet & planet) { return planet.isMarkedForRemoval(); });

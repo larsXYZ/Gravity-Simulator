@@ -197,9 +197,9 @@ public:
 	void setStrongestAttractorStrength(double strength) { STRENGTH_strongest_attractor = strength; }
 
 	//LIFE FUNCTIONS
-
-	void updateVel(const Planet& forcer, double timeStep);
-	void move(double timeStep);
+	
+	void setx(double x);
+	void sety(double y);
 	void updateRadiAndType();
 
 	void resetAttractorMeasure()
