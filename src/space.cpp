@@ -147,7 +147,7 @@ void Space::update()
 
 	 //GRAVITY, COLLISIONS, ROCHE, AND TEMP
 #pragma omp parallel for schedule(dynamic)
-	for (auto & thisPlanet  : pListe)
+	for (auto & thisPlanet : pListe)
 	{
 		if (thisPlanet.isMarkedForRemoval())
 			continue;
@@ -160,14 +160,8 @@ void Space::update()
 
 			const auto dx = otherPlanet.getx() - thisPlanet.getx();
 			const auto dy = otherPlanet.gety() - thisPlanet.gety();
-			const auto dist = sqrt(dx * dx + dy * dy);
+			const auto dist = std::hypot(dx, dy);
 			const auto radDist = thisPlanet.getRad() + otherPlanet.getRad();
-
-			if (otherPlanet.emitsHeat())
-			{
-				const auto heat = tempConstTwo * thisPlanet.getRad() * thisPlanet.getRad() * otherPlanet.giveTEnergy(timeStep) / dist;
-				thisPlanet.absorbHeat(heat, timeStep);
-			}
 
 			if (thisPlanet.getType() != BLACKHOLE && 
 				dist < ROCHE_LIMIT_DIST_MULTIPLIER * radDist && 
@@ -184,7 +178,7 @@ void Space::update()
 				{
 					removePlanet(thisPlanet.getId());
 
-					if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_COLLISION) 
+					if (MAX_N_DUST_PARTICLES > smkListe.size() + PARTICULES_PER_COLLISION) 
 						for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++) 
 							addSmoke(sf::Vector2f(thisPlanet.getx(), thisPlanet.gety()), 10, sf::Vector2f(thisPlanet.getxv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4), thisPlanet.getyv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4)), DUSTLEVETID);
 					addExplosion(sf::Vector2f(thisPlanet.getx(), thisPlanet.gety()), 2 * thisPlanet.getRad(), sf::Vector2f(thisPlanet.getxv() * 0.5, thisPlanet.getyv() * 0.5), sqrt(thisPlanet.getmass()) / 2);
@@ -204,7 +198,16 @@ void Space::update()
 				thisPlanet.setStrongestAttractorStrength(acceleration);
 				thisPlanet.setStrongestAttractorIdRef(otherPlanet.getId());
 			}
+
+			if (otherPlanet.emitsHeat())
+			{
+				const auto heat = tempConstTwo * thisPlanet.getRad() * thisPlanet.getRad() * otherPlanet.giveTEnergy(timeStep) / dist;
+				thisPlanet.absorbHeat(heat, timeStep);
+			}
 		}
+
+		thisPlanet.move(timeStep);
+		thisPlanet.resetAttractorMeasure();
 	}
 
 	std::erase_if(pListe, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
@@ -235,15 +238,7 @@ void Space::update()
 			if (index != -1) pListe[index].colonize(pListe[i].getLife().getId(), pListe[i].getLife().getCol(), pListe[i].getLife().getDesc());
 		}
 	}
-
-	//MOVE
-#pragma omp parallel for schedule(dynamic)
-	for (int i = 0; i < pListe.size(); i++)
-	{
-		pListe[i].move(timeStep);
-		pListe[i].resetAttractorMeasure();
-	}
-
+	
 	//CHECKING IF ANYTHING IS OUTSIDE BOUNDS
 	if (bound.getState())
 	{
@@ -477,7 +472,7 @@ void Space::explodePlanetOld(int id)
 		addPlanet(Q);
 	}
 	removePlanet(id);
-	if (MAXANTALLDUST > smkListe.size() + PARTICULES_PER_EXPLOSION)
+	if (MAX_N_DUST_PARTICLES > smkListe.size() + PARTICULES_PER_EXPLOSION)
 		for (size_t i = 0; i < PARTICULES_PER_EXPLOSION; i++)
 			addSmoke(sf::Vector2f(x, y), 10, sf::Vector2f(planet.getxv() + CREATEDUSTSPEEDMULT * (((double)modernRandomWithLimits(-400, 400)) / 100), 
 				planet.getyv() + CREATEDUSTSPEEDMULT * (((double)modernRandomWithLimits(-400, 400)) / 100)), DUSTLEVETID);

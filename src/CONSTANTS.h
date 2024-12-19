@@ -50,7 +50,7 @@ const double SHIP_GAS_EJECT_SPEED = 0.06;
 
 //DUST
 const int DUSTLEVETID = 10000;
-const int MAXANTALLDUST = 5000;
+const int MAX_N_DUST_PARTICLES = 5000;
 const double EXPLOSION_SIZE = 1;
 const double RANDOMPERCENTAGESIZE = 0.4;
 const int PARTICULES_PER_EXPLOSION = 15;

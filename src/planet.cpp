@@ -260,8 +260,8 @@ void Planet::collision(const Planet& p)
 	xv = (mass * xv + p.mass * p.getxv()) / (mass + p.getmass());
 	yv = (mass * yv + p.mass * p.getyv()) / (mass + p.getmass());
 
-	double dXV = xv - p.getxv();
-	double dYV = yv - p.getyv();
+	const auto dXV = xv - p.getxv();
+	const auto dYV = yv - p.getyv();
 
 	incTEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
 }
