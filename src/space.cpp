@@ -141,7 +141,7 @@ struct Acceleration2D
 	double y{ 0.0 };
 };
 
-void append_acceleration(const DistanceCalculationResult & distance_info, 
+void accumulate_acceleration(const DistanceCalculationResult & distance_info, 
 						Acceleration2D & acceleration,
 						const Planet & other_planet)
 {
@@ -194,14 +194,14 @@ void Space::update()
 				continue;
 
 			DistanceCalculationResult distance = calculateDistance(thisPlanet, otherPlanet);
-			append_acceleration(distance, acc_sum_1, otherPlanet);
+			accumulate_acceleration(distance, acc_sum_1, otherPlanet);
 
 			if (thisPlanet.getType() != BLACKHOLE &&
 				distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
 				thisPlanet.getmass() > MINIMUMBREAKUPSIZE &&
 				thisPlanet.getmass() / otherPlanet.getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 			{
-				explodePlanetOld(thisPlanet.getId());
+				explodePlanet(thisPlanet);
 				break;
 			}
 
@@ -235,7 +235,7 @@ void Space::update()
 				continue;
 
 			DistanceCalculationResult distance = calculateDistance(thisPlanet, otherPlanet);
-			append_acceleration(distance, acc_sum_2, otherPlanet);
+			accumulate_acceleration(distance, acc_sum_2, otherPlanet);
 		}
 
 		/* Integrate (second part) (Leapfrog) */
@@ -434,85 +434,52 @@ void Space::clear(sf::View& v, sf::Window& w)
 	fokusId = -1;
 }
 
-void Space::explodePlanet(int ind)
+void Space::explodePlanet(Planet& planet)
 {
-	if (pListe.size() > 0 && pListe[ind].getmass() > MINIMUMBREAKUPSIZE)
-	{
-		double origMass = pListe[ind].getmass();
-		double antall = ceil(origMass / MINIMUMBREAKUPSIZE);
-		double mass = origMass / antall;
-		double rad = (Planet(mass)).getRad();
-		double x = pListe[ind].getx();
-		double y = pListe[ind].gety();
-		double xv = pListe[ind].getxv();
-		double yv = pListe[ind].getyv();
-
-		removePlanet(pListe[ind].getId());
-		addExplosion(sf::Vector2f(x, y), 90, sf::Vector2f(xv, yv), 10);
-
-		double kanter = 5;
-		int added = 0;
-
-
-		for (size_t i = 0; i < antall; i += kanter)
-		{
-			double angle = ((double) modernRandomWithLimits(0,200*PI))/100;
-			double deltaVinkel = 2 * PI / kanter;
-			double dist = 2 * rad * (1 / sin(deltaVinkel) - 1) + EXPLODE_PLANET_DISTCONST + 2 * rad + (2 * kanter - 10)*rad;
-			double escVel = G*sqrt(origMass) * EXPLODE_PLANET_SPEEDMULT_OTHER / cbrt(dist+0.1);
-			kanter++;
-
-			for (size_t q = 0; q < kanter; q++)
-			{
-				Planet Q(mass, x + dist  * cos(angle), y + dist * sin(angle), xv + escVel * cos(angle), yv + escVel * sin(angle));
-				Q.setTemp(1500);
-				addPlanet(Q);
-				angle += deltaVinkel;
-				added++;
-				if (added >= antall) return;
-			}
-
-		}
-		
-	}
-}
-
-void Space::explodePlanetOld(int id)
-{
-	Planet* ptr = findPlanetPtr(id);
-	if (!ptr)
+	const auto match = std::find_if(pListe.begin(), pListe.end(), 
+		[&planet](const auto& p) { return p.getId() == planet.getId(); });
+	if (match == pListe.end())
 		return;
-	const auto& planet = *ptr;
 
-	const double antall = modernRandomWithLimits(4, 8);
-	double masse = planet.getmass();
-	int x = planet.getx();
+	if (match->getmass() < MINIMUMBREAKUPSIZE)
+		return;
+
+	
+
+	double origMass = planet.getmass();
+	double antall = ceil(origMass / MINIMUMBREAKUPSIZE);
+	double mass = origMass / antall;
+	double rad = (Planet(mass)).getRad();
+	double x = planet.getx();
 	double y = planet.gety();
-	double radius = planet.getRad();
+	double xv = planet.getxv();
+	double yv = planet.getyv();
 
-	double angle = 0;
+	removePlanet(planet.getId());
+	addExplosion(sf::Vector2f(x, y), 90, sf::Vector2f(xv, yv), 10);
 
-	for (size_t i = 0; i < antall; i++)
+	double kanter = 5;
+	int added = 0;
+
+	for (size_t i = 0; i < antall; i += kanter)
 	{
-		Planet Q(masse / antall, 
-			x + 2 * cbrt(radius) * cos(angle), 
-			y + 2 * cbrt(radius) * sin(angle), 
-			planet.getxv() + EXPLODE_PLANET_SPEEDMULT * sqrt(masse) * cos(angle), 
-			planet.getyv() + EXPLODE_PLANET_SPEEDMULT * sqrt(masse) * sin(angle));
-		Q.setTemp(1500);
-		angle += 2 * PI / antall;
-		addPlanet(Q);
-	}
-	removePlanet(id);
-	if (MAX_N_DUST_PARTICLES > smkListe.size() + PARTICULES_PER_EXPLOSION)
-		for (size_t i = 0; i < PARTICULES_PER_EXPLOSION; i++)
-			addSmoke(sf::Vector2f(x, y), 10, sf::Vector2f(planet.getxv() + CREATEDUSTSPEEDMULT * (((double)modernRandomWithLimits(-400, 400)) / 100), 
-				planet.getyv() + CREATEDUSTSPEEDMULT * (((double)modernRandomWithLimits(-400, 400)) / 100)), DUSTLEVETID);
-}
+		double angle = ((double)modernRandomWithLimits(0, 200 * PI)) / 100;
+		double deltaVinkel = 2 * PI / kanter;
+		double dist = 2 * rad * (1 / sin(deltaVinkel) - 1) + EXPLODE_PLANET_DISTCONST + 2 * rad + (2 * kanter - 10) * rad;
+		double escVel = G * sqrt(origMass) * EXPLODE_PLANET_SPEEDMULT_OTHER / cbrt(dist + 0.1);
+		kanter++;
 
-double Space::range(double x1, double y1, double x2, double y2)
-{
-	return sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+		for (size_t q = 0; q < kanter; q++)
+		{
+			Planet Q(mass, x + dist * cos(angle), y + dist * sin(angle), xv + escVel * cos(angle), yv + escVel * sin(angle));
+			Q.setTemp(1500);
+			addPlanet(Q);
+			angle += deltaVinkel;
+			added++;
+			if (added >= antall) return;
+		}
+
+	}
 }
 
 void Space::giveId(Planet &p)
@@ -1143,7 +1110,8 @@ void Space::lockToObject(sf::RenderWindow& w, sf::View& v)
 		//SEARCH
 		for(size_t i = 0; i < pListe.size(); i++)
 		{
-			if (range(localPosition.x, localPosition.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
+			const auto dist = std::hypot(localPosition.x - pListe[i].getx(), localPosition.y - pListe[i].gety());
+			if (dist < pListe[i].getRad())
 			{
 				lockToObjectId = pListe[i].getId();
 				return;
@@ -1151,7 +1119,8 @@ void Space::lockToObject(sf::RenderWindow& w, sf::View& v)
 		}
 
 		//CHECKING IF WE PRESSED ON THE SPACESHIP (NOT USED FOR ANYTHING)
-		if (range(localPosition.x, localPosition.y, ship.getpos().x, ship.getpos().y) < 4.5)
+		const auto dist_to_ship = std::hypot(localPosition.x - ship.getpos().x, localPosition.y - ship.getpos().y);
+		if (dist_to_ship < 4.5)
 		{
 			lockToObjectId = -1;
 			return;

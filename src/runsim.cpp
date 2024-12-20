@@ -134,8 +134,9 @@ void Space::runSim()
 				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
 				for (size_t i = 0; i < pListe.size(); i++)
 				{
-					if (range(mPos.x, mPos.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
-						explodePlanet(i);
+					const auto dist = std::hypot(mPos.x - pListe[i].getx(), mPos.y - pListe[i].gety());
+					if (dist < pListe[i].getRad())
+						explodePlanet(pListe[i]);
 				}
 			}
 
@@ -146,7 +147,8 @@ void Space::runSim()
 				sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 				for (size_t i = 0; i < pListe.size(); i++)
 				{
-					if (range(localPosition.x, localPosition.y, pListe[i].getx(), pListe[i].gety()) < pListe[i].getRad())
+					const auto dist = std::hypot(localPosition.x - pListe[i].getx(), localPosition.y - pListe[i].gety());
+					if (dist < pListe[i].getRad())
 					{
 						if (fokusId != pListe[i].getId())
 						{
@@ -171,7 +173,8 @@ void Space::runSim()
 				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
 				for (size_t i = 0; i < pListe.size(); i++)
 				{
-					if (range(pListe[i].getx(), pListe[i].gety(), mPos.x, mPos.y) < pListe[i].getRad())
+					const auto dist = std::hypot(pListe[i].getx() - mPos.x, pListe[i].gety() - mPos.y);
+					if (dist < pListe[i].getRad())
 					{
 
 						//CHECKING IF IT ALREADY IS IN THE LIST
@@ -323,7 +326,8 @@ void Space::runSim()
 					{
 						sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 
-						if (range(pListe[i].getx(), pListe[i].gety(), localPosition.x, localPosition.y) < pListe[i].getRad())
+						const auto dist = std::hypot(pListe[i].getx() - localPosition.x, pListe[i].gety() - localPosition.y);
+						if (dist < pListe[i].getRad())
 						{
 							planetFuncId = pListe[i].getId();
 							createInOrbitCounter = 1;
@@ -430,7 +434,8 @@ void Space::runSim()
 				sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 				for (size_t i = 0; i < pListe.size(); i++)
 				{
-					if (range(pListe[i].getx(), pListe[i].gety(), localPosition.x, localPosition.y) < pListe[i].getRad())
+					const auto dist = std::hypot(pListe[i].getx() - localPosition.x, pListe[i].gety() - localPosition.y);
+					if (dist < pListe[i].getRad())
 					{
 
 						addExplosion(sf::Vector2f(pListe[i].getx(), pListe[i].gety()), 2 * pListe[i].getRad(), sf::Vector2f(pListe[i].getxv(), pListe[i].getyv()), pListe[i].getmass() / 2);
@@ -463,7 +468,8 @@ void Space::runSim()
 						sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 						for (size_t i = 0; i < pListe.size(); i++)
 						{
-							if (range(pListe[i].getx(), pListe[i].gety(), localPosition.x, localPosition.y) < pListe[i].getRad())
+							const auto dist = std::hypot(pListe[i].getx() - localPosition.x, pListe[i].gety() - localPosition.y);
+							if (dist < pListe[i].getRad())
 							{
 								planetFuncId = pListe[i].getId();
 								ringPlanetCounter = 1;
@@ -599,7 +605,7 @@ void Space::runSim()
 				sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
 				sf::Vector3f massCenterInfoVector(centerOfMass(midlPListe));
 				sf::Vector2f massCenterVelocity = centerOfMassVelocity(midlPListe);
-				double rad = range(new_mouse_pos.x, new_mouse_pos.y, massCenterInfoVector.x, massCenterInfoVector.y);
+				double rad = std::hypot(new_mouse_pos.x - massCenterInfoVector.x, new_mouse_pos.y - massCenterInfoVector.y);
 				Planet midlP(size);
 
 				//DRAWING NEW PLANET AND ORBIT
@@ -673,7 +679,7 @@ void Space::runSim()
 						else if (boundCounter == 1 && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 						{
 							sf::Vector2f mPos(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-							double midlRad = range(mPos.x, mPos.y, bound.getPos().x, bound.getPos().y);
+							double midlRad = std::hypot(mPos.x - bound.getPos().x, mPos.y - bound.getPos().y);
 							bound.setRad(midlRad);
 							if (bound.getRad() > BOUND_MIN_RAD) bound.draw(window, xmidltrans, ymidltrans, zoom);
 						}

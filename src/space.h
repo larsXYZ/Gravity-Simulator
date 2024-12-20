@@ -95,8 +95,7 @@ public:
 	void removeSmoke(int ind);
 	void removeTrail(int ind);
 	void clear(sf::View& v, sf::Window& w);
-	void explodePlanet(int ind);
-	void explodePlanetOld(int id);
+	void explodePlanet(Planet & planet);
 	void randomPlanets(int totmass, int antall,double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l);
@@ -133,6 +132,5 @@ public:
 	int modernRandomWithLimits(int min, int max);
 	static std::string convertDoubleToString(double number);
 	static double convertStringToDouble(std::string string);
-	double range(double x1, double y1, double x2, double y2);
 	std::string calcTemperature(double q, int e);
 };
