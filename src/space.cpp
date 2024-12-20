@@ -201,7 +201,7 @@ void Space::update()
 				thisPlanet.getmass() > MINIMUMBREAKUPSIZE &&
 				thisPlanet.getmass() / otherPlanet.getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 			{
-				explodePlanet(thisPlanet);
+				disintegratePlanet(thisPlanet);
 				break;
 			}
 
@@ -218,6 +218,12 @@ void Space::update()
 					otherPlanet.incMass(thisPlanet.getmass());
 					break;
 				}
+			}
+
+			if (otherPlanet.emitsHeat())
+			{
+				const auto heat = tempConstTwo * thisPlanet.getRad() * thisPlanet.getRad() * otherPlanet.giveTEnergy(timeStep) / distance.dist;
+				thisPlanet.absorbHeat(heat, timeStep);
 			}
 		}
 		
@@ -434,6 +440,50 @@ void Space::clear(sf::View& v, sf::Window& w)
 	fokusId = -1;
 }
 
+void Space::disintegratePlanet(Planet& planet)
+{
+	const auto match = std::find_if(pListe.begin(), pListe.end(),
+		[&planet](const auto& p) { return p.getId() == planet.getId(); });
+	if (match == pListe.end())
+		return;
+
+	if (match->getmass() < MINIMUMBREAKUPSIZE)
+		return;
+
+	double origMass = planet.getmass();
+	double number = ceil(origMass / MINIMUMBREAKUPSIZE);
+	double mass = origMass / number;
+	double rad = (Planet(mass)).getRad();
+	double x = planet.getx();
+	double y = planet.gety();
+	double xv = planet.getxv();
+	double yv = planet.getyv();
+
+	removePlanet(planet.getId());
+
+	double edges = 5;
+	int added = 0;
+
+	for (size_t i = 0; i < number; i += edges)
+	{
+		double angle = ((double)modernRandomWithLimits(0, 200 * PI)) / 100;
+		double delta_angle = 2 * PI / edges;
+		double dist = 2 * rad * (1 / sin(delta_angle) - 1) + EXPLODE_PLANET_DISTCONST + 2 * rad + (2 * edges - 10) * rad;
+		double escape_vel = G * sqrt(origMass) * DISINTEGRATE_PLANET_SPEEDMULT / cbrt(dist + 0.1);
+		edges++;
+
+		for (size_t q = 0; q < edges; q++)
+		{
+			Planet Q(mass, x + dist * cos(angle), y + dist * sin(angle), xv + escape_vel * cos(angle), yv + escape_vel * sin(angle));
+			Q.setTemp(1500);
+			addPlanet(Q);
+			angle += delta_angle;
+			added++;
+			if (added >= number) return;
+		}
+	}
+}
+
 void Space::explodePlanet(Planet& planet)
 {
 	const auto match = std::find_if(pListe.begin(), pListe.end(), 
@@ -443,8 +493,6 @@ void Space::explodePlanet(Planet& planet)
 
 	if (match->getmass() < MINIMUMBREAKUPSIZE)
 		return;
-
-	
 
 	double origMass = planet.getmass();
 	double antall = ceil(origMass / MINIMUMBREAKUPSIZE);
@@ -478,7 +526,6 @@ void Space::explodePlanet(Planet& planet)
 			added++;
 			if (added >= antall) return;
 		}
-
 	}
 }
 

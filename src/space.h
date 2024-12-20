@@ -95,6 +95,7 @@ public:
 	void removeSmoke(int ind);
 	void removeTrail(int ind);
 	void clear(sf::View& v, sf::Window& w);
+	void disintegratePlanet(Planet& planet);
 	void explodePlanet(Planet & planet);
 	void randomPlanets(int totmass, int antall,double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
