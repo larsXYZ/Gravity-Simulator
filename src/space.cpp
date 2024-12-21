@@ -1170,7 +1170,7 @@ void Space::drawLightEffects(sf::RenderWindow& window)
 void Space::lockToObject(sf::RenderWindow& w, sf::View& v)
 {
 	//FINDING NEW OBJECT TO FOCUS ON
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && functions->getSelectedItem() == "Follow object (T)" && !mouseOnWidgets)
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && getSelectedFunction(functions) == FunctionType::FOLLOW_OBJECT && !mouseOnWidgets)
 	{
 		sf::Vector2i localPosition(w.mapPixelToCoords(sf::Mouse::getPosition(w), v));
 
