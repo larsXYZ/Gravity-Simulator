@@ -1,18 +1,14 @@
 #pragma once
 #include <cmath>
 #include <math.h>
-#include <iostream>
 #include "CONSTANTS.h"
 #include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
 #include <random>
-#include <sstream>
 #include <vector>
 #include "Life.h"
 
 class Planet
 {
-private:
 	std::string name = genName();
 
 	//PHYSICAL
@@ -48,6 +44,10 @@ private:
 	int ID_strongest_attractor;
 	double STRENGTH_strongest_attractor = 0;
 	bool marked_for_removal = false;
+
+	//FOR DISINTEGRATION AND IGNORING
+	double disintegrate_grace_end_time = 0;
+	std::vector<int> ignore_ids;
 
 	//GRAPHICS
 	sf::CircleShape circle;
@@ -141,8 +141,6 @@ public:
 	double getxv() const;
 	double getyv() const;
 	double getmass() const;
-	void printInfo() const;
-	void printInfoShort() const;
 	double getRad() const;
 	pType getType() const;
 	double getId() const;
@@ -196,6 +194,14 @@ public:
 	double getStrongestAttractorStrength() { return STRENGTH_strongest_attractor; }
 	void setStrongestAttractorStrength(double strength) { STRENGTH_strongest_attractor = strength; }
 
+	bool canDisintegrate(double curr_time);
+	void setDisintegrationGraceTime(double grace_time, double curr_time);
+	void registerIgnoredId(int id);
+	void clearIgnores();
+	bool isIgnoring(int id) const;
+	
+	void becomeAbsorbedBy(Planet& absorbing_planet);
+	
 	//LIFE FUNCTIONS
 	
 	void setx(double x);

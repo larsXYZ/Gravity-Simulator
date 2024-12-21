@@ -1,5 +1,7 @@
 #include "planet.h"
 
+#include <sstream>
+
 //GET FUNCTIONS
 
 double Planet::getx() const
@@ -133,6 +135,50 @@ void Planet::updateTemp()
 	temperature = temp();
 }
 
+bool Planet::canDisintegrate(double curr_time)
+{
+	if (getType() == BLACKHOLE)
+		return false;
+
+	if (getmass() < MINIMUMBREAKUPSIZE)
+		return false;
+
+	if (!ignore_ids.empty())
+		return false;
+
+	return true;
+}
+
+void Planet::setDisintegrationGraceTime(double grace_time, double curr_time)
+{
+	disintegrate_grace_end_time = curr_time + grace_time;
+}
+
+void Planet::registerIgnoredId(int id)
+{
+	ignore_ids.push_back(id);
+}
+
+void Planet::clearIgnores()
+{
+	ignore_ids.clear();
+}
+
+bool Planet::isIgnoring(int id) const
+{
+	if (ignore_ids.empty())
+		return false;
+
+	return std::find(ignore_ids.begin(), ignore_ids.end(), id) != ignore_ids.end();
+}
+
+void Planet::becomeAbsorbedBy(Planet& absorbing_planet)
+{
+	markForRemoval();
+	absorbing_planet.collision(*this);
+	absorbing_planet.incMass(getmass());
+}
+
 void Planet::setx(double x_)
 {
 	x = x_;
@@ -215,29 +261,6 @@ void Planet::incMass(double m)
 {
 	mass += m;
 	updateRadiAndType();
-}
-
-void Planet::printInfo() const
-{
-	std::cout << "\n#############\n" << std::endl;
-
-	std::cout << "Mass: " << getmass() << std::endl;
-
-	std::cout << "X-posisjon: " << getx() << std::endl;
-
-	std::cout << "Y-posisjon: " << gety() << std::endl;
-
-	std::cout << "X-hastighet: " << getxv() << std::endl;
-
-	std::cout << "Y-hastighet: " << getyv() << std::endl;
-
-	std::cout << "\n#############\n" << std::endl;
-}
-
-void Planet::printInfoShort() const
-{
-	std::cout << "ID: " << getId() << " // " << "M: " << getmass() << "    X: " << getx() << "    | " << getxv() <<
-		"    Y: " << gety() << "    | " << getyv() << "    | " << std::endl;
 }
 
 void Planet::collision(const Planet& p)

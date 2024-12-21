@@ -36,6 +36,7 @@ private:
 	int ys;
 	int nesteid = 0;
 	double timeStep = TIMESTEP_VALUE_START;
+	double curr_time = 0;
 	int iteration = 0;
 	bool fullScreen;
 	double size = 1;
@@ -87,16 +88,16 @@ public:
 	Space(int x, int y, bool f);
 
 	//PLANET FUNCTIONS
-	void addPlanet(Planet p);
-	void printPListe();
-	std::vector<Planet> getPListe();
+	int addPlanet(Planet&& p);
 	void removePlanet(const int id);
 	void removeExplosion(int ind);
 	void removeSmoke(int ind);
 	void removeTrail(int ind);
 	void clear(sf::View& v, sf::Window& w);
-	void disintegratePlanet(Planet& planet);
-	void explodePlanet(Planet & planet);
+
+	void disintegratePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
+	void explodePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
+
 	void randomPlanets(int totmass, int antall,double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l);
@@ -131,6 +132,7 @@ public:
 
 	//OTHER
 	int modernRandomWithLimits(int min, int max);
+	double modernRandomWithLimits(double min, double max);
 	static std::string convertDoubleToString(double number);
 	static double convertStringToDouble(std::string string);
 	std::string calcTemperature(double q, int e);

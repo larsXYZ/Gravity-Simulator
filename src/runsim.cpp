@@ -312,7 +312,7 @@ void Space::runSim()
 					midl.y -= ytrans / zoom;
 					sf::Vector2i localPos(window.mapPixelToCoords(midl, view1));
 					Planet R(size, (xx + xtrans), (yy + ytrans), createPlanetSpeedmult* (xx - localPos.x), createPlanetSpeedmult*(yy - localPos.y));
-					addPlanet(R);
+					addPlanet(std::move(R));
 				}
 			}
 
