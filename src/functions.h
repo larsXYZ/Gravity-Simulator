@@ -34,11 +34,11 @@ const std::vector<Function> function_info
 {
 	{sf::Keyboard::N, "New Object (N)", FunctionType::NEW_OBJECT},
 	{sf::Keyboard::O, "New Object in orbit (O)", FunctionType::OBJECT_IN_ORBIT},
-	{sf::Keyboard::S, "Adv Object in orbit (S)", FunctionType::ADVANCED_OBJECT_IN_ORBIT},
+	{sf::Keyboard::A, "Adv Object in orbit (A)", FunctionType::ADVANCED_OBJECT_IN_ORBIT},
 	{sf::Keyboard::D, "Remove object (D)", FunctionType::REMOVE_OBJECT},
 	{sf::Keyboard::C, "Explode object (C)", FunctionType::EXPLODE_OBJECT},
 	{sf::Keyboard::G, "Random system(G)", FunctionType::RANDOM_SYSTEM},
-	{sf::Keyboard::E, "Spawn ship (E)", FunctionType::SPAWN_SHIP},
+	{sf::Keyboard::S, "Spawn ship (S)", FunctionType::SPAWN_SHIP},
 	{sf::Keyboard::Q, "Rings (Q)", FunctionType::ADD_RINGS},
 	{sf::Keyboard::I, "Info (I)", FunctionType::SHOW_INFO},
 	{sf::Keyboard::F, "Follow object (F)", FunctionType::FOLLOW_OBJECT},
