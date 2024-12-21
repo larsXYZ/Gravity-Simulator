@@ -1,20 +1,21 @@
 #pragma once
 #include <vector>
-#include "planet.h"
 #include <random>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <string>
+
+#include "planet.h"
 #include "Spaceship.h"
 #include "Effect.h"
 #include "CONSTANTS.h"
 #include "Bound.h"
+#include "functions.h"
 
 class Space
 {
-private:
 	//CONSTANTS
 	int xsize;
 	int ysize;

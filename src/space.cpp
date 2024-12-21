@@ -126,15 +126,17 @@ struct Acceleration2D
 	double y{ 0.0 };
 };
 
-void accumulate_acceleration(const DistanceCalculationResult & distance_info, 
+double accumulate_acceleration(const DistanceCalculationResult & distance_info, 
 						Acceleration2D & acceleration,
 						const Planet & other_planet)
 {
-	const auto F = G * other_planet.getmass() / std::max(distance_info.dist * distance_info.dist, 0.01);
+	const auto A = G * other_planet.getmass() / std::max(distance_info.dist * distance_info.dist, 0.01);
 	const auto angle = atan2(distance_info.dy, distance_info.dx);
 
-	acceleration.x += cos(angle) * F;
-	acceleration.y += sin(angle) * F;
+	acceleration.x += cos(angle) * A;
+	acceleration.y += sin(angle) * A;
+
+	return A;
 }
 
 bool isIgnoringOtherPlanet(const Planet & thisPlanet, const Planet & otherPlanet)
@@ -184,6 +186,8 @@ void Space::update()
 		if (thisPlanet->disintegrationGraceTimeOver(curr_time))
 			thisPlanet->clearIgnores();
 
+		thisPlanet->resetAttractorMeasure();
+
 		Acceleration2D acc_sum_1;
 		for (auto & otherPlanet : pListe)
 		{
@@ -191,7 +195,7 @@ void Space::update()
 				continue;
 
 			DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
-			accumulate_acceleration(distance, acc_sum_1, otherPlanet);
+			const auto acceleration_magnitude = accumulate_acceleration(distance, acc_sum_1, otherPlanet);
 
 			if (thisPlanet->canDisintegrate(curr_time) &&
 				distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
@@ -200,7 +204,7 @@ void Space::update()
 				const auto rad = thisPlanet->getRad();
 
 				disintegratePlanet(*thisPlanet);
-				thisPlanet = &pListe[i]; /* Risking invalidation */
+				thisPlanet = &pListe[i]; /* Risking invalidation due to added planets */
 
 				const auto& particles_by_rad = [rad]()
 				{
@@ -239,6 +243,12 @@ void Space::update()
 			{
 				const auto heat = tempConstTwo * thisPlanet->getRad() * thisPlanet->getRad() * otherPlanet.giveTEnergy(timeStep) / distance.dist;
 				thisPlanet->absorbHeat(heat, timeStep);
+			}
+
+			if (acceleration_magnitude > thisPlanet->getStrongestAttractorStrength())
+			{
+				thisPlanet->setStrongestAttractorStrength(acceleration_magnitude);
+				thisPlanet->setStrongestAttractorIdRef(otherPlanet.getId());
 			}
 		}
 
@@ -341,26 +351,7 @@ void Space::hotkeys(sf::Window& w, sf::View& v)
 		if (timeStepSlider->getValue() > timeStepSlider->getMaximum()) timeStepSlider->setValue(timeStepSlider->getMaximum());
 	}
 
-	const static std::map<sf::Keyboard::Key, std::string> hotkey_map
-	{
-		{sf::Keyboard::F, "Object (F)"},
-		{sf::Keyboard::O, "Object in orbit (O)"},
-		{sf::Keyboard::S, "Adv Object in orbit (S)"},
-		{sf::Keyboard::D, "Remove object (D)"},
-		{sf::Keyboard::C, "Explode object (C)"},
-		{sf::Keyboard::G, "Random system (G)"},
-		{sf::Keyboard::Q, "Rings (Q)"},
-		{sf::Keyboard::E, "Spawn ship (E)"},
-		{sf::Keyboard::I, "Info (I)"},
-		{sf::Keyboard::T, "Follow object (T)"},
-		{sf::Keyboard::B, "Bound (B)"}
-	};
-
-	for (const auto& [key, action] : hotkey_map)
-	{
-		if (sf::Keyboard::isKeyPressed(key))
-			functions->setSelectedItem(action);
-	}
+	setFunctionGUIFromHotkeys(functions);
 }
 
 void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f pos)
@@ -802,17 +793,9 @@ void Space::initSetup()
 	functions->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
 	functions->setTextSize(13);
 	functions->setPosition(5, simInfo->getFullSize().y + 2*UI_SEPERATION_DISTANCE);
-	functions->addItem("Object (F)");
-	functions->addItem("Object in orbit (O)");
-	functions->addItem("Adv Object in orbit (S)");
-	functions->addItem("Remove object (D)");
-	functions->addItem("Explode object (C)");
-	functions->addItem("Random system (G)");
-	functions->addItem("Rings (Q)");
-	functions->addItem("Spawn ship (E)");
-	functions->addItem("Info (I)");
-	functions->addItem("Follow object (T)");
-	functions->addItem("Bound (B)");
+
+	fillFunctionGUIDropdown(functions);
+	
 	functions->setSize(160, functions->getItemCount()*functions->getItemHeight()+5);
 
 	autoBound->setPosition(170, 105 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());

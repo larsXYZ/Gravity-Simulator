@@ -129,7 +129,7 @@ void Space::runSim()
 				lockToObject(window, view1);
 
 			//EXPLODE OBJECT FUNCTION
-			if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Explode object (C)" && !mouseOnWidgets)
+			if (event.type == sf::Event::MouseButtonPressed && getSelectedFunction(functions) == FunctionType::EXPLODE_OBJECT && !mouseOnWidgets)
 			{
 				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
 				for (size_t i = 0; i < pListe.size(); i++)
@@ -141,7 +141,7 @@ void Space::runSim()
 			}
 
 			//FOCUSING ON A NEW OBJECT
-			if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Info (I)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			if (event.type == sf::Event::MouseButtonPressed && getSelectedFunction(functions) == FunctionType::SHOW_INFO && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{
 				bool found = false;
 				sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
@@ -167,7 +167,8 @@ void Space::runSim()
 			}
 
 			//ADVANCED IN ORBIT ADDER
-			if (event.type == sf::Event::MouseButtonPressed && functions->getSelectedItem() == "Adv Object in orbit (S)" && !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
+			if (event.type == sf::Event::MouseButtonPressed && getSelectedFunction(functions) == FunctionType::ADVANCED_OBJECT_IN_ORBIT 
+				&& !mouseOnWidgets && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
 			{
 				//SEARCHING FOR PLANET
 				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
@@ -252,7 +253,7 @@ void Space::runSim()
 			}
 
 			//ADDING PLANET
-			if (functions->getSelectedItem() == "Object (F)" && !mouseOnWidgets)
+			if (getSelectedFunction(functions) == FunctionType::NEW_OBJECT && !mouseOnWidgets)
 			{
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 				{
@@ -317,7 +318,7 @@ void Space::runSim()
 			}
 
 			//ADDING PLANET IN ORBIT
-			if (functions->getSelectedItem() == "Object in orbit (O)" && !mouseOnWidgets)
+			if (getSelectedFunction(functions) == FunctionType::OBJECT_IN_ORBIT && !mouseOnWidgets)
 			{
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && createInOrbitCounter == 0)
 				{
@@ -429,7 +430,7 @@ void Space::runSim()
 			}
 
 			//REMOVING PLANET
-			if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && functions->getSelectedItem() == "Remove object (D)" && !mouseOnWidgets)
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && getSelectedFunction(functions) == FunctionType::REMOVE_OBJECT && !mouseOnWidgets)
 			{
 				sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 				for (size_t i = 0; i < pListe.size(); i++)
@@ -437,7 +438,6 @@ void Space::runSim()
 					const auto dist = std::hypot(pListe[i].getx() - localPosition.x, pListe[i].gety() - localPosition.y);
 					if (dist < pListe[i].getRad())
 					{
-
 						addExplosion(sf::Vector2f(pListe[i].getx(), pListe[i].gety()), 2 * pListe[i].getRad(), sf::Vector2f(pListe[i].getxv(), pListe[i].getyv()), pListe[i].getmass() / 2);
 						removePlanet(pListe[i].getId());
 						break;
@@ -453,13 +453,13 @@ void Space::runSim()
 			}
 
 			//SPAWNING SHIP
-			if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && functions->getSelectedItem() == "Spawn ship (E)" && !mouseOnWidgets && lockToObjectId != -1)
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && getSelectedFunction(functions) == FunctionType::SPAWN_SHIP && !mouseOnWidgets && lockToObjectId != -1)
 			{
 				ship.reset(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 			}
 
 			//ADDING RINGS
-			if (functions->getSelectedItem() == "Rings (Q)" && !mouseOnWidgets)
+			if (getSelectedFunction(functions) == FunctionType::ADD_RINGS && !mouseOnWidgets)
 			{
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && ringPlanetCounter == 0)
 				{
@@ -542,7 +542,7 @@ void Space::runSim()
 			}
 
 			//RANDOM GENERATED SYSTEM
-			if (functions->getSelectedItem() == "Random system (G)" && !mouseOnWidgets)
+			if (getSelectedFunction(functions) == FunctionType::RANDOM_SYSTEM && !mouseOnWidgets)
 			{
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !randomToggle && !randomToggle2)
 				{
@@ -599,7 +599,7 @@ void Space::runSim()
 			updateSpaceship();
 
 			//ADV IN ORBIT ADDER
-			if (functions->getSelectedItem() == "Adv Object in orbit (S)" && !mouseOnWidgets && sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
+			if (getSelectedFunction(functions) == FunctionType::ADVANCED_OBJECT_IN_ORBIT && !mouseOnWidgets && sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
 			{
 
 				sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
@@ -661,7 +661,7 @@ void Space::runSim()
 			//BOUNDS
 			if (!autoBound->isChecked())
 			{
-				if (functions->getSelectedItem() == "Bound (B)" && !mouseOnWidgets)
+				if (getSelectedFunction(functions) == FunctionType::ADD_BOUND && !mouseOnWidgets)
 				{
 					if (bound.getState() && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 					{
@@ -703,7 +703,7 @@ void Space::runSim()
 		drawEffects(window);
 		ship.draw(window, xmidltrans, ymidltrans);
 		drawLightEffects(window);
-		if (functions->getSelectedItem() != "Adv Object in orbit (S)")
+		if (getSelectedFunction(functions) != FunctionType::ADVANCED_OBJECT_IN_ORBIT)
 		{
 			midlPListe.clear();
 		}
