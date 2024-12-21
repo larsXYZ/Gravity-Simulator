@@ -98,11 +98,11 @@ public:
 	void disintegratePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
 	void explodePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
 
-	void randomPlanets(int totmass, int antall,double radius, sf::Vector2f pos);
+	void randomPlanets(int totmass, int antall, double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addTrail(sf::Vector2f p, int l);
-	void GravitySmoke(Planet& forcer, int t);
+	void planetsGravityInfluencesSmoke(Planet& forcer);
 	void giveRings(Planet p, int inner, int outer);
 	
 	//SIMULATION FUNCTIONS
@@ -131,8 +131,9 @@ public:
 	void drawPlanetInfo(sf::RenderWindow& w, sf::View& v);
 
 	//OTHER
-	int modernRandomWithLimits(int min, int max);
-	double modernRandomWithLimits(double min, double max);
+	int uniform_random(int min, int max);
+	double uniform_random(double min, double max);
+	sf::Vector2f random_vector(double magn);
 	static std::string convertDoubleToString(double number);
 	static double convertStringToDouble(std::string string);
 	std::string calcTemperature(double q, int e);

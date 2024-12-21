@@ -171,7 +171,7 @@ void Space::update()
 	for (int i = 0; i < pListe.size(); i++)
 	{
 		if (pListe[i].getmass() > MINIMUMBREAKUPSIZE && updateSMK) 
-			GravitySmoke(pListe[i], timeStep);
+			planetsGravityInfluencesSmoke(pListe[i]);
 	}
 
 	for (int i = 0; i < pListe.size(); i++)
@@ -197,8 +197,26 @@ void Space::update()
 				distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
 				thisPlanet->getmass() / otherPlanet.getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 			{
+				const auto rad = thisPlanet->getRad();
+
 				disintegratePlanet(*thisPlanet);
 				thisPlanet = &pListe[i]; /* Risking invalidation */
+
+				const auto& particles_by_rad = [rad]()
+				{
+					return static_cast<size_t>(50 * rad);
+				};
+
+				const auto n_dust_particles = std::clamp(static_cast<size_t>(MAX_N_DUST_PARTICLES) - smkListe.size(), 
+															static_cast<size_t>(0), particles_by_rad());
+				for (size_t i = 0; i < n_dust_particles; i++)
+				{
+					const auto scatter_pos = random_vector(rad);
+					const auto scatter_vel = random_vector(20.0);
+					addSmoke(sf::Vector2f(thisPlanet->getx() + scatter_pos.x, thisPlanet->gety() + scatter_pos.y), 10,
+						sf::Vector2f(thisPlanet->getxv() + CREATEDUSTSPEEDMULT * scatter_vel.x,
+							thisPlanet->getyv() + CREATEDUSTSPEEDMULT * scatter_vel.y), DUSTLEVETID);
+				}
 				break;
 			}
 
@@ -207,13 +225,6 @@ void Space::update()
 				if (thisPlanet->getmass() <= otherPlanet.getmass())
 				{
 					thisPlanet->becomeAbsorbedBy(otherPlanet);
-
-					if (MAX_N_DUST_PARTICLES > smkListe.size() + PARTICULES_PER_COLLISION)
-						for (size_t i = 0; i < PARTICULES_PER_COLLISION; i++)
-							addSmoke(sf::Vector2f(thisPlanet->getx(), thisPlanet->gety()), 10, 
-								sf::Vector2f(thisPlanet->getxv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4), 
-									thisPlanet->getyv() + CREATEDUSTSPEEDMULT * modernRandomWithLimits(-4, 4)), DUSTLEVETID);
-
 
 					addExplosion(sf::Vector2f(thisPlanet->getx(), thisPlanet->gety()), 
 								2 * thisPlanet->getRad(), 
@@ -354,10 +365,10 @@ void Space::hotkeys(sf::Window& w, sf::View& v)
 
 void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f pos)
 {
-	double speedmultRandom = 0.00000085 * modernRandomWithLimits(120*totmass, 150*totmass);
+	double speedmultRandom = 0.00000085 * uniform_random(120*totmass, 150*totmass);
 	double angle = 0;
 	double delta_angle = 2*PI / antall;
-	double centermass = modernRandomWithLimits(totmass / 3 , totmass / 2);
+	double centermass = uniform_random(totmass / 3 , totmass / 2);
 	totmass -= centermass;
 
 	Planet centerP(centermass, pos.x, pos.y);
@@ -366,11 +377,11 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 
 	for (int i = 0; i < antall; i++, angle += delta_angle)
 	{
-		double mass = modernRandomWithLimits(0.6*totmass /antall, 1.4*totmass /antall);
+		double mass = uniform_random(0.6*totmass /antall, 1.4*totmass /antall);
 
-		double radius2 = modernRandomWithLimits(2*centerP.getRad() , radius);
-		double randomelement1 = modernRandomWithLimits(-speedmultRandom*0.5, speedmultRandom*0.5);
-		double randomelement2 = modernRandomWithLimits(-speedmultRandom*0.5, speedmultRandom*0.5);
+		double radius2 = uniform_random(2*centerP.getRad() , radius);
+		double randomelement1 = uniform_random(-speedmultRandom*0.5, speedmultRandom*0.5);
+		double randomelement2 = uniform_random(-speedmultRandom*0.5, speedmultRandom*0.5);
 
 		double x = cos(angle) * radius2;
 		double y = sin(angle) * radius2;
@@ -461,8 +472,8 @@ void Space::disintegratePlanet(Planet planet)
 		Planet p(mass_per_planet, planet.getx(), planet.gety(), 
 			planet.getxv(), planet.getyv());
 
-		const auto offset_dist = modernRandomWithLimits(0.0, planet.getRad() - p.getRad());
-		const auto angle_offset = modernRandomWithLimits(0.0, 2.0 * PI);
+		const auto offset_dist = uniform_random(0.0, planet.getRad() - p.getRad());
+		const auto angle_offset = uniform_random(0.0, 2.0 * PI);
 
 		p.setx(p.getx() + cos(angle_offset) * offset_dist);
 		p.sety(p.gety() + sin(angle_offset) * offset_dist);
@@ -476,7 +487,7 @@ void Space::disintegratePlanet(Planet planet)
 		{
 			for (const auto & id2 : generated_ids)
 				p->registerIgnoredId(id2);
-			p->setDisintegrationGraceTime(modernRandomWithLimits(MIN_DT_DISINTEGRATE_GRACE_PERIOD, MAX_DT_DISINTEGRATE_GRACE_PERIOD), curr_time);
+			p->setDisintegrationGraceTime(uniform_random(MIN_DT_DISINTEGRATE_GRACE_PERIOD, MAX_DT_DISINTEGRATE_GRACE_PERIOD), curr_time);
 		}
 	}
 
@@ -510,7 +521,7 @@ void Space::explodePlanet(Planet planet)
 
 	for (size_t i = 0; i < antall; i += kanter)
 	{
-		double angle = modernRandomWithLimits(0.0, 2.0 * PI);
+		double angle = uniform_random(0.0, 2.0 * PI);
 		double deltaVinkel = 2 * PI / kanter;
 		double dist = 2 * rad * (1 / sin(deltaVinkel) - 1) + EXPLODE_PLANET_DISTCONST + 2 * rad + (2 * kanter - 10) * rad;
 		double escVel = G * sqrt(origMass) * EXPLODE_PLANET_SPEEDMULT_OTHER / cbrt(dist + 0.1);
@@ -585,12 +596,10 @@ void Space::addTrail(sf::Vector2f p, int l)
 	trlListe.push_back(Trail(p, l));
 }
 
-void Space::GravitySmoke(Planet& forcer, int t)
+void Space::planetsGravityInfluencesSmoke(Planet& forcer)
 {
 	for (auto& smoke : smkListe)
-	{
-		smoke.pullOfGravity(forcer, t);
-	}
+		smoke.pullOfGravity(forcer, timeStep, curr_time);
 }
 
 void Space::giveRings(Planet p, int inner, int outer)
@@ -601,7 +610,7 @@ void Space::giveRings(Planet p, int inner, int outer)
 
 	for (int i = 0; i < antall; i++)
 	{
-		double rad = ((double) modernRandomWithLimits(inner*1000, outer*1000))/1000;
+		double rad = ((double) uniform_random(inner*1000, outer*1000))/1000;
 		double hast = sqrt(G*p.getmass() / rad);
 
 		smkListe.push_back(Smoke(sf::Vector2f(p.getx() + cos(angle)*rad, p.gety()+sin(angle)*rad), 1, 0, sf::Vector2f(hast*cos(angle + 1.507) + p.getxv(),hast*sin(angle + 1.507) + p.getyv()), 20000));
@@ -635,7 +644,7 @@ void Space::updateSpaceship()
 	if (mode == 1)
 	{
 		sf::Vector2f v;
-		double angl = ((double)modernRandomWithLimits(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		double angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 
 		sf::Vector2f p;
 		p.x = ship.getpos().x - 2 * cos(angl);
@@ -643,17 +652,17 @@ void Space::updateSpaceship()
 
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, modernRandomWithLimits(1.3, 1.5), v, 400);
+		addSmoke(p, uniform_random(1.3, 1.5), v, 400);
 
-		angl = ((double)modernRandomWithLimits(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, modernRandomWithLimits(1.3, 1.5), v, 200);
+		addSmoke(p, uniform_random(1.3, 1.5), v, 200);
 	}
 	else if (mode == -1)
 	{
 		sf::Vector2f v;
-		double angl = ((double)modernRandomWithLimits(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		double angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 
 		sf::Vector2f p;
 		p.x = ship.getpos().x - 2 * cos(angl);
@@ -661,12 +670,12 @@ void Space::updateSpaceship()
 
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, modernRandomWithLimits(1.3, 1.5), v, 400);
+		addSmoke(p, uniform_random(1.3, 1.5), v, 400);
 
-		angl = ((double)modernRandomWithLimits(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, modernRandomWithLimits(1.3, 1.5), v, 200);
+		addSmoke(p, uniform_random(1.3, 1.5), v, 200);
 	}
 }
 
@@ -1031,14 +1040,25 @@ T generate_uniform(T min, T max) {
 }
 
 
-int Space::modernRandomWithLimits(int min, int max)
+int Space::uniform_random(int min, int max)
 {
 	return generate_uniform<int>(min, max);
 }
 
-double Space::modernRandomWithLimits(double min, double max)
+double Space::uniform_random(double min, double max)
 {
 	return generate_uniform<double>(min, max);
+}
+
+sf::Vector2f Space::random_vector(double magn)
+{
+	const auto angle = generate_uniform<double>(0.0, 2.0*PI);
+	const auto magnitude = generate_uniform<double>(0.0, magn);
+	return sf::Vector2f
+	{
+		static_cast<float>(cos(angle) * magnitude),
+		static_cast<float>(sin(angle) * magnitude)
+	};
 }
 
 std::string Space::convertDoubleToString(double number)
@@ -1085,7 +1105,7 @@ void Space::drawEffects(sf::RenderWindow &window)
 	{
 		expListe[i].move(timeStep);
 
-		if (expListe[i].getAge(inc) < expListe[i].levetidmax()) expListe[i].print(window, xmidltrans, ymidltrans);
+		if (expListe[i].getAge(inc) < expListe[i].levetidmax()) expListe[i].render(window, xmidltrans, ymidltrans);
 		else
 		{
 			removeExplosion(i);
@@ -1098,7 +1118,7 @@ void Space::drawEffects(sf::RenderWindow &window)
 		smkListe[i].move(timeStep);
 		if (smkListe[i].getAge(timeStep) < smkListe[i].levetidmax() && !smkListe[i].killMe())
 		{
-			smkListe[i].print(window, xmidltrans, ymidltrans);
+			smkListe[i].render(window, xmidltrans, ymidltrans);
 		}
 		else
 		{
@@ -1109,7 +1129,7 @@ void Space::drawEffects(sf::RenderWindow &window)
 	for(size_t i = 0; i < trlListe.size(); i++)
 	{
 		trlListe[i].move(timeStep);
-		if (trlListe[i].getAge(0) < trlListe[i].levetidmax() && !trlListe[i].killMe()) trlListe[i].print(window, xmidltrans, ymidltrans);
+		if (trlListe[i].getAge(0) < trlListe[i].levetidmax() && !trlListe[i].killMe()) trlListe[i].render(window, xmidltrans, ymidltrans);
 		else
 		{
 			removeTrail(i);

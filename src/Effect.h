@@ -28,7 +28,7 @@ public:
 	sf::Vector2f getpos();
 	double getsize();
 	sf::Color getcol();
-	virtual void print(sf::RenderWindow &w, int xm, int ym) = 0;
+	virtual void render(sf::RenderWindow &w, int xm, int ym) = 0;
 	void setID(int i);
 	int getID();
 	int getAge(double t);
@@ -55,7 +55,7 @@ public:
 		setcol(sf::Color::Yellow);
 	}
 
-	void print(sf::RenderWindow &w, int xm, int ym)
+	void render(sf::RenderWindow &w, int xm, int ym)
 	{
 
 
@@ -119,13 +119,13 @@ public:
 #if PARTICLES_PER_SMOKE != 0
 		for (int i = 0; i < PARTICLES_PER_SMOKE; i++)
 		{
-			xpos[i] = (double) modernRandomWithLimits(-EXPLOSION_SIZE, EXPLOSION_SIZE) / PARTICLES_PER_SMOKE;
-			ypos[i] = (double) modernRandomWithLimits(-EXPLOSION_SIZE, EXPLOSION_SIZE) / PARTICLES_PER_SMOKE;
+			xpos[i] = (double) uniform_random(-EXPLOSION_SIZE, EXPLOSION_SIZE) / PARTICLES_PER_SMOKE;
+			ypos[i] = (double) uniform_random(-EXPLOSION_SIZE, EXPLOSION_SIZE) / PARTICLES_PER_SMOKE;
 		}
 #endif
 	}
 
-	void print(sf::RenderWindow &w, int xm, int ym)
+	void render(sf::RenderWindow &w, int xm, int ym)
 	{
 		royk.setPosition(getpos().x - xm, getpos().y - ym);
 		w.draw(royk);
@@ -141,12 +141,11 @@ public:
 		}
 
 	}
-	void pullOfGravity(Planet forcer, int timeStep)
+	void pullOfGravity(Planet forcer, int timeStep, double curr_time)
 	{
-
 		//CHECK IF PLANET IS MASSIVE ENOUGH FOR US TO CARE
-		if (forcer.getmass() < DUST_MIN_PHYSICS_SIZE) return;
-
+		if (forcer.getmass() < DUST_MIN_PHYSICS_SIZE) 
+			return;
 
 		//MATH
 		double distanceSquared = (forcer.getx() - getpos().x)*(forcer.getx() - getpos().x) + (forcer.gety() - getpos().y) * (forcer.gety() - getpos().y);
@@ -159,7 +158,8 @@ public:
 		{
 			setVel(sf::Vector2f(f*cos(angle), f*sin(angle)));
 		}
-		else if(forcer.getRad() > COLLISION_SIZE_MULTIPLIER*MINIMUMBREAKUPSIZE)
+		else if(forcer.getRad() > COLLISION_SIZE_MULTIPLIER*MINIMUMBREAKUPSIZE &&
+				!forcer.disintegrationGraceTimeIsActive(curr_time))
 		{
 			destroyme = true;
 		}
@@ -185,7 +185,7 @@ public:
 		royk.setFillColor(getcol());
 		royk.setOrigin(TRAILRAD, TRAILRAD);
 	}
-	void print(sf::RenderWindow &w, int xm, int ym)
+	void render(sf::RenderWindow &w, int xm, int ym)
 	{
 
 		royk.setPosition(getpos().x - xm, getpos().y - ym);

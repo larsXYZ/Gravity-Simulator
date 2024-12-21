@@ -196,6 +196,7 @@ public:
 
 	bool canDisintegrate(double curr_time);
 	void setDisintegrationGraceTime(double grace_time, double curr_time);
+	bool disintegrationGraceTimeIsActive(double curr_time);
 	bool disintegrationGraceTimeOver(double curr_time);
 	void registerIgnoredId(int id);
 	void clearIgnores();
