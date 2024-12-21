@@ -181,6 +181,9 @@ void Space::update()
 		if (thisPlanet->isMarkedForRemoval())
 			continue;
 
+		if (thisPlanet->disintegrationGraceTimeOver(curr_time))
+			thisPlanet->clearIgnores();
+
 		Acceleration2D acc_sum_1;
 		for (auto & otherPlanet : pListe)
 		{
@@ -473,6 +476,7 @@ void Space::disintegratePlanet(Planet planet)
 		{
 			for (const auto & id2 : generated_ids)
 				p->registerIgnoredId(id2);
+			p->setDisintegrationGraceTime(modernRandomWithLimits(MIN_DT_DISINTEGRATE_GRACE_PERIOD, MAX_DT_DISINTEGRATE_GRACE_PERIOD), curr_time);
 		}
 	}
 

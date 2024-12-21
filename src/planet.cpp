@@ -154,6 +154,11 @@ void Planet::setDisintegrationGraceTime(double grace_time, double curr_time)
 	disintegrate_grace_end_time = curr_time + grace_time;
 }
 
+bool Planet::disintegrationGraceTimeOver(double curr_time)
+{
+	return curr_time > disintegrate_grace_end_time;
+}
+
 void Planet::registerIgnoredId(int id)
 {
 	ignore_ids.push_back(id);
