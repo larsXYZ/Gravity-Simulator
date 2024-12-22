@@ -438,7 +438,6 @@ void Space::runSim()
 					const auto dist = std::hypot(pListe[i].getx() - localPosition.x, pListe[i].gety() - localPosition.y);
 					if (dist < pListe[i].getRad())
 					{
-						addExplosion(sf::Vector2f(pListe[i].getx(), pListe[i].gety()), 2 * pListe[i].getRad(), sf::Vector2f(pListe[i].getxv(), pListe[i].getyv()), pListe[i].getmass() / 2);
 						removePlanet(pListe[i].getId());
 						break;
 					}
