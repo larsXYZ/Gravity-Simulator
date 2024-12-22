@@ -27,7 +27,7 @@ void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
 	explosions.push_back(Explosion(p, s, 0, v, l));
 }
 
-void Space::addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l)
+void Space::addSmoke(sf::Vector2f p,  sf::Vector2f v, double s, int l)
 {
 	particles->add_particle(p, v, s, 10000.0);
 }
@@ -211,11 +211,9 @@ void Space::update()
 															static_cast<size_t>(0), particles_by_rad());
 				for (size_t i = 0; i < n_dust_particles; i++)
 				{
-					const auto scatter_pos = random_vector(rad);
-					const auto scatter_vel = random_vector(20.0);
-					addSmoke(sf::Vector2f(thisPlanet->getx() + scatter_pos.x, thisPlanet->gety() + scatter_pos.y), 10,
-						sf::Vector2f(thisPlanet->getxv() + CREATEDUSTSPEEDMULT * scatter_vel.x,
-							thisPlanet->getyv() + CREATEDUSTSPEEDMULT * scatter_vel.y), DUSTLEVETID);
+					const auto scatter_pos = sf::Vector2f( thisPlanet->getx() , thisPlanet->gety()) + random_vector(rad);
+					const auto scatter_vel = sf::Vector2f(thisPlanet->getxv(), thisPlanet->getyv()) + CREATEDUSTSPEEDMULT * random_vector(20.0);
+					addSmoke(scatter_pos, scatter_vel,2, DUST_LIFESPAN);
 				}
 				break;
 			}
@@ -621,12 +619,12 @@ void Space::updateSpaceship()
 
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, uniform_random(1.3, 1.5), v, 400);
+		addSmoke(p, v, uniform_random(1.3, 1.5), 400);
 
 		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, uniform_random(1.3, 1.5), v, 200);
+		addSmoke(p, v, uniform_random(1.3, 1.5), 200);
 	}
 	else if (mode == -1)
 	{
@@ -639,12 +637,12 @@ void Space::updateSpaceship()
 
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, uniform_random(1.3, 1.5), v, 400);
+		addSmoke(p, v, uniform_random(1.3, 1.5), 400);
 
 		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, uniform_random(1.3, 1.5), v, 200);
+		addSmoke(p, v, uniform_random(1.3, 1.5), 200);
 	}
 }
 

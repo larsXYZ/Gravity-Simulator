@@ -17,15 +17,15 @@ const int FRAMERATE_CHECK_DELTAFRAME = 10;
 
 //DESTRUCTION
 const double CREATEPLANETSPEEDMULT = 0.0005;
-const double CREATEDUSTSPEEDMULT = 0.003;
+const float CREATEDUSTSPEEDMULT = 0.003;
 
 //OBJECT-TYPE LIMITS
 const double ROCKYLIMIT = 15;
 const double TERRESTIALLIMIT = 50;
-const double GASGIANTLIMIT = 400;
-const double SMALLSTARLIMIT = 800;
-const double STARLIMIT = 1500;
-const double BIGSTARLIMIT = 3500;
+const double GASGIANTLIMIT = 600;
+const double SMALLSTARLIMIT = 900;
+const double STARLIMIT = 1800;
+const double BIGSTARLIMIT = 4000;
 
 //STAR HEAT MULTIPLIERS
 const double HEAT_SMALL_STAR_MULT = 0.8;
@@ -49,14 +49,8 @@ const double atmoAlphaMult = 0.3;           //ALPHA OF ATMOSPHERE MULTIPLIER
 const double SHIP_GAS_EJECT_SPEED = 0.06;
 
 //DUST
-const int DUSTLEVETID = 10000;
-const size_t MAX_N_DUST_PARTICLES = 5000;
-const double EXPLOSION_SIZE = 1;
-const double RANDOMPERCENTAGESIZE = 0.4;
-const int PARTICULES_PER_EXPLOSION = 15;
-const size_t PARTICULES_PER_DISINTEGRATION = 300;
-const int PARTICLES_PER_SMOKE = 0;
-const int SMK_ACCURACY = 4;
+const int DUST_LIFESPAN = 10000;
+const size_t MAX_N_DUST_PARTICLES = 10000;
 const int DUST_MIN_PHYSICS_SIZE = 15;
 
 //COLLISIONS

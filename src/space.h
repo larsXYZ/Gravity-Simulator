@@ -106,7 +106,7 @@ public:
 
 	void randomPlanets(int totmass, int antall, double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
-	void addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l);
+	void addSmoke(sf::Vector2f p, sf::Vector2f v, double s, int l);
 	void addTrail(sf::Vector2f p, int l);
 	void giveRings(Planet p, int inner, int outer);
 	
