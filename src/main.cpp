@@ -206,17 +206,17 @@ int main()
 				settingScreen.close();
 				exit(0);
 			}
-				
-			evaluateCustomResolutionInputsVisibility(resSetup, customResX, customResY);
-			evaluateStartButtonVisibility(resSetup, customResX, customResY, startButton);
-			
-			settingScreen.draw(title);
-			settingScreen.draw(version);
-			settingGUI.draw();
-			settingScreen.display();
-
-			if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
-				start(resSetup, modeSetup, customResX, customResY);
 		}
+
+		evaluateCustomResolutionInputsVisibility(resSetup, customResX, customResY);
+		evaluateStartButtonVisibility(resSetup, customResX, customResY, startButton);
+
+		settingScreen.draw(title);
+		settingScreen.draw(version);
+		settingGUI.draw();
+		settingScreen.display();
+
+		if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+			start(resSetup, modeSetup, customResX, customResY);
 	}
 }
