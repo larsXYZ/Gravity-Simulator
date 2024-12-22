@@ -144,7 +144,6 @@ public:
 	double getRad() const;
 	pType getType() const;
 	double getId() const;
-	double getG() const;
 
 	int getStrongestAttractorId() const
 	{
@@ -194,10 +193,10 @@ public:
 	double getStrongestAttractorStrength() { return STRENGTH_strongest_attractor; }
 	void setStrongestAttractorStrength(double strength) { STRENGTH_strongest_attractor = strength; }
 
-	bool canDisintegrate(double curr_time);
+	bool canDisintegrate(double curr_time) const;
 	void setDisintegrationGraceTime(double grace_time, double curr_time);
-	bool disintegrationGraceTimeIsActive(double curr_time);
-	bool disintegrationGraceTimeOver(double curr_time);
+	bool disintegrationGraceTimeIsActive(double curr_time) const;
+	bool disintegrationGraceTimeOver(double curr_time) const;
 	void registerIgnoredId(int id);
 	void clearIgnores();
 	bool isIgnoring(int id) const;

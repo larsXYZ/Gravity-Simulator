@@ -230,8 +230,8 @@ bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 	else if (!isLanded)
 	{
 		double angle = atan2(forcer.gety() - ship.getpos().y, forcer.getx() - ship.getpos().x);
-		double xf = forcer.getG() * forcer.getmass() / (dist*dist) * cos(angle);
-		double yf = forcer.getG() * forcer.getmass() / (dist*dist)* sin(angle);
+		double xf = G * forcer.getmass() / (dist*dist) * cos(angle);
+		double yf = G * forcer.getmass() / (dist*dist)* sin(angle);
 
 		if (dist > forcer.getRad())
 		{

@@ -50,11 +50,6 @@ double Planet::getId() const
 	return id;
 }
 
-double Planet::getG() const
-{
-	return G;
-}
-
 void Planet::mark(double i)
 {
 	id = i;
@@ -135,7 +130,7 @@ void Planet::updateTemp()
 	temperature = temp();
 }
 
-bool Planet::canDisintegrate(double curr_time)
+bool Planet::canDisintegrate(double curr_time) const
 {
 	if (getType() == BLACKHOLE)
 		return false;
@@ -154,12 +149,12 @@ void Planet::setDisintegrationGraceTime(double grace_time, double curr_time)
 	disintegrate_grace_end_time = curr_time + grace_time;
 }
 
-bool Planet::disintegrationGraceTimeIsActive(double curr_time)
+bool Planet::disintegrationGraceTimeIsActive(double curr_time) const
 {
 	return !disintegrationGraceTimeOver(curr_time);
 }
 
-bool Planet::disintegrationGraceTimeOver(double curr_time)
+bool Planet::disintegrationGraceTimeOver(double curr_time) const
 {
 	return curr_time > disintegrate_grace_end_time;
 }
