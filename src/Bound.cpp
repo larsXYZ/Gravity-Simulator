@@ -45,7 +45,7 @@ bool Bound::getState() const
 
 bool Bound::isOutside(sf::Vector2f p) const
 {
-	return sqrt((p.x - getPos().x) * (p.x - getPos().x) + (p.y - getPos().y) * (p.y - getPos().y)) > indicator.getRadius();
+	return std::hypot((p.x - getPos().x), (p.y - getPos().y)) > indicator.getRadius();
 }
 
 void Bound::draw(sf::RenderWindow& w, double xx, double yy, double z)

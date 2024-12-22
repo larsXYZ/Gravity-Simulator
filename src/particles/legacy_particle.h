@@ -11,7 +11,8 @@ public:
 	LegacyParticle(const sf::Vector2f & position, const sf::Vector2f & velocity, double size)
 		: velocity(velocity)
 	{
-		indicator.setFillColor(sf::Color(200, 200, 200, 100));
+		//indicator.setFillColor(sf::Color(200, 200, 200, 100));
+		indicator.setFillColor(sf::Color::White);
 		indicator.setRadius(size);
 		indicator.setOrigin(size, size);
 		indicator.setPosition(position);

@@ -44,43 +44,50 @@ public:
 	{
 		next_dec_simulation_target();
 
-		for (const auto & planet : planets)
+		for (auto& particle : particles[current_dec_simulation_target])
 		{
-			if (planet.getmass() < DUST_MIN_PHYSICS_SIZE)
-				continue;
-
-			for (auto & particle : particles[current_dec_simulation_target])
+			if (bound.isOutside(particle.get_position()))
 			{
-				const auto curr_pos = particle.get_position();
-				const auto distanceSquared = (planet.getx() - curr_pos.x) * (planet.getx() - curr_pos.x)
-					+ (planet.gety() - curr_pos.y) * (planet.gety() - curr_pos.y);
-				const auto angle = atan2(planet.gety() - curr_pos.y, planet.getx() - curr_pos.x);
+				particle.mark_for_removal();
+				continue;
+			}
 
-				const auto A = G * planet.getmass() / (distanceSquared);
-				const auto acceleration = sf::Vector2f(A * cos(angle),
-														A * sin(angle));
+			for (const auto& planet : planets)
+			{
+				if (planet.getmass() < DUST_MIN_PHYSICS_SIZE)
+					continue;
+
+				const auto curr_pos = particle.get_position();
+
+				const auto dx = planet.getx() - curr_pos.x;
+				const auto dy = planet.gety() - curr_pos.y;
+				const auto distanceSquared = dx * dx + dy * dy;
 				
-				if (distanceSquared > planet.getRad() * planet.getRad())
-				{
-					const auto dv = static_cast<float>(timestep) * static_cast<float>(decimation_factor) * acceleration;
-					particle.set_velocity(particle.get_velocity() + dv);
-				}
-				else if (planet.getRad() > COLLISION_SIZE_MULTIPLIER * MINIMUMBREAKUPSIZE &&
+				if (distanceSquared <= planet.getRad() * planet.getRad() && 
 					!planet.disintegrationGraceTimeIsActive(curr_time))
 				{
 					particle.mark_for_removal();
+					break;
 				}
+
+				const auto angle = atan2(planet.gety() - curr_pos.y, planet.getx() - curr_pos.x);
+				const auto A = G * planet.getmass() / distanceSquared;
+				const auto acceleration = sf::Vector2f(A * cos(angle),
+														A * sin(angle));
+
+				const auto dv = static_cast<float>(timestep) * static_cast<float>(decimation_factor) * acceleration;
+				particle.set_velocity(particle.get_velocity() + dv);
 			}
 		}
 
+		std::erase_if(particles[current_dec_simulation_target],
+			[](const auto& p)
+			{
+				return p.to_be_removed();
+			});
+
 		for (auto& particle_vector : particles)
 		{
-			std::remove_if(particle_vector.begin(), particle_vector.end(),
-				[](auto& p)
-				{
-					return p.to_be_removed();
-				});
-
 			for (auto& particle : particle_vector)
 				particle.move(timestep);
 		}
