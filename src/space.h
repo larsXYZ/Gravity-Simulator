@@ -69,7 +69,7 @@ class Space
 	std::vector<Planet> planets;
 	std::vector<int> temp_planet_ids;
 	std::vector<Explosion> explosions;
-	std::vector<Smoke> smoke;
+	std::vector<Smoke> smoke_particles;
 	std::vector<Trail> trail;
 	Bound bound;
 
@@ -103,7 +103,7 @@ public:
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addTrail(sf::Vector2f p, int l);
-	void planetsGravityInfluencesSmoke(Planet& forcer);
+	void planet_pulls_smoke(Planet& forcer);
 	void giveRings(Planet p, int inner, int outer);
 	
 	//SIMULATION FUNCTIONS

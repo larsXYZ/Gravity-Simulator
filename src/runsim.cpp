@@ -769,7 +769,8 @@ void Space::runSim()
 		window.setView(view1);
 		window.display();
 
-		if (timeStep != 0) update();
+		if (timeStep != 0) 
+			update();
 
 		//FRAMERATE OUT
 		sf::Time time = clock.getElapsedTime();
