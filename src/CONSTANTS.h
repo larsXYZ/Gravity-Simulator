@@ -39,7 +39,7 @@ const double MASS_SLIDER_MAX_VALUE = 4000;
 //PLANETTHINGS
 const int maxAtmoLayer = 15;
 const int minAtmoLayer = 10;
-const int brightnessVariance = 8;           //THE VARIANCE OF ATMOSPHERE BRIGHNESS IN GASGIANTS
+const int brightnessVariance = 8;           //THE VARIANCE OF ATMOSPHERE BRIGHTNESS IN GASGIANTS
 const double greenHouseEffectMult = 0.0008;
 const double maxAtmo = 600;                 //MAX ATMOSPHERE
 const double atmoThicknessMult = 0.05;      //HEIGHT OF ATMOSPHERE MULTIPLIER
@@ -49,7 +49,8 @@ const double atmoAlphaMult = 0.3;           //ALPHA OF ATMOSPHERE MULTIPLIER
 const double SHIP_GAS_EJECT_SPEED = 0.06;
 
 //DUST
-const int DUST_LIFESPAN = 10000;
+const double DUST_LIFESPAN_MIN = 40000.0;
+const double DUST_LIFESPAN_MAX = 80000.0;
 const size_t MAX_N_DUST_PARTICLES = 10000;
 const int DUST_MIN_PHYSICS_SIZE = 15;
 

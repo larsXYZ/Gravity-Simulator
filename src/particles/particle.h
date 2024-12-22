@@ -3,8 +3,11 @@ class IParticle
 {
 
 	bool remove_me{ false };
+	double removal_time;
 
 public:
+
+	IParticle(double removal_time) : removal_time(removal_time) {}
 
 	~IParticle() = default;
 
@@ -37,5 +40,5 @@ public:
 	 * For removing particles
 	 */
 	void mark_for_removal() { remove_me = true; }
-	bool to_be_removed() const { return remove_me; }
+	bool to_be_removed(double curr_time) const { return remove_me || removal_time < curr_time; }
 };

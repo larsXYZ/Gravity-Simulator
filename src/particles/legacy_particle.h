@@ -8,8 +8,8 @@ class LegacyParticle : public IParticle
 	sf::CircleShape indicator;
 
 public:
-	LegacyParticle(const sf::Vector2f & position, const sf::Vector2f & velocity, double size)
-		: velocity(velocity)
+	LegacyParticle(const sf::Vector2f & position, const sf::Vector2f & velocity, double size, double removal_time)
+		: IParticle(removal_time), velocity(velocity)
 	{
 		indicator.setFillColor(sf::Color(200, 200, 200, 100));
 		indicator.setRadius(size);

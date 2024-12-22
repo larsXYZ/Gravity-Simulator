@@ -9,7 +9,7 @@ public:
 	~IParticleContainer() = default;
 	virtual void update(const std::vector<Planet> & planets, const Bound &bound, double timestep, double curr_time) = 0;
 	virtual void render_all(sf::RenderWindow &w) = 0;
-	virtual void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double lifespan) = 0;
+	virtual void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time) = 0;
 	virtual void clear() = 0;
 	virtual size_t size() = 0;
 };
@@ -81,9 +81,9 @@ public:
 		}
 
 		std::erase_if(particles[current_dec_simulation_target],
-			[](const auto& p)
+			[curr_time](const auto& p)
 			{
-				return p.to_be_removed();
+				return p.to_be_removed(curr_time);
 			});
 
 		for (auto& particle_vector : particles)
@@ -100,7 +100,7 @@ public:
 				particle.render(window);
 	}
 
-	void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double lifespan) override
+	void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time) override
 	{
 		auto smallest_vector = std::min_element(particles.begin(),
 			particles.end(), [](const auto& vec1, const auto& vec2) {return vec1.size() < vec2.size(); });
@@ -108,7 +108,8 @@ public:
 		smallest_vector->push_back(LegacyParticle(
 			position,
 			velocity,
-			size
+			size,
+			removal_time
 		));
 	}
 

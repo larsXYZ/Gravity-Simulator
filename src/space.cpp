@@ -27,9 +27,9 @@ void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
 	explosions.push_back(Explosion(p, s, 0, v, l));
 }
 
-void Space::addSmoke(sf::Vector2f p,  sf::Vector2f v, double s, int l)
+void Space::addSmoke(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan)
 {
-	particles->add_particle(p, v, s, 10000.0);
+	particles->add_particle(p, v, s, curr_time+lifespan);
 }
 
 sf::Vector3f Space::centerOfMass(std::vector<int> midlPList)
@@ -213,7 +213,8 @@ void Space::update()
 				{
 					const auto scatter_pos = sf::Vector2f( thisPlanet->getx() , thisPlanet->gety()) + random_vector(rad);
 					const auto scatter_vel = sf::Vector2f(thisPlanet->getxv(), thisPlanet->getyv()) + CREATEDUSTSPEEDMULT * random_vector(20.0);
-					addSmoke(scatter_pos, scatter_vel,2, DUST_LIFESPAN);
+					const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
+					addSmoke(scatter_pos, scatter_vel,2, lifespan);
 				}
 				break;
 			}
