@@ -66,11 +66,11 @@ class Space
 
 	//OBJECTS IN THE SIMULATION
 	SpaceShip ship;
-	std::vector<Planet> pListe;
-	std::vector<int> midlPListe;
-	std::vector<Explosion> expListe;
-	std::vector<Smoke> smkListe;
-	std::vector<Trail> trlListe;
+	std::vector<Planet> planets;
+	std::vector<int> temp_planet_ids;
+	std::vector<Explosion> explosions;
+	std::vector<Smoke> smoke;
+	std::vector<Trail> trail;
 	Bound bound;
 
 	//GUI

@@ -15,18 +15,18 @@ int Space::addPlanet(Planet&& p)
 	
 	p.setColor();
 
-	pListe.push_back(std::move(p));
+	planets.push_back(std::move(p));
 	return id;
 }
 
 void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
 {
-	expListe.push_back(Explosion(p, s, 0, v, l));
+	explosions.push_back(Explosion(p, s, 0, v, l));
 }
 
 void Space::addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l)
 {
-	smkListe.push_back(Smoke(p, s, 0, v, l));
+	smoke.push_back(Smoke(p, s, 0, v, l));
 }
 
 sf::Vector3f Space::centerOfMass(std::vector<int> midlPList)
@@ -84,10 +84,10 @@ sf::Vector2f Space::centerOfMassAll()
 	double xCont = 0;
 	double yCont = 0;
 
-	for (size_t i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < planets.size(); i++)
 	{
 
-		Planet p = pListe[i];
+		Planet p = planets[i];
 		if (p.getmass() != -1)
 		{
 			double pMass = p.getmass();
@@ -152,7 +152,7 @@ void Space::update()
 
 	//SETUP & OTHER
 	totalMass = 0;
-	if (pListe.size() > 0) iteration += 1;
+	if (planets.size() > 0) iteration += 1;
 	if (ship.getLandedState())
 	{
 		if (findPlanet(ship.getPlanetID()).getmass() == -1)
@@ -162,23 +162,23 @@ void Space::update()
 	if (iteration % SMK_ACCURACY == 0) updateSMK = true;
 
 	//SHIPCHECK
-	for (size_t i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < planets.size(); i++)
 	{
-		if (ship.isExist() && !ship.pullofGravity(pListe[i], ship, timeStep))
+		if (ship.isExist() && !ship.pullofGravity(planets[i], ship, timeStep))
 			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
 	}
 
 	//SMOKE MOVE
 #pragma omp parallel for schedule(dynamic)
-	for (int i = 0; i < pListe.size(); i++)
+	for (int i = 0; i < planets.size(); i++)
 	{
-		if (pListe[i].getmass() > MINIMUMBREAKUPSIZE && updateSMK) 
-			planetsGravityInfluencesSmoke(pListe[i]);
+		if (planets[i].getmass() > MINIMUMBREAKUPSIZE && updateSMK) 
+			planetsGravityInfluencesSmoke(planets[i]);
 	}
 
-	for (int i = 0; i < pListe.size(); i++)
+	for (int i = 0; i < planets.size(); i++)
 	{
-		Planet * thisPlanet = &pListe[i];
+		Planet * thisPlanet = &planets[i];
 
 		if (thisPlanet->isMarkedForRemoval())
 			continue;
@@ -189,7 +189,7 @@ void Space::update()
 		thisPlanet->resetAttractorMeasure();
 
 		Acceleration2D acc_sum_1;
-		for (auto & otherPlanet : pListe)
+		for (auto & otherPlanet : planets)
 		{
 			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
 				continue;
@@ -204,14 +204,14 @@ void Space::update()
 				const auto rad = thisPlanet->getRad();
 
 				disintegratePlanet(*thisPlanet);
-				thisPlanet = &pListe[i]; /* Risking invalidation due to added planets */
+				thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
 
 				const auto& particles_by_rad = [rad]()
 				{
 					return static_cast<size_t>(50 * rad);
 				};
 
-				const auto n_dust_particles = std::clamp(static_cast<size_t>(MAX_N_DUST_PARTICLES) - smkListe.size(), 
+				const auto n_dust_particles = std::clamp(static_cast<size_t>(MAX_N_DUST_PARTICLES) - smoke.size(), 
 															static_cast<size_t>(0), particles_by_rad());
 				for (size_t i = 0; i < n_dust_particles; i++)
 				{
@@ -262,7 +262,7 @@ void Space::update()
 		thisPlanet->sety(thisPlanet->gety() + thisPlanet->getyv() * timeStep + 0.5 * acc_sum_1.y * timeStep * timeStep);
 
 		Acceleration2D acc_sum_2;
-		for (auto& otherPlanet : pListe)
+		for (auto& otherPlanet : planets)
 		{
 			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
 				continue;
@@ -276,31 +276,31 @@ void Space::update()
 		thisPlanet->setyv(thisPlanet->getyv() + 0.5 * (acc_sum_1.y + acc_sum_2.y) * timeStep);
 	}
 
-	std::erase_if(pListe, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
+	std::erase_if(planets, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
 
 	//OTHER
 #pragma omp parallel for schedule(dynamic)
-	for (int i = 0; i < pListe.size(); i++)
+	for (int i = 0; i < planets.size(); i++)
 	{
 		//TEMPERATURE
-		pListe[i].coolDOWN(timeStep);
-		pListe[i].setColor();
-		pListe[i].updateTemp();
+		planets[i].coolDOWN(timeStep);
+		planets[i].setColor();
+		planets[i].updateTemp();
 
 		//ATMOSPHERE
-		pListe[i].updateAtmo(timeStep);
+		planets[i].updateAtmo(timeStep);
 
 		//LIFE
-		pListe[i].updateLife(timeStep);
+		planets[i].updateLife(timeStep);
 	}
 
 	//COLONIZATION
-	for (size_t i = 0; i < pListe.size(); i++)
+	for (size_t i = 0; i < planets.size(); i++)
 	{
-		if (pListe[i].getLife().willExp())
+		if (planets[i].getLife().willExp())
 		{
 			int index = findBestPlanet(i);
-			if (index != -1) pListe[index].colonize(pListe[i].getLife().getId(), pListe[i].getLife().getCol(), pListe[i].getLife().getDesc());
+			if (index != -1) planets[index].colonize(planets[i].getLife().getId(), planets[i].getLife().getCol(), planets[i].getLife().getDesc());
 		}
 	}
 	
@@ -308,16 +308,16 @@ void Space::update()
 	if (bound.getState())
 	{
 		//PLANETS
-		for (size_t i = 0; i < pListe.size(); i++)
+		for (size_t i = 0; i < planets.size(); i++)
 		{
-			if (bound.isOutside(sf::Vector2f(pListe[i].getx(), pListe[i].gety())))
-				removePlanet(pListe[i].getId());
+			if (bound.isOutside(sf::Vector2f(planets[i].getx(), planets[i].gety())))
+				removePlanet(planets[i].getId());
 		}
 
 		//DUST
-		for (size_t i = 0; i < smkListe.size(); i++)
+		for (size_t i = 0; i < smoke.size(); i++)
 		{
-			if (bound.isOutside(smkListe[i].getpos())) removeSmoke(i);
+			if (bound.isOutside(smoke[i].getpos())) removeSmoke(i);
 		}
 
 		//SHIP
@@ -334,8 +334,8 @@ void Space::update()
 	}
 
 	//CHECKING TOTAL MASS
-	for (size_t i = 0; i < pListe.size(); i++)
-		totalMass += pListe[i].getmass();
+	for (size_t i = 0; i < planets.size(); i++)
+		totalMass += planets[i].getmass();
 }
 
 void Space::hotkeys(sf::Window& w, sf::View& v)
@@ -392,42 +392,42 @@ void Space::removePlanet(const int id)
 
 void Space::removeTrail(int ind)
 {
-	if (ind >= (int) trlListe.size() || ind < 0) return;
+	if (ind >= (int) trail.size() || ind < 0) return;
 
-	auto it = trlListe.begin() + ind;
-	*it = std::move(trlListe.back());
-	trlListe.pop_back();
+	auto it = trail.begin() + ind;
+	*it = std::move(trail.back());
+	trail.pop_back();
 
 }
 
 void Space::removeExplosion(int ind)
 {
-	if (ind >= (int) expListe.size() || ind < 0) return;
+	if (ind >= (int) explosions.size() || ind < 0) return;
 
-	auto it = expListe.begin() + ind;
-	*it = std::move(expListe.back());
-	expListe.pop_back();
+	auto it = explosions.begin() + ind;
+	*it = std::move(explosions.back());
+	explosions.pop_back();
 }
 
 void Space::removeSmoke(int ind)
 {
-	if (ind >= (int) smkListe.size() || ind < 0) return;
+	if (ind >= (int) smoke.size() || ind < 0) return;
 
 	std::vector<Smoke> midl;
 
-	auto it = smkListe.begin() + ind;
-	*it = std::move(smkListe.back());
-	smkListe.pop_back();
+	auto it = smoke.begin() + ind;
+	*it = std::move(smoke.back());
+	smoke.pop_back();
 }
 
 void Space::clear(sf::View& v, sf::Window& w)
 {
 	(void) w;
 
-	pListe.clear();
-	expListe.clear();
-	smkListe.clear();
-	trlListe.clear();
+	planets.clear();
+	explosions.clear();
+	smoke.clear();
+	trail.clear();
 	bound = Bound();
 
 	xtrans = 0;
@@ -445,10 +445,10 @@ void Space::clear(sf::View& v, sf::Window& w)
 
 void Space::disintegratePlanet(Planet planet)
 {
-	const auto match = std::find_if(pListe.begin(), pListe.end(),
+	const auto match = std::find_if(planets.begin(), planets.end(),
 		[&planet](const auto& p) { return p.getId() == planet.getId(); });
 
-	if (match == pListe.end())
+	if (match == planets.end())
 		return;
 
 	if (match->getmass() < MINIMUMBREAKUPSIZE)
@@ -487,9 +487,9 @@ void Space::disintegratePlanet(Planet planet)
 
 void Space::explodePlanet(Planet planet)
 {
-	const auto match = std::find_if(pListe.begin(), pListe.end(), 
+	const auto match = std::find_if(planets.begin(), planets.end(), 
 		[&planet](const auto& p) { return p.getId() == planet.getId(); });
-	if (match == pListe.end())
+	if (match == planets.end())
 		return;
 
 	if (match->getmass() < MINIMUMBREAKUPSIZE)
@@ -538,11 +538,11 @@ void Space::giveId(Planet &p)
 
 Planet Space::findPlanet(double id)
 {
-	for(size_t i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < planets.size(); i++)
 	{
-		if (pListe[i].getId() == id)
+		if (planets[i].getId() == id)
 		{
-			return pListe[i];
+			return planets[i];
 		}
 	}
 	return Planet(-1);
@@ -550,7 +550,7 @@ Planet Space::findPlanet(double id)
 
 Planet* Space::findPlanetPtr(double id)
 {
-	for (auto & planet : pListe)
+	for (auto & planet : planets)
 	{
 		if (planet.getId() == id)
 			return &planet;
@@ -563,17 +563,17 @@ int Space::findBestPlanet(int q)
 	int ind = -1;
 	double highest = -1;
 
-	for(size_t i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < planets.size(); i++)
 	{
-		if (pListe[i].getType() == ROCKY || pListe[i].getType() == TERRESTIAL)
+		if (planets[i].getType() == ROCKY || planets[i].getType() == TERRESTIAL)
 		{
-			int nr = pListe[i].getLife().getTypeEnum();
+			int nr = planets[i].getLife().getTypeEnum();
 			if (nr == 6 || nr == 7 || nr == 5 || nr == 4)
 			{
 			}
-			else if (pListe[i].getSupportedBiomass() > highest && (int) i != q)
+			else if (planets[i].getSupportedBiomass() > highest && (int) i != q)
 			{
-				highest = pListe[i].getSupportedBiomass();
+				highest = planets[i].getSupportedBiomass();
 				ind = i;
 			}
 		}
@@ -584,12 +584,12 @@ int Space::findBestPlanet(int q)
 
 void Space::addTrail(sf::Vector2f p, int l)
 {
-	trlListe.push_back(Trail(p, l));
+	trail.push_back(Trail(p, l));
 }
 
 void Space::planetsGravityInfluencesSmoke(Planet& forcer)
 {
-	for (auto& smoke : smkListe)
+	for (auto& smoke : smoke)
 		smoke.pullOfGravity(forcer, timeStep, curr_time);
 }
 
@@ -604,7 +604,7 @@ void Space::giveRings(Planet p, int inner, int outer)
 		double rad = ((double) uniform_random(inner*1000, outer*1000))/1000;
 		double hast = sqrt(G*p.getmass() / rad);
 
-		smkListe.push_back(Smoke(sf::Vector2f(p.getx() + cos(angle)*rad, p.gety()+sin(angle)*rad), 1, 0, sf::Vector2f(hast*cos(angle + 1.507) + p.getxv(),hast*sin(angle + 1.507) + p.getyv()), 20000));
+		smoke.push_back(Smoke(sf::Vector2f(p.getx() + cos(angle)*rad, p.gety()+sin(angle)*rad), 1, 0, sf::Vector2f(hast*cos(angle + 1.507) + p.getxv(),hast*sin(angle + 1.507) + p.getyv()), 20000));
 		
 		angle += delta_angle;
 
@@ -778,7 +778,7 @@ void Space::setInfo()
 		}
 
 	//Displaying sim-info
-	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(pListe.size()) + "\nParticles: " + convertDoubleToString(smkListe.size()) + "\nZoom: " + convertDoubleToString(1 / zoom));
+	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(planets.size()) + "\nParticles: " + convertDoubleToString(smoke.size()) + "\nZoom: " + convertDoubleToString(1 / zoom));
 
 }
 
@@ -886,7 +886,7 @@ void Space::drawPlanetInfo(sf::RenderWindow& w, sf::View& v)
 		if (iteration % TRAILFREQ == 0) addTrail(pos, TRAILLIFE);
 
 		//POINTING TO STRONGEST GRAVITY SOURCE
-		if (pListe.size() > 1 && fokusP_Parent.getmass() != -1)
+		if (planets.size() > 1 && fokusP_Parent.getmass() != -1)
 		{
 			sf::Vertex g[] =
 			{
@@ -937,7 +937,7 @@ void Space::drawPlanetInfo(sf::RenderWindow& w, sf::View& v)
 			g.setOutlineColor(sf::Color(0, 200, 0, goldi_strength));
 			w.draw(g);
 		}
-		if ((fokusP_Parent.getType() == SMALLSTAR || fokusP_Parent.getType() == STAR || fokusP_Parent.getType() == BIGSTAR) && pListe.size() > 1)
+		if ((fokusP_Parent.getType() == SMALLSTAR || fokusP_Parent.getType() == STAR || fokusP_Parent.getType() == BIGSTAR) && planets.size() > 1)
 		{
 			double goldilock_inner_rad = (tempConstTwo * fokusP_Parent.getRad() * fokusP_Parent.getRad() * fokusP_Parent.temp()) / inner_goldi_temp;
 			double goldilock_outer_rad = (tempConstTwo * fokusP_Parent.getRad() * fokusP_Parent.getRad() * fokusP_Parent.temp()) / outer_goldi_temp;
@@ -954,22 +954,22 @@ void Space::drawPlanetInfo(sf::RenderWindow& w, sf::View& v)
 
 		//DRAWING LINES TO OTHER PLANET WITH THE SAME SPECIES
 		if (fokusP.getLife().getTypeEnum() >= 6) {
-			for(size_t i = 0; i < pListe.size(); i++)
+			for(size_t i = 0; i < planets.size(); i++)
 			{
-				if (pListe[i].getLife().getId() == fokusP.getLife().getId())
+				if (planets[i].getLife().getId() == fokusP.getLife().getId())
 				{
 					sf::Vertex q[] =
 					{
-						sf::Vertex(sf::Vector2f(pListe[i].getx() - xmidltrans, pListe[i].gety() - ymidltrans),fokusP.getLife().getCol()),
+						sf::Vertex(sf::Vector2f(planets[i].getx() - xmidltrans, planets[i].gety() - ymidltrans),fokusP.getLife().getCol()),
 						sf::Vertex(sf::Vector2f(pos.x - xmidltrans, pos.y - ymidltrans),fokusP.getLife().getCol())
 					};
 					w.draw(q, 2, sf::Lines);
 
-					sf::CircleShape omr(pListe[i].getRad() + 5);
-					omr.setPosition(sf::Vector2f(pListe[i].getx() - xmidltrans, pListe[i].gety() - ymidltrans));
-					omr.setOrigin(pListe[i].getRad() + 5, pListe[i].getRad() + 5);
+					sf::CircleShape omr(planets[i].getRad() + 5);
+					omr.setPosition(sf::Vector2f(planets[i].getx() - xmidltrans, planets[i].gety() - ymidltrans));
+					omr.setOrigin(planets[i].getRad() + 5, planets[i].getRad() + 5);
 					omr.setFillColor(sf::Color(0, 0, 0, 0));
-					omr.setOutlineColor(pListe[i].getLife().getCol());
+					omr.setOutlineColor(planets[i].getLife().getCol());
 					omr.setOutlineThickness(1 * zoom);
 					w.draw(omr);
 				}
@@ -987,7 +987,7 @@ void Space::drawPlanetInfo(sf::RenderWindow& w, sf::View& v)
 		text2.setPosition(pos.x + 1.5*fokusP.getRad() - xmidltrans, pos.y + 1.5*fokusP.getRad() - ymidltrans);
 		text2.setScale(0.5*zoom, 0.5*zoom);
 		text2.setString(fokusP.getName() + "\nType: " + typeplanet + "\nRadius: " + convertDoubleToString(fokusP.getRad()) + "\nMass: " + convertDoubleToString(fokusP.getmass()) + "\nSpeed: " + convertDoubleToString(sqrt(fokusP.getxv()*fokusP.getxv() + fokusP.getyv()*fokusP.getyv())));
-		if (pListe.size() > 1) text2.setString(text2.getString() + "\nDistance: " + convertDoubleToString(sqrt((findPlanet(fokusP.getStrongestAttractorId()).getx() - pos.x)*(findPlanet(fokusP.getStrongestAttractorId()).getx() - pos.x) + (findPlanet(fokusP.getStrongestAttractorId()).gety() - pos.y)*(findPlanet(fokusP.getStrongestAttractorId()).gety() - pos.y))));
+		if (planets.size() > 1) text2.setString(text2.getString() + "\nDistance: " + convertDoubleToString(sqrt((findPlanet(fokusP.getStrongestAttractorId()).getx() - pos.x)*(findPlanet(fokusP.getStrongestAttractorId()).getx() - pos.x) + (findPlanet(fokusP.getStrongestAttractorId()).gety() - pos.y)*(findPlanet(fokusP.getStrongestAttractorId()).gety() - pos.y))));
 		text2.setString(text2.getString() + "\nTemp: " + calcTemperature(fokusP.temp(), tempEnhet));
 		if (fokusP.getType() == TERRESTIAL)
 		{
@@ -1071,9 +1071,9 @@ double Space::convertStringToDouble(std::string string)
 void Space::drawPlanets(sf::RenderWindow &window)
 {
 	//DRAWING PLANETS																										
-	for(size_t i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < planets.size(); i++)
 	{
-		pListe[i].draw(window, xmidltrans, ymidltrans);
+		planets[i].draw(window, xmidltrans, ymidltrans);
 	}
 }
 
@@ -1084,11 +1084,11 @@ void Space::drawEffects(sf::RenderWindow &window)
 	int inc = 1;
 	if (timeStep == 0) inc = 0;
 
-	for(size_t i = 0; i < expListe.size(); i++)
+	for(size_t i = 0; i < explosions.size(); i++)
 	{
-		expListe[i].move(timeStep);
+		explosions[i].move(timeStep);
 
-		if (expListe[i].getAge(inc) < expListe[i].levetidmax()) expListe[i].render(window, xmidltrans, ymidltrans);
+		if (explosions[i].getAge(inc) < explosions[i].levetidmax()) explosions[i].render(window, xmidltrans, ymidltrans);
 		else
 		{
 			removeExplosion(i);
@@ -1096,12 +1096,12 @@ void Space::drawEffects(sf::RenderWindow &window)
 	}
 	
 	//DUST
-	for(int i = 0; i < smkListe.size(); i++)
+	for(int i = 0; i < smoke.size(); i++)
 	{
-		smkListe[i].move(timeStep);
-		if (smkListe[i].getAge(timeStep) < smkListe[i].levetidmax() && !smkListe[i].killMe())
+		smoke[i].move(timeStep);
+		if (smoke[i].getAge(timeStep) < smoke[i].levetidmax() && !smoke[i].killMe())
 		{
-			smkListe[i].render(window, xmidltrans, ymidltrans);
+			smoke[i].render(window, xmidltrans, ymidltrans);
 		}
 		else
 		{
@@ -1109,10 +1109,10 @@ void Space::drawEffects(sf::RenderWindow &window)
 		}
 	}
 	//TRAILS
-	for(size_t i = 0; i < trlListe.size(); i++)
+	for(size_t i = 0; i < trail.size(); i++)
 	{
-		trlListe[i].move(timeStep);
-		if (trlListe[i].getAge(0) < trlListe[i].levetidmax() && !trlListe[i].killMe()) trlListe[i].render(window, xmidltrans, ymidltrans);
+		trail[i].move(timeStep);
+		if (trail[i].getAge(0) < trail[i].levetidmax() && !trail[i].killMe()) trail[i].render(window, xmidltrans, ymidltrans);
 		else
 		{
 			removeTrail(i);
@@ -1123,9 +1123,9 @@ void Space::drawEffects(sf::RenderWindow &window)
 
 void Space::drawLightEffects(sf::RenderWindow& window)
 {
-	for(size_t i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < planets.size(); i++)
 	{
-		Planet p = pListe[i];
+		Planet p = planets[i];
 		
 		if (p.getmass() >= GASGIANTLIMIT && p.getmass() < BIGSTARLIMIT)
 		{
@@ -1175,12 +1175,12 @@ void Space::lockToObject(sf::RenderWindow& w, sf::View& v)
 		sf::Vector2i localPosition(w.mapPixelToCoords(sf::Mouse::getPosition(w), v));
 
 		//SEARCH
-		for(size_t i = 0; i < pListe.size(); i++)
+		for(size_t i = 0; i < planets.size(); i++)
 		{
-			const auto dist = std::hypot(localPosition.x - pListe[i].getx(), localPosition.y - pListe[i].gety());
-			if (dist < pListe[i].getRad())
+			const auto dist = std::hypot(localPosition.x - planets[i].getx(), localPosition.y - planets[i].gety());
+			if (dist < planets[i].getRad())
 			{
-				lockToObjectId = pListe[i].getId();
+				lockToObjectId = planets[i].getId();
 				return;
 			}
 		}
@@ -1202,11 +1202,11 @@ double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 {
 	double tEnergyFromOutside = 0;
 
-	for(size_t i = 0; i < pListe.size(); i++)
+	for(size_t i = 0; i < planets.size(); i++)
 	{
-		if (pListe[i].getmass() < BIGSTARLIMIT && pListe[i].getmass() >= GASGIANTLIMIT)
+		if (planets[i].getmass() < BIGSTARLIMIT && planets[i].getmass() >= GASGIANTLIMIT)
 		{
-			tEnergyFromOutside += pListe[i].giveTEnergy(1)/ sqrt((pListe[i].getx() - pos.x)*(pListe[i].getx() - pos.x) + (pListe[i].gety() - pos.y) * (pListe[i].gety() - pos.y));
+			tEnergyFromOutside += planets[i].giveTEnergy(1)/ sqrt((planets[i].getx() - pos.x)*(planets[i].getx() - pos.x) + (planets[i].gety() - pos.y) * (planets[i].gety() - pos.y));
 		}
 	}
 

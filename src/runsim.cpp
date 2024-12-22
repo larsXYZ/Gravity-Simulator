@@ -132,11 +132,11 @@ void Space::runSim()
 			if (event.type == sf::Event::MouseButtonPressed && getSelectedFunction(functions) == FunctionType::EXPLODE_OBJECT && !mouseOnWidgets)
 			{
 				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-				for (size_t i = 0; i < pListe.size(); i++)
+				for (size_t i = 0; i < planets.size(); i++)
 				{
-					const auto dist = std::hypot(mPos.x - pListe[i].getx(), mPos.y - pListe[i].gety());
-					if (dist < pListe[i].getRad())
-						explodePlanet(pListe[i]);
+					const auto dist = std::hypot(mPos.x - planets[i].getx(), mPos.y - planets[i].gety());
+					if (dist < planets[i].getRad())
+						explodePlanet(planets[i]);
 				}
 			}
 
@@ -145,15 +145,15 @@ void Space::runSim()
 			{
 				bool found = false;
 				sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-				for (size_t i = 0; i < pListe.size(); i++)
+				for (size_t i = 0; i < planets.size(); i++)
 				{
-					const auto dist = std::hypot(localPosition.x - pListe[i].getx(), localPosition.y - pListe[i].gety());
-					if (dist < pListe[i].getRad())
+					const auto dist = std::hypot(localPosition.x - planets[i].getx(), localPosition.y - planets[i].gety());
+					if (dist < planets[i].getRad())
 					{
-						if (fokusId != pListe[i].getId())
+						if (fokusId != planets[i].getId())
 						{
-							trlListe.clear();
-							fokusId = pListe[i].getId();
+							trail.clear();
+							fokusId = planets[i].getId();
 						}
 						found = true;
 						break;
@@ -161,7 +161,7 @@ void Space::runSim()
 					if (!found)
 					{
 						fokusId = -1;
-						trlListe.clear();
+						trail.clear();
 					}
 				}
 			}
@@ -172,27 +172,27 @@ void Space::runSim()
 			{
 				//SEARCHING FOR PLANET
 				sf::Vector2f mPos(window.mapPixelToCoords(mousePos, view1));
-				for (size_t i = 0; i < pListe.size(); i++)
+				for (size_t i = 0; i < planets.size(); i++)
 				{
-					const auto dist = std::hypot(pListe[i].getx() - mPos.x, pListe[i].gety() - mPos.y);
-					if (dist < pListe[i].getRad())
+					const auto dist = std::hypot(planets[i].getx() - mPos.x, planets[i].gety() - mPos.y);
+					if (dist < planets[i].getRad())
 					{
 
 						//CHECKING IF IT ALREADY IS IN THE LIST
 						bool alreadyIn = false;
-						for (size_t q = 0; q < midlPListe.size(); q++)
+						for (size_t q = 0; q < temp_planet_ids.size(); q++)
 						{
-							if (midlPListe[q] == pListe[i].getId())
+							if (temp_planet_ids[q] == planets[i].getId())
 							{
-								auto it = midlPListe.begin() + q;
-								*it = std::move(midlPListe.back());
-								midlPListe.pop_back();
+								auto it = temp_planet_ids.begin() + q;
+								*it = std::move(temp_planet_ids.back());
+								temp_planet_ids.pop_back();
 								alreadyIn = true;
 								break;
 							}
 						}
 
-						if (!alreadyIn) midlPListe.push_back(pListe[i].getId());
+						if (!alreadyIn) temp_planet_ids.push_back(planets[i].getId());
 						break;
 					}
 				}
@@ -323,14 +323,14 @@ void Space::runSim()
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && createInOrbitCounter == 0)
 				{
 
-					for (size_t i = 0; i < pListe.size(); i++)
+					for (size_t i = 0; i < planets.size(); i++)
 					{
 						sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 
-						const auto dist = std::hypot(pListe[i].getx() - localPosition.x, pListe[i].gety() - localPosition.y);
-						if (dist < pListe[i].getRad())
+						const auto dist = std::hypot(planets[i].getx() - localPosition.x, planets[i].gety() - localPosition.y);
+						if (dist < planets[i].getRad())
 						{
-							planetFuncId = pListe[i].getId();
+							planetFuncId = planets[i].getId();
 							createInOrbitCounter = 1;
 							break;
 						}
@@ -433,12 +433,12 @@ void Space::runSim()
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && getSelectedFunction(functions) == FunctionType::REMOVE_OBJECT && !mouseOnWidgets)
 			{
 				sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-				for (size_t i = 0; i < pListe.size(); i++)
+				for (size_t i = 0; i < planets.size(); i++)
 				{
-					const auto dist = std::hypot(pListe[i].getx() - localPosition.x, pListe[i].gety() - localPosition.y);
-					if (dist < pListe[i].getRad())
+					const auto dist = std::hypot(planets[i].getx() - localPosition.x, planets[i].gety() - localPosition.y);
+					if (dist < planets[i].getRad())
 					{
-						removePlanet(pListe[i].getId());
+						removePlanet(planets[i].getId());
 						break;
 					}
 				}
@@ -462,15 +462,15 @@ void Space::runSim()
 			{
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && ringPlanetCounter == 0)
 				{
-					if (pListe.size() > 0)
+					if (planets.size() > 0)
 					{
 						sf::Vector2i localPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
-						for (size_t i = 0; i < pListe.size(); i++)
+						for (size_t i = 0; i < planets.size(); i++)
 						{
-							const auto dist = std::hypot(pListe[i].getx() - localPosition.x, pListe[i].gety() - localPosition.y);
-							if (dist < pListe[i].getRad())
+							const auto dist = std::hypot(planets[i].getx() - localPosition.x, planets[i].gety() - localPosition.y);
+							if (dist < planets[i].getRad())
 							{
-								planetFuncId = pListe[i].getId();
+								planetFuncId = planets[i].getId();
 								ringPlanetCounter = 1;
 								break;
 							}
@@ -602,8 +602,8 @@ void Space::runSim()
 			{
 
 				sf::Vector2f new_mouse_pos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view1);
-				sf::Vector3f massCenterInfoVector(centerOfMass(midlPListe));
-				sf::Vector2f massCenterVelocity = centerOfMassVelocity(midlPListe);
+				sf::Vector3f massCenterInfoVector(centerOfMass(temp_planet_ids));
+				sf::Vector2f massCenterVelocity = centerOfMassVelocity(temp_planet_ids);
 				double rad = std::hypot(new_mouse_pos.x - massCenterInfoVector.x, new_mouse_pos.y - massCenterInfoVector.y);
 				Planet midlP(size);
 
@@ -638,7 +638,7 @@ void Space::runSim()
 					double fixhast = size*hast / (size + massCenterInfoVector.z);
 					addPlanet(Planet(size, massCenterInfoVector.x + rad*cos(angle), massCenterInfoVector.y + rad*sin(angle), (massCenterVelocity.x + hast*cos(angle + 1.507)- fixhast*cos(angle + 1.507)), (massCenterVelocity.y + hast*sin(angle + 1.507)- fixhast*sin(angle + 1.507))));
 						
-					for (int i = 0; i < midlPListe.size(); i++)
+					for (int i = 0; i < temp_planet_ids.size(); i++)
 					{
 						if (Planet* ptr = findPlanetPtr(planetFuncId))
 						{
@@ -704,15 +704,15 @@ void Space::runSim()
 		drawLightEffects(window);
 		if (getSelectedFunction(functions) != FunctionType::ADVANCED_OBJECT_IN_ORBIT)
 		{
-			midlPListe.clear();
+			temp_planet_ids.clear();
 		}
 		else
 		{
 
 			//SELECTED PLANETS
-			for (size_t i = 0; i < midlPListe.size(); i++)
+			for (size_t i = 0; i < temp_planet_ids.size(); i++)
 			{
-				Planet p = findPlanet(midlPListe[i]);
+				Planet p = findPlanet(temp_planet_ids[i]);
 				if (p.getmass() != -1)
 				{
 					sf::Vector2f pos(p.getx() - xmidltrans, p.gety() - ymidltrans);
@@ -728,9 +728,9 @@ void Space::runSim()
 			}
 
 			//CENTER OF MASS
-			if (midlPListe.size() > 1)
+			if (temp_planet_ids.size() > 1)
 			{
-				sf::Vector3f p = centerOfMass(midlPListe);
+				sf::Vector3f p = centerOfMass(temp_planet_ids);
 				double rad = ADV_ORBIT_ADDER_CENTER_MARKER_RAD * zoom;
 				sf::CircleShape s(rad);
 				s.setOrigin(rad, rad);
