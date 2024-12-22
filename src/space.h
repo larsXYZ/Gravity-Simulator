@@ -13,6 +13,8 @@
 #include "CONSTANTS.h"
 #include "Bound.h"
 #include "user_functions.h"
+#include "particles/particle_container.h"
+
 
 class Space
 {
@@ -67,10 +69,13 @@ class Space
 	//OBJECTS IN THE SIMULATION
 	SpaceShip ship;
 	std::vector<Planet> planets;
+	std::unique_ptr<IParticleContainer> particles;
+
 	std::vector<int> temp_planet_ids;
+
 	std::vector<Explosion> explosions;
-	std::vector<Smoke> smoke_particles;
 	std::vector<Trail> trail;
+
 	Bound bound;
 
 	//GUI
@@ -86,7 +91,7 @@ class Space
 
 public:
 
-	Space(int x, int y, bool f);
+	explicit Space(int x, int y, bool f);
 
 	//PLANET FUNCTIONS
 	int addPlanet(Planet&& p);
@@ -103,7 +108,6 @@ public:
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addTrail(sf::Vector2f p, int l);
-	void planet_pulls_smoke(Planet& forcer);
 	void giveRings(Planet p, int inner, int outer);
 	
 	//SIMULATION FUNCTIONS

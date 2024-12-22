@@ -1,6 +1,9 @@
 #include "space.h"
 
+#include "particles/particle_container.h"
+
 Space::Space(int x, int y, bool f)
+	: particles(std::make_unique<DecimatedLegacyParticleContainer>())
 {
 	xsize = x;
 	ysize = y;
@@ -26,7 +29,7 @@ void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
 
 void Space::addSmoke(sf::Vector2f p, double s, sf::Vector2f v, int l)
 {
-	smoke_particles.push_back(Smoke(p, s, 0, v, l));
+	particles->add_particle(p, v, s, 10000.0);
 }
 
 sf::Vector3f Space::centerOfMass(std::vector<int> midlPList)
@@ -166,16 +169,8 @@ void Space::update()
 		if (ship.isExist() && !ship.pullofGravity(planets[i], ship, timeStep))
 			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
 	}
-
-	//SMOKE MOVE
-	const auto update_smoke = iteration % SMK_ACCURACY == 0;
-
-#pragma omp parallel for schedule(dynamic)
-	for (int i = 0; i < planets.size(); i++)
-	{
-		if (planets[i].getmass() > MINIMUMBREAKUPSIZE && update_smoke)
-			planet_pulls_smoke(planets[i]);
-	}
+	
+	particles->update(planets, bound, timeStep, curr_time);
 
 	for (int i = 0; i < planets.size(); i++)
 	{
@@ -212,7 +207,7 @@ void Space::update()
 					return static_cast<size_t>(50 * rad);
 				};
 
-				const auto n_dust_particles = std::clamp(static_cast<size_t>(MAX_N_DUST_PARTICLES) - smoke_particles.size(), 
+				const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
 															static_cast<size_t>(0), particles_by_rad());
 				for (size_t i = 0; i < n_dust_particles; i++)
 				{
@@ -314,16 +309,9 @@ void Space::update()
 			if (bound.isOutside(sf::Vector2f(planets[i].getx(), planets[i].gety())))
 				removePlanet(planets[i].getId());
 		}
-
-		//DUST
-		for (size_t i = 0; i < smoke_particles.size(); i++)
-		{
-			if (bound.isOutside(smoke_particles[i].getpos())) removeSmoke(i);
-		}
-
+		
 		//SHIP
 		if (bound.isOutside(ship.getpos())) ship.destroy();
-
 	}
 
 	//PLACING BOUND AROUND MASS CENTRE IF AUTOBOUND IS ENABLED
@@ -412,13 +400,7 @@ void Space::removeExplosion(int ind)
 
 void Space::removeSmoke(int ind)
 {
-	if (ind >= (int) smoke_particles.size() || ind < 0) return;
-
-	std::vector<Smoke> midl;
-
-	auto it = smoke_particles.begin() + ind;
-	*it = std::move(smoke_particles.back());
-	smoke_particles.pop_back();
+	particles->clear();
 }
 
 void Space::clear(sf::View& v, sf::Window& w)
@@ -427,7 +409,7 @@ void Space::clear(sf::View& v, sf::Window& w)
 
 	planets.clear();
 	explosions.clear();
-	smoke_particles.clear();
+	particles->clear();
 	trail.clear();
 	bound = Bound();
 
@@ -588,12 +570,6 @@ void Space::addTrail(sf::Vector2f p, int l)
 	trail.push_back(Trail(p, l));
 }
 
-void Space::planet_pulls_smoke(Planet& forcer)
-{
-	for (auto& smoke : smoke_particles)
-		smoke.pullOfGravity(forcer, timeStep, curr_time);
-}
-
 void Space::giveRings(Planet p, int inner, int outer)
 {
 	int antall = 0.05*outer*outer;
@@ -603,14 +579,15 @@ void Space::giveRings(Planet p, int inner, int outer)
 	for (int i = 0; i < antall; i++)
 	{
 		double rad = ((double) uniform_random(inner*1000, outer*1000))/1000;
-		double hast = sqrt(G*p.getmass() / rad);
+		double speed = sqrt(G*p.getmass() / rad);
 
-		smoke_particles.push_back(Smoke(sf::Vector2f(p.getx() + cos(angle)*rad, p.gety()+sin(angle)*rad), 1, 0, sf::Vector2f(hast*cos(angle + 1.507) + p.getxv(),hast*sin(angle + 1.507) + p.getyv()), 20000));
+		const auto pos = sf::Vector2f(p.getx() + cos(angle) * rad, p.gety() + sin(angle) * rad);
+		const auto vel = sf::Vector2f(speed * cos(angle + PI / 2.0) + p.getxv(), speed * sin(angle + PI / 2.0));
 		
+		particles->add_particle(pos, vel, 1, 20000);
+
 		angle += delta_angle;
-
 	}
-
 }
 
 std::string Space::calcTemperature(double q, int e)
@@ -779,7 +756,7 @@ void Space::setInfo()
 		}
 
 	//Displaying sim-info
-	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(planets.size()) + "\nParticles: " + convertDoubleToString(smoke_particles.size()) + "\nZoom: " + convertDoubleToString(1 / zoom));
+	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(planets.size()) + "\nParticles: " + convertDoubleToString(particles->size()) + "\nZoom: " + convertDoubleToString(1 / zoom));
 
 }
 
@@ -1097,18 +1074,8 @@ void Space::drawEffects(sf::RenderWindow &window)
 	}
 	
 	//DUST
-	for(int i = 0; i < smoke_particles.size(); i++)
-	{
-		smoke_particles[i].move(timeStep);
-		if (smoke_particles[i].getAge(timeStep) < smoke_particles[i].levetidmax() && !smoke_particles[i].killMe())
-		{
-			smoke_particles[i].render(window, xmidltrans, ymidltrans);
-		}
-		else
-		{
-			removeSmoke(i);
-		}
-	}
+	particles->render_all(window);
+
 	//TRAILS
 	for(size_t i = 0; i < trail.size(); i++)
 	{
