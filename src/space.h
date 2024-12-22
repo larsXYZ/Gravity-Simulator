@@ -12,7 +12,7 @@
 #include "Effect.h"
 #include "CONSTANTS.h"
 #include "Bound.h"
-#include "functions.h"
+#include "user_functions.h"
 
 class Space
 {
