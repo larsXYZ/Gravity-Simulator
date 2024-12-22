@@ -169,24 +169,7 @@ public:
 
 	std::string getFlavorTextLife() const;
 
-	sf::Color getStarCol() const
-	{
-		if (temperature < 1600) return (sf::Color(255, 38, 00));
-		if (temperature < 2400) return (sf::Color(255, 118, 00));
-		if (temperature < 3000) return (sf::Color(255, 162, 60));
-		if (temperature < 3700) return (sf::Color(255, 180, 107));
-		if (temperature < 4500) return (sf::Color(255, 206, 146));
-		if (temperature < 5500) return (sf::Color(255, 219, 186));
-		if (temperature < 6500) return (sf::Color(255, 238, 222));
-		if (temperature < 7200) return (sf::Color(255, 249, 251));
-		if (temperature < 8000) return (sf::Color(240, 241, 255));
-		if (temperature < 9000) return (sf::Color(227, 233, 255));
-		if (temperature < 10000) return (sf::Color(214, 225, 255));
-		if (temperature < 11000) return (sf::Color(207, 218, 255));
-		if (temperature < 12000) return (sf::Color(200, 213, 255));
-		if (temperature < 13000) return (sf::Color(191, 211, 255));
-		return (sf::Color(186, 208, 255));
-	}
+	sf::Color getStarCol() const;
 
 	void markForRemoval() { marked_for_removal = true; }
 	bool isMarkedForRemoval() const { return marked_for_removal; }
