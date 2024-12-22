@@ -235,7 +235,7 @@ void Space::update()
 
 			if (otherPlanet.emitsHeat())
 			{
-				const auto heat = tempConstTwo * thisPlanet->getRad() * thisPlanet->getRad() * otherPlanet.giveTEnergy(timeStep) / distance.dist;
+				const auto heat = tempConstTwo * thisPlanet->getRad() * thisPlanet->getRad() * otherPlanet.giveThermalEnergy(timeStep) / distance.dist;
 				thisPlanet->absorbHeat(heat, timeStep);
 			}
 
@@ -277,12 +277,12 @@ void Space::update()
 	for (int i = 0; i < planets.size(); i++)
 	{
 		//TEMPERATURE
-		planets[i].coolDOWN(timeStep);
+		planets[i].coolDown(timeStep);
 		planets[i].setColor();
 		planets[i].updateTemp();
 
 		//ATMOSPHERE
-		planets[i].updateAtmo(timeStep);
+		planets[i].updateAtmosphere(timeStep);
 
 		//LIFE
 		planets[i].updateLife(timeStep);
@@ -953,7 +953,7 @@ void Space::drawPlanetInfo(sf::RenderWindow& w, sf::View& v)
 		}
 
 		//FINDING GREENHOUSE EFFECT
-		double dTherEnergy = fokusP.thermalEnergy() - fokusP.thermalEnergy() / (1 + greenHouseEffectMult*fokusP.getAtmoCur());
+		double dTherEnergy = fokusP.thermalEnergy() - fokusP.thermalEnergy() / (1 + greenHouseEffectMult*fokusP.getCurrentAtmosphere());
 		double dTemp = dTherEnergy / (fokusP.getmass()*fokusP.getTCap());
 		std::string dTempString;
 		if (tempEnhet == 1) dTempString = calcTemperature(dTemp, tempEnhet);
@@ -967,7 +967,7 @@ void Space::drawPlanetInfo(sf::RenderWindow& w, sf::View& v)
 		text2.setString(text2.getString() + "\nTemp: " + calcTemperature(fokusP.temp(), tempEnhet));
 		if (fokusP.getType() == TERRESTIAL)
 		{
-			text2.setString(text2.getString() + "\n\nAtmo: " + convertDoubleToString((int)fokusP.getAtmoCur()) + " / " + convertDoubleToString((int)fokusP.getAtmoPot()) + "kPa \nGreenhouse Effect: " + dTempString);
+			text2.setString(text2.getString() + "\n\nAtmo: " + convertDoubleToString((int)fokusP.getCurrentAtmosphere()) + " / " + convertDoubleToString((int)fokusP.getAtmospherePotensial()) + "kPa \nGreenhouse Effect: " + dTempString);
 			if (fokusP.getLife().getTypeEnum() == 0) text2.setString(text2.getString() + "\n\n" + fokusP.getFlavorTextLife());
 		}
 		if (fokusP.getLife().getTypeEnum() != 0)
@@ -1172,7 +1172,7 @@ double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 	{
 		if (planets[i].getmass() < BIGSTARLIMIT && planets[i].getmass() >= GASGIANTLIMIT)
 		{
-			tEnergyFromOutside += planets[i].giveTEnergy(1)/ sqrt((planets[i].getx() - pos.x)*(planets[i].getx() - pos.x) + (planets[i].gety() - pos.y) * (planets[i].gety() - pos.y));
+			tEnergyFromOutside += planets[i].giveThermalEnergy(1)/ sqrt((planets[i].getx() - pos.x)*(planets[i].getx() - pos.x) + (planets[i].gety() - pos.y) * (planets[i].gety() - pos.y));
 		}
 	}
 

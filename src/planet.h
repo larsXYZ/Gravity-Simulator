@@ -205,152 +205,45 @@ public:
 	void updateTemp();
 
 	//TEMPERATURE
-	double temp() const
-	{
-		return tEnergy / (mass * tCapacity);
-	}
+	double temp() const;
 
-	double getTemp() const
-	{
-		return temperature;
-	}
+	double getTemp() const;
 
-	void setTemp(double t)
-	{
-		tEnergy = mass * t * tCapacity;
-	}
+	void setTemp(double t);
 
-	double fusionEnergy() const
-	{
-		switch (planetType)
-		{
-		case ROCKY:
-			return 0;
-		case TERRESTIAL:
-			return 0;
-		case GASGIANT:
-			return 0;
-		case SMALLSTAR:
-			return HEAT_SMALL_STAR_MULT * mass;
-		case STAR:
-			return HEAT_STAR_MULT * mass;
-		case BIGSTAR:
-			return HEAT_BIG_STAR_MULT * mass;
-		default:
-			return 0;
-		}
-	}
+	double fusionEnergy() const;
 
-	double thermalEnergy() const
-	{
-		return tEnergy;
-	}
+	double thermalEnergy() const;
 
-	void coolDOWN(int t)
-	{
-		tEnergy -= t * (SBconst * (radi * radi * temp()) - fusionEnergy());
-	}
+	void coolDown(int t);
 
-	void absorbHeat(double e, int t)
-	{
-		tEnergy += (e * (1 + greenHouseEffectMult * atmoCur));
-	}
+	void absorbHeat(double e, int t);
 
-	double giveTEnergy(int t) const
-	{
-		return t * (SBconst * (radi * radi * temp()));
-	}
+	double giveThermalEnergy(int t) const;
 
-	void incTEnergy(double e)
-	{
-		tEnergy += e;
-	}
+	void increaseThermalEnergy(double e);
 
 	void setColor();
 	double getTCap() const { return tCapacity; };
 	void setMass(double m) { mass = m; }
 
 	//ATMOSPHERE
-	void updateAtmo(int t)
-	{
-		if (planetType != TERRESTIAL)
-		{
-			if (planetType == ROCKY)
-			{
-				atmoCur = 0;
-				return;
-			}
-			return;
-		}
+	void updateAtmosphere(int t);
 
-		if (temperature < 600 && temperature > 200 && atmoCur < atmoPot)
-		{
-			atmoCur += t * 0.05;
-			if (atmoCur > atmoPot) atmoCur = atmoPot;
-		}
-		else
-		{
-			atmoCur -= t * 0.1;
+	double getCurrentAtmosphere() const;
 
-			if (atmoCur < 0) atmoCur = 0;
-		}
-
-		circle.setOutlineColor(sf::Color(atmoCol_r, atmoCol_g, atmoCol_b, atmoCur * atmoAlphaMult));
-		circle.setOutlineThickness(sqrt(atmoCur) * atmoThicknessMult);
-	}
-
-	double getAtmoCur() const
-	{
-		return atmoCur;
-	}
-
-	double getAtmoPot() const
-	{
-		return atmoPot;
-	}
+	double getAtmospherePotensial() const;
 
 	//LIFE
-	void updateLife(int t)
-	{
-		if (planetType == ROCKY || planetType == TERRESTIAL)
-		{
-			supportedBiomass = 100000 / (1 + (LIFE_PREFERRED_TEMP_MULTIPLIER *
-				pow((temperature - LIFE_PREFERRED_TEMP), 2) + LIFE_PREFERRED_ATMO_MULTIPLIER * pow(
-					(atmoCur - LIFE_PREFERRED_ATMO), 2))) - 5000;
-			if (supportedBiomass < 0) supportedBiomass = 0;
+	void updateLife(int t);
 
-			life.update(supportedBiomass, t, radi);
-		}
-		else
-		{
-			life.kill();
-		}
-	}
+	void colonize(int i, sf::Color c, std::string d);
 
-	void colonize(int i, sf::Color c, std::string d)
-	{
-		life = Life(i);
-		life.giveCol(c);
-		life.giveDesc(d);
-	}
+	Life getLife() const;
 
-	Life getLife() const
-	{
-		return life;
-	}
+	double getSupportedBiomass() const;
 
-	double getSupportedBiomass() const
-	{
-		return supportedBiomass;
-	}
-
-	int modernRandomWithLimits(int min, int max) const
-	{
-		std::random_device seeder;
-		std::default_random_engine generator(seeder());
-		std::uniform_int_distribution<int> uniform(min, max);
-		return uniform(generator);
-	}
+	int modernRandomWithLimits(int min, int max) const;
 
 	std::string genName();
 	

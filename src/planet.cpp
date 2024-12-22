@@ -177,7 +177,7 @@ public:
 			return temperatures_and_colors.back().color;
 
 		auto lower = temperatures_and_colors.begin();
-		auto higher = temperatures_and_colors.begin();
+		auto higher = temperatures_and_colors.end();
 		for (auto tempcol = temperatures_and_colors.begin();
 			tempcol != temperatures_and_colors.end();
 			++tempcol)
@@ -207,6 +207,67 @@ sf::Color Planet::getStarCol() const
 void Planet::updateTemp()
 {
 	temperature = temp();
+}
+
+double Planet::temp() const
+{
+	return tEnergy / (mass * tCapacity);
+}
+
+double Planet::getTemp() const
+{
+	return temperature;
+}
+
+void Planet::setTemp(double t)
+{
+	tEnergy = mass * t * tCapacity;
+}
+
+double Planet::fusionEnergy() const
+{
+	switch (planetType)
+	{
+	case ROCKY:
+		return 0;
+	case TERRESTIAL:
+		return 0;
+	case GASGIANT:
+		return 0;
+	case SMALLSTAR:
+		return HEAT_SMALL_STAR_MULT * mass;
+	case STAR:
+		return HEAT_STAR_MULT * mass;
+	case BIGSTAR:
+		return HEAT_BIG_STAR_MULT * mass;
+	default:
+		return 0;
+	}
+}
+
+double Planet::thermalEnergy() const
+{
+	return tEnergy;
+}
+
+void Planet::coolDown(int t)
+{
+	tEnergy -= t * (SBconst * (radi * radi * temp()) - fusionEnergy());
+}
+
+void Planet::absorbHeat(double e, int t)
+{
+	tEnergy += (e * (1 + greenHouseEffectMult * atmoCur));
+}
+
+double Planet::giveThermalEnergy(int t) const
+{
+	return t * (SBconst * (radi * radi * temp()));
+}
+
+void Planet::increaseThermalEnergy(double e)
+{
+	tEnergy += e;
 }
 
 bool Planet::canDisintegrate(double curr_time) const
@@ -355,7 +416,7 @@ void Planet::collision(const Planet& p)
 	const auto dXV = xv - p.getxv();
 	const auto dYV = yv - p.getyv();
 
-	incTEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
+	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
 }
 
 void Planet::draw(sf::RenderWindow& w, double xx, double yy)
@@ -440,6 +501,86 @@ void Planet::setColor()
 
 		circle.setFillColor(sf::Color(r, g, b));
 	}
+}
+
+void Planet::updateAtmosphere(int t)
+{
+	if (planetType != TERRESTIAL)
+	{
+		if (planetType == ROCKY)
+		{
+			atmoCur = 0;
+			return;
+		}
+		return;
+	}
+
+	if (temperature < 600 && temperature > 200 && atmoCur < atmoPot)
+	{
+		atmoCur += t * 0.05;
+		if (atmoCur > atmoPot) atmoCur = atmoPot;
+	}
+	else
+	{
+		atmoCur -= t * 0.1;
+
+		if (atmoCur < 0) atmoCur = 0;
+	}
+
+	circle.setOutlineColor(sf::Color(atmoCol_r, atmoCol_g, atmoCol_b, atmoCur * atmoAlphaMult));
+	circle.setOutlineThickness(sqrt(atmoCur) * atmoThicknessMult);
+}
+
+double Planet::getCurrentAtmosphere() const
+{
+	return atmoCur;
+}
+
+double Planet::getAtmospherePotensial() const
+{
+	return atmoPot;
+}
+
+void Planet::updateLife(int t)
+{
+	if (planetType == ROCKY || planetType == TERRESTIAL)
+	{
+		supportedBiomass = 100000 / (1 + (LIFE_PREFERRED_TEMP_MULTIPLIER *
+			pow((temperature - LIFE_PREFERRED_TEMP), 2) + LIFE_PREFERRED_ATMO_MULTIPLIER * pow(
+				(atmoCur - LIFE_PREFERRED_ATMO), 2))) - 5000;
+		if (supportedBiomass < 0) supportedBiomass = 0;
+
+		life.update(supportedBiomass, t, radi);
+	}
+	else
+	{
+		life.kill();
+	}
+}
+
+void Planet::colonize(int i, sf::Color c, std::string d)
+{
+	life = Life(i);
+	life.giveCol(c);
+	life.giveDesc(d);
+}
+
+Life Planet::getLife() const
+{
+	return life;
+}
+
+double Planet::getSupportedBiomass() const
+{
+	return supportedBiomass;
+}
+
+int Planet::modernRandomWithLimits(int min, int max) const
+{
+	std::random_device seeder;
+	std::default_random_engine generator(seeder());
+	std::uniform_int_distribution<int> uniform(min, max);
+	return uniform(generator);
 }
 
 std::string convertDoubleToString(double number)
