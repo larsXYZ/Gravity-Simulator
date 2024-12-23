@@ -64,8 +64,8 @@ struct FunctionContext
 	SpaceShip & spaceship;
 	sf::View & view;
 	sf::RenderWindow & window;
-	tgui::Gui & gui;
 	const sf::Vector2i & mouse_pos_window;
 	const sf::Vector2f & mouse_pos_world;
+	tgui::Slider::Ptr mass_slider;
 };
 void executeFunction(FunctionContext& context);

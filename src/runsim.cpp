@@ -102,7 +102,7 @@ void Space::runSim()
 	gui.add(newPlanetInfo);
 	gui.add(massSlider);
 	gui.add(timeStepSlider);
-	gui.add(tempChooser);
+	gui.add(temperatureUnitSelector);
 	gui.add(currPlanetInfo);
 	gui.add(massExistingObjectSlider);
 	gui.add(autoBound);
@@ -130,9 +130,9 @@ void Space::runSim()
 			.spaceship = ship,
 			.view = mainView,
 			.window = window,
-			.gui = gui,
 			.mouse_pos_window = sf::Mouse::getPosition(window),
-			.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView)
+			.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView),
+			.mass_slider = massSlider,
 		};
 		executeFunction(context);
 

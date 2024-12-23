@@ -78,8 +78,8 @@ public:
 		{
 			mouseToggle = false;
 			const auto to_now = context.mouse_pos_world - start_pos;
-			const auto speed_multiplier{ 0.005 };
-			Planet R(10, start_pos.x, start_pos.y, -speed_multiplier * to_now.x, -speed_multiplier * to_now.y);
+			const auto speed_multiplier{ 0.002 };
+			Planet R(context.mass_slider->getValue(), start_pos.x, start_pos.y, -speed_multiplier * to_now.x, -speed_multiplier * to_now.y);
 			context.space.addPlanet(std::move(R));
 		}
 	}

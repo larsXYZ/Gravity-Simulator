@@ -708,7 +708,7 @@ void Space::setInfo()
 	}
 	
 	//Temp unit
-	if (tempChooser->getSelectedIndex() < 2) tempEnhet = tempChooser->getSelectedIndex() + 1;
+	if (temperatureUnitSelector->getSelectedIndex() < 2) tempEnhet = temperatureUnitSelector->getSelectedIndex() + 1;
 	else tempEnhet = 3;
 
 	//Hiding new planet
@@ -793,13 +793,13 @@ void Space::initSetup()
 	timeStepSlider->setMinimum(0);
 	timeStepSlider->setMaximum(MAX_TIMESTEP);
 
-	tempChooser->add("K");
-	tempChooser->add("°C");
-	tempChooser->add("°F");
-	tempChooser->select("K");
-	tempChooser->setTextSize(10);
-	tempChooser->setTabHeight(12);
-	tempChooser->setPosition(165, 50);
+	temperatureUnitSelector->add("K");
+	temperatureUnitSelector->add("°C");
+	temperatureUnitSelector->add("°F");
+	temperatureUnitSelector->select("K");
+	temperatureUnitSelector->setTextSize(10);
+	temperatureUnitSelector->setTabHeight(12);
+	temperatureUnitSelector->setPosition(165, 50);
 
 	currPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
 	currPlanetInfo->setSize(145, 45);
