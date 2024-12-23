@@ -26,8 +26,6 @@ public:
 				view.move(last_mouse_pos_window - mouse_position_now_window);
 				last_mouse_pos_window = mouse_position_now_window;
 
-				std::cout << "Movement registered" << std::endl;
-
 				break;
 			}
 		case sf::Event::MouseButtonReleased:
@@ -39,7 +37,6 @@ public:
 					break;
 
 				is_dragging = false;
-				std::cout << "Release registered" << std::endl;
 				break;
 			}
 		case sf::Event::MouseButtonPressed:
@@ -53,7 +50,6 @@ public:
 				is_dragging = true;
 				last_mouse_pos_window = sf::Vector2f( (float)new_event.mouseButton.x, 
 													(float)new_event.mouseButton.y );
-				std::cout << "Press registered" << std::endl;
 				break;
 			}
 		}
