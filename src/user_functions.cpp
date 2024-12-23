@@ -57,7 +57,7 @@ public:
 			}
 			if (mouseToggle)
 			{
-				Planet R(10);
+				Planet R(context.mass_slider->getValue());
 				sf::CircleShape tempCircle(R.getRad());
 				tempCircle.setOrigin(R.getRad(), R.getRad());
 				tempCircle.setPosition(start_pos);
