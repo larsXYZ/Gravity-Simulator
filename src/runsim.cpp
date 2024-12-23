@@ -6,10 +6,8 @@ void Space::runSim()
 {
 	sf::RenderWindow window;
 
-	if (fullScreen)
-		window.create(sf::VideoMode(xsize, ysize), "Gravity Simulator", sf::Style::Fullscreen);
-	else
-		window.create(sf::VideoMode(xsize, ysize), "Gravity Simulator", sf::Style::Default);
+	window.create(sf::VideoMode(xsize, ysize), "Gravity Simulator", 
+		fullScreen ? sf::Style::Fullscreen : sf::Style::Default);
 
 	sf::View mainView;
 	window.setFramerateLimit(framerate);
@@ -21,9 +19,7 @@ void Space::runSim()
 	font.loadFromFile("sansation.ttf");
 	text.setFont(font);
 	text.setCharacterSize(14);
-	text2.setFont(font);
 	text.setColor(sf::Color::White);
-	text2.setColor(sf::Color::White);
 
 	//LOADING GUI
 	tgui::Gui gui{ window };
@@ -41,33 +37,28 @@ void Space::runSim()
 
 	while (window.isOpen())
 	{
-		//CLEARING WINDOW AND GETTING MOUSEPOS
 		window.clear(sf::Color::Black);
 
-		//HOTKEYS
 		hotkeys(window, mainView);
 		window.setView(mainView);
+		window.pollEvent(event);
 
-		//GUI
 		gui.handleEvent(event);
 		setInfo();
 
-		//EVENTS
-		while (window.pollEvent(event))
+		FunctionContext context
 		{
-			FunctionContext context
-			{
-				.type = getSelectedFunction(functions),
-				.space = *this,
-				.spaceship = ship,
-				.view = mainView,
-				.window = window,
-				.gui = gui,
-				.mouse_pos_window = sf::Mouse::getPosition(window),
-				.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView)
-			};
-			executeFunction(context);
-		}
+			.type = getSelectedFunction(functions),
+			.space = *this,
+			.spaceship = ship,
+			.view = mainView,
+			.window = window,
+			.gui = gui,
+			.mouse_pos_window = sf::Mouse::getPosition(window),
+			.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView),
+			.event = event
+		};
+		executeFunction(context);
 
 		//PRINTING TO WINDOW
 		drawPlanets(window);

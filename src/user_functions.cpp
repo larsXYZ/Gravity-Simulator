@@ -46,8 +46,6 @@ class AddPlanetFunction : public IUserFunction
 	bool mouseToggle{ false };
 	sf::Vector2f start_pos;
 public:
-	AddPlanetFunction() = default;
-	~AddPlanetFunction() = default;
 	void execute(FunctionContext& context) override
 	{
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
@@ -59,20 +57,18 @@ public:
 			}
 			if (mouseToggle)
 			{
-				//PLANET CIRCLE
-				Planet R(10, context.mouse_pos_window.x, context.mouse_pos_world.y);
-				sf::CircleShape midlCircle(R.getRad());
-				midlCircle.setOrigin(R.getRad(), R.getRad());
-				midlCircle.setPosition(sf::Vector2f(R.getx(), R.gety()));
-				midlCircle.setFillColor(sf::Color(255, 0, 0, 100));
-				context.window.draw(midlCircle);
-
-				//VELOCITY VECTOR
-				const auto to_now = start_pos - context.mouse_pos_world;
+				Planet R(10);
+				sf::CircleShape tempCircle(R.getRad());
+				tempCircle.setOrigin(R.getRad(), R.getRad());
+				tempCircle.setPosition(start_pos);
+				tempCircle.setFillColor(sf::Color(255, 0, 0, 100));
+				context.window.draw(tempCircle);
+				
+				const auto to_now = context.mouse_pos_world - start_pos;
 				sf::Vertex line[] =
 				{
 					sf::Vertex(start_pos,sf::Color::Red),
-					sf::Vertex(start_pos - 2.f * to_now, sf::Color::Red)
+					sf::Vertex(start_pos - to_now, sf::Color::Red)
 				};
 
 				context.window.draw(line, 2, sf::Lines);
@@ -81,8 +77,9 @@ public:
 		else if (mouseToggle)
 		{
 			mouseToggle = false;
-			const auto to_now = start_pos - context.mouse_pos_world;
-			Planet R(10, start_pos.x, start_pos.y, 0.05 * to_now.x, 0.05 * to_now.y);
+			const auto to_now = context.mouse_pos_world - start_pos;
+			const auto speed_multiplier{ 0.005 };
+			Planet R(10, start_pos.x, start_pos.y, -speed_multiplier * to_now.x, -speed_multiplier * to_now.y);
 			context.space.addPlanet(std::move(R));
 		}
 	}

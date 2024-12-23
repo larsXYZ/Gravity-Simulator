@@ -67,5 +67,6 @@ struct FunctionContext
 	tgui::Gui & gui;
 	sf::Vector2i mouse_pos_window;
 	sf::Vector2f mouse_pos_world;
+	sf::Event& event;
 };
 void executeFunction(FunctionContext& context);
