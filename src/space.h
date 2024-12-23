@@ -1,19 +1,20 @@
 #pragma once
+
 #include <vector>
 #include <random>
+#include <string>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
-#include <string>
 
 #include "planet.h"
 #include "Spaceship.h"
 #include "Effect.h"
 #include "CONSTANTS.h"
 #include "Bound.h"
-#include "user_functions.h"
 #include "particles/particle_container.h"
+
 
 
 class Space
@@ -30,11 +31,6 @@ class Space
 
 	//WINDOW
 	double totalMass = 0;
-	int xtrans = 0;
-	int ytrans = 0;
-	int xmidltrans = 0;
-	int ymidltrans = 0;
-	double zoom = 1;
 	int xs;
 	int ys;
 	int nesteid = 0;
@@ -46,36 +42,19 @@ class Space
 	int tempEnhet = 1;
 	int fps = 0;
 	bool showGUI = true;
-	sf::Vector2i mousePos = sf::Vector2i(0, 0);
 
 	sf::Text text;
 	sf::Text text2;
 	sf::Font font;
 	sf::Event event;
 
-	//TOGGLES AND OTHER THINGS
-	bool randomizeToggle = true;
-	bool mouseToggle = false;
-	bool transToggle = true;
-	bool updatetoggle = true;
-
-	bool drawtext2 = false;
-	bool showText = true;
-	int fokusId = -1;
-	int lockToObjectId = -2;
-	bool mouseOnWidgets = false;
-	bool mouseOnMassSliderSelected = false;
-
 	//OBJECTS IN THE SIMULATION
 	SpaceShip ship;
 	std::vector<Planet> planets;
 	std::unique_ptr<IParticleContainer> particles;
-
 	std::vector<int> temp_planet_ids;
-
 	std::vector<Explosion> explosions;
 	std::vector<Trail> trail;
-
 	Bound bound;
 
 	//GUI
@@ -128,12 +107,10 @@ public:
 
 	//USERFUNCTIONS
 	void hotkeys(sf::Window& w, sf::View& v);
-	void lockToObject(sf::RenderWindow& w, sf::View& v);
 
 	//GUI
 	void initSetup();
 	void setInfo();
-	void drawPlanetInfo(sf::RenderWindow& w, sf::View& v);
 
 	//OTHER
 	int uniform_random(int min, int max);

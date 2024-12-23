@@ -24,6 +24,6 @@ public:
 
 	bool isOutside(sf::Vector2f p) const;
 
-	void draw(sf::RenderWindow& w, double xx, double yy, double z);
+	void render(sf::RenderWindow& w);
 
 };

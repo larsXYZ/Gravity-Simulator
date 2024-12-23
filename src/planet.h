@@ -197,7 +197,7 @@ public:
 		STRENGTH_strongest_attractor = 0;
 	}
 
-	void draw(sf::RenderWindow& w, double xx, double yy);
+	void draw(sf::RenderWindow& w);
 	void incMass(double m);
 	double getDist(const Planet& forcer) const;
 	void collision(const Planet& p);

@@ -3,8 +3,11 @@
 #include <string>
 #include <vector>
 
+#include "SFML/Graphics.hpp"
 #include "SFML/Window/Keyboard.hpp"
-#include "TGUI/Widgets/ListBox.hpp"
+
+#include <TGUI/TGUI.hpp>
+#include <TGUI/Backend/SFML-Graphics.hpp>
 
 enum class FunctionType
 {
@@ -50,3 +53,19 @@ FunctionType getSelectedFunction(tgui::ListBox::Ptr listbox);
 void fillFunctionGUIDropdown(tgui::ListBox::Ptr listbox);
 
 void setFunctionGUIFromHotkeys(tgui::ListBox::Ptr listbox);
+
+class Space;
+class SpaceShip;
+
+struct FunctionContext
+{
+	FunctionType type;
+	Space & space;
+	SpaceShip & spaceship;
+	sf::View & view;
+	sf::RenderWindow & window;
+	tgui::Gui & gui;
+	sf::Vector2i mouse_pos_window;
+	sf::Vector2f mouse_pos_world;
+};
+void executeFunction(FunctionContext& context);

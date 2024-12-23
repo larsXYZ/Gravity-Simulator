@@ -1,6 +1,7 @@
 #include "space.h"
 
 #include "particles/particle_container.h"
+#include "user_functions.h"
 
 Space::Space(int x, int y, bool f)
 	: particles(std::make_unique<DecimatedLegacyParticleContainer>())
@@ -411,18 +412,12 @@ void Space::clear(sf::View& v, sf::Window& w)
 	particles->clear();
 	trail.clear();
 	bound = Bound();
-
-	xtrans = 0;
-	ytrans = 0;
-	xmidltrans = 0;
-	ymidltrans = 0;
-	zoom = 1;
+	
 	v = sf::View();
 	v.setSize(sf::Vector2f(xsize, ysize));
 	v.setCenter(0, 0);
 	ship.reset(sf::Vector2f(0, 0));
 	iteration = 0;
-	fokusId = -1;
 }
 
 void Space::disintegratePlanet(Planet planet)
@@ -655,7 +650,8 @@ void Space::setInfo()
 	//Timestep
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))timeStepSlider->setValue(0);
 	timeStep = timeStepSlider->getValue();
-	
+
+	/*
 	//Current planet sliders
 	if (findPlanet(fokusId).getmass() == -1)
 	{
@@ -665,7 +661,7 @@ void Space::setInfo()
 	else
 	{
 		//Gathering current object mass slider info
-		if (mouseOnMassSliderSelected && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
 			if (Planet* ptr = findPlanetPtr(fokusId))
 			{
@@ -755,8 +751,8 @@ void Space::setInfo()
 		}
 
 	//Displaying sim-info
-	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(planets.size()) + "\nParticles: " + convertDoubleToString(particles->size()) + "\nZoom: " + convertDoubleToString(1 / zoom));
-
+	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(planets.size()) + "\nParticles: " + convertDoubleToString(particles->size()));
+	*/
 }
 
 void Space::initSetup()
@@ -814,175 +810,7 @@ void Space::initSetup()
 	massExistingObjectSlider->setValue(1);
 	massExistingObjectSlider->setMinimum(MASS_SLIDER_MIN_VALUE);
 	massExistingObjectSlider->setMaximum(MASS_SLIDER_MAX_VALUE);
-
 }
-
-void Space::drawPlanetInfo(sf::RenderWindow& w, sf::View& v)
-{
-	(void) v;
-
-	//PRINTING INFO TO WINDOW
-	if (findPlanet(fokusId).getmass() != -1)
-	{
-		//GATHERING INFO
-		Planet fokusP = findPlanet(fokusId);
-		sf::Vector2f pos(fokusP.getx(), fokusP.gety());
-		Planet fokusP_Parent = findPlanet(fokusP.getStrongestAttractorId());
-		std::string typeplanet;
-
-		//DETERMINING OBJECT TYPE
-		switch (fokusP.getType())
-		{
-		case ROCKY: typeplanet = "Rocky Planet"; break;
-		case TERRESTIAL: typeplanet = "Terrestial Planet"; break;
-		case GASGIANT: typeplanet = "Gasgiant"; break;
-		case SMALLSTAR: typeplanet = "Red Dwarf"; break;
-		case STAR: typeplanet = "Yellow Dwarf"; break;
-		case BIGSTAR: typeplanet = "Blue Giant"; break;
-		case BLACKHOLE: typeplanet = "Black Hole"; break;
-		default: typeplanet = "????????"; break;
-		}
-
-		//INFOVECTOR
-		sf::Vertex l[] =
-		{
-			sf::Vertex(sf::Vector2f(pos.x + 1.5*fokusP.getRad() - xmidltrans, pos.y + 1.5*fokusP.getRad() - ymidltrans),sf::Color::Cyan),
-			sf::Vertex(sf::Vector2f(pos.x - xmidltrans, pos.y - ymidltrans), sf::Color::Cyan)
-		};
-		w.draw(l, 2, sf::Lines);
-
-		//VELOCITY VECTOR
-		sf::Vertex v[] =
-		{
-			sf::Vertex(sf::Vector2f(pos.x + 400 * fokusP.getxv() - xmidltrans, pos.y + 400 * fokusP.getyv() - ymidltrans),sf::Color::Red),
-			sf::Vertex(sf::Vector2f(pos.x - xmidltrans, pos.y - ymidltrans), sf::Color::Red)
-		};
-		w.draw(v, 2, sf::Lines);
-
-		//DRAWING TRAILS
-		if (iteration % TRAILFREQ == 0) addTrail(pos, TRAILLIFE);
-
-		//POINTING TO STRONGEST GRAVITY SOURCE
-		if (planets.size() > 1 && fokusP_Parent.getmass() != -1)
-		{
-			sf::Vertex g[] =
-			{
-				sf::Vertex(sf::Vector2f(fokusP_Parent.getx() - xmidltrans, fokusP_Parent.gety() - ymidltrans),sf::Color::Yellow),
-				sf::Vertex(sf::Vector2f(pos.x - xmidltrans, pos.y - ymidltrans), sf::Color::Yellow)
-			};
-			w.draw(g, 2, sf::Lines);
-		}
-
-		//DRAWING ROCHE LIMIT IF IT EXISTS
-		if (fokusP_Parent.getmass() != -1 && fokusP.getmass() > MINIMUMBREAKUPSIZE && fokusP.getmass() / fokusP_Parent.getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
-		{
-			double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER*(fokusP_Parent.getRad() + fokusP.getRad());
-
-			sf::CircleShape omr(rocheRad);
-			omr.setPosition(sf::Vector2f(fokusP_Parent.getx() - xmidltrans, fokusP_Parent.gety() - ymidltrans));
-			omr.setOrigin(rocheRad, rocheRad);
-			omr.setFillColor(sf::Color(0, 0, 0, 0));
-			omr.setOutlineColor(sf::Color(255, 140, 0));
-			omr.setOutlineThickness(1 * zoom);
-			w.draw(omr);
-		}
-
-		//CENTER OF MASS
-		sf::CircleShape midtpunkt(2);
-		midtpunkt.setOrigin(2, 2);
-		midtpunkt.setFillColor(sf::Color::Yellow);
-
-		double avst = sqrt((fokusP_Parent.getx() - pos.x)*(fokusP_Parent.getx() - pos.x) + (fokusP_Parent.gety() - pos.y)*(fokusP_Parent.gety() - pos.y));
-		avst = avst*(fokusP_Parent.getmass()) / (fokusP.getmass() + fokusP_Parent.getmass());
-		double angleb = atan2(fokusP_Parent.gety() - fokusP.gety(), fokusP_Parent.getx() - fokusP.getx());
-
-		midtpunkt.setPosition(fokusP.getx() + avst*cos(angleb) - xmidltrans, fokusP.gety() + avst*sin(angleb) - ymidltrans);
-		w.draw(midtpunkt);
-
-		//GOLDILOCK-ZONE
-		if (fokusP.getType() == SMALLSTAR || fokusP.getType() == STAR || fokusP.getType() == BIGSTAR)
-		{
-			double goldilock_inner_rad = (tempConstTwo * fokusP.getRad() * fokusP.getRad() * fokusP.temp()) / inner_goldi_temp;
-			double goldilock_outer_rad = (tempConstTwo * fokusP.getRad() * fokusP.getRad() * fokusP.temp()) / outer_goldi_temp;
-
-			sf::CircleShape g(goldilock_inner_rad);
-			g.setPointCount(60);
-			g.setPosition(sf::Vector2f(fokusP.getx()-xmidltrans, fokusP.gety() - ymidltrans));
-			g.setOrigin(goldilock_inner_rad, goldilock_inner_rad);
-			g.setOutlineThickness(goldilock_outer_rad - goldilock_inner_rad);
-			g.setFillColor(sf::Color(0, 0, 0, 0));
-			g.setOutlineColor(sf::Color(0, 200, 0, goldi_strength));
-			w.draw(g);
-		}
-		if ((fokusP_Parent.getType() == SMALLSTAR || fokusP_Parent.getType() == STAR || fokusP_Parent.getType() == BIGSTAR) && planets.size() > 1)
-		{
-			double goldilock_inner_rad = (tempConstTwo * fokusP_Parent.getRad() * fokusP_Parent.getRad() * fokusP_Parent.temp()) / inner_goldi_temp;
-			double goldilock_outer_rad = (tempConstTwo * fokusP_Parent.getRad() * fokusP_Parent.getRad() * fokusP_Parent.temp()) / outer_goldi_temp;
-
-			sf::CircleShape g(goldilock_inner_rad);
-			g.setPointCount(60);
-			g.setPosition(sf::Vector2f(fokusP_Parent.getx() - xmidltrans, fokusP_Parent.gety() - ymidltrans));
-			g.setOrigin(goldilock_inner_rad, goldilock_inner_rad);
-			g.setOutlineThickness(goldilock_outer_rad - goldilock_inner_rad);
-			g.setFillColor(sf::Color(0, 0, 0, 0));
-			g.setOutlineColor(sf::Color(0, 200, 0, goldi_strength));
-			w.draw(g);
-		}
-
-		//DRAWING LINES TO OTHER PLANET WITH THE SAME SPECIES
-		if (fokusP.getLife().getTypeEnum() >= 6) {
-			for(size_t i = 0; i < planets.size(); i++)
-			{
-				if (planets[i].getLife().getId() == fokusP.getLife().getId())
-				{
-					sf::Vertex q[] =
-					{
-						sf::Vertex(sf::Vector2f(planets[i].getx() - xmidltrans, planets[i].gety() - ymidltrans),fokusP.getLife().getCol()),
-						sf::Vertex(sf::Vector2f(pos.x - xmidltrans, pos.y - ymidltrans),fokusP.getLife().getCol())
-					};
-					w.draw(q, 2, sf::Lines);
-
-					sf::CircleShape omr(planets[i].getRad() + 5);
-					omr.setPosition(sf::Vector2f(planets[i].getx() - xmidltrans, planets[i].gety() - ymidltrans));
-					omr.setOrigin(planets[i].getRad() + 5, planets[i].getRad() + 5);
-					omr.setFillColor(sf::Color(0, 0, 0, 0));
-					omr.setOutlineColor(planets[i].getLife().getCol());
-					omr.setOutlineThickness(1 * zoom);
-					w.draw(omr);
-				}
-			}
-		}
-
-		//FINDING GREENHOUSE EFFECT
-		double dTherEnergy = fokusP.thermalEnergy() - fokusP.thermalEnergy() / (1 + greenHouseEffectMult*fokusP.getCurrentAtmosphere());
-		double dTemp = dTherEnergy / (fokusP.getmass()*fokusP.getTCap());
-		std::string dTempString;
-		if (tempEnhet == 1) dTempString = calcTemperature(dTemp, tempEnhet);
-		else dTempString = calcTemperature(dTemp + 273.15,tempEnhet);
-
-		//FIXING TEXT
-		text2.setPosition(pos.x + 1.5*fokusP.getRad() - xmidltrans, pos.y + 1.5*fokusP.getRad() - ymidltrans);
-		text2.setScale(0.5*zoom, 0.5*zoom);
-		text2.setString(fokusP.getName() + "\nType: " + typeplanet + "\nRadius: " + convertDoubleToString(fokusP.getRad()) + "\nMass: " + convertDoubleToString(fokusP.getmass()) + "\nSpeed: " + convertDoubleToString(sqrt(fokusP.getxv()*fokusP.getxv() + fokusP.getyv()*fokusP.getyv())));
-		if (planets.size() > 1) text2.setString(text2.getString() + "\nDistance: " + convertDoubleToString(sqrt((findPlanet(fokusP.getStrongestAttractorId()).getx() - pos.x)*(findPlanet(fokusP.getStrongestAttractorId()).getx() - pos.x) + (findPlanet(fokusP.getStrongestAttractorId()).gety() - pos.y)*(findPlanet(fokusP.getStrongestAttractorId()).gety() - pos.y))));
-		text2.setString(text2.getString() + "\nTemp: " + calcTemperature(fokusP.temp(), tempEnhet));
-		if (fokusP.getType() == TERRESTIAL)
-		{
-			text2.setString(text2.getString() + "\n\nAtmo: " + convertDoubleToString((int)fokusP.getCurrentAtmosphere()) + " / " + convertDoubleToString((int)fokusP.getAtmospherePotensial()) + "kPa \nGreenhouse Effect: " + dTempString);
-			if (fokusP.getLife().getTypeEnum() == 0) text2.setString(text2.getString() + "\n\n" + fokusP.getFlavorTextLife());
-		}
-		if (fokusP.getLife().getTypeEnum() != 0)
-		{
-			text2.setString(text2.getString() + "\n\nBiomass: " + convertDoubleToString((int)fokusP.getLife().getBmass()) + "MT");
-			if (fokusP.getLife().getTypeEnum() > 3) text2.setString(text2.getString() + "\n" + fokusP.getLife().getDesc() + " (" + fokusP.getLife().getType() + ")\n" + fokusP.getFlavorTextLife());
-			else text2.setString(text2.getString() + "\n" + fokusP.getLife().getType() + "\n" + fokusP.getFlavorTextLife());
-		}
-		text2.setColor(sf::Color(255, 255, 255));
-		drawtext2 = true;
-	}
-}
-
-//OTHER
 
 template<typename T>
 T generate_uniform(T min, T max) {
@@ -1050,7 +878,7 @@ void Space::drawPlanets(sf::RenderWindow &window)
 	//DRAWING PLANETS																										
 	for(size_t i = 0; i < planets.size(); i++)
 	{
-		planets[i].draw(window, xmidltrans, ymidltrans);
+		planets[i].draw(window);
 	}
 }
 
@@ -1065,7 +893,7 @@ void Space::drawEffects(sf::RenderWindow &window)
 	{
 		explosions[i].move(timeStep);
 
-		if (explosions[i].getAge(inc) < explosions[i].levetidmax()) explosions[i].render(window, xmidltrans, ymidltrans);
+		if (explosions[i].getAge(inc) < explosions[i].levetidmax()) explosions[i].render(window);
 		else
 		{
 			removeExplosion(i);
@@ -1079,7 +907,7 @@ void Space::drawEffects(sf::RenderWindow &window)
 	for(size_t i = 0; i < trail.size(); i++)
 	{
 		trail[i].move(timeStep);
-		if (trail[i].getAge(0) < trail[i].levetidmax() && !trail[i].killMe()) trail[i].render(window, xmidltrans, ymidltrans);
+		if (trail[i].getAge(0) < trail[i].levetidmax() && !trail[i].killMe()) trail[i].render(window);
 		else
 		{
 			removeTrail(i);
@@ -1101,67 +929,36 @@ void Space::drawLightEffects(sf::RenderWindow& window)
 			//LONG RANGE LIGHT
 			col.a = EXPLOSION_LIGHT_START_STRENGTH;
 			sf::VertexArray vertexArr(sf::TrianglesFan);
-			vertexArr.append(sf::Vertex(sf::Vector2f(p.getx() - xmidltrans, p.gety() - ymidltrans), col));
+			vertexArr.append(sf::Vertex(sf::Vector2f(p.getx(), p.gety()), col));
 			col.a = 0;
 			double deltaAng = 2*PI / ((double)LIGHT_NUMBER_OF_VERTECES);
 			double ang = 0;
 			double rad = LIGHT_STRENGTH_MULTIPLIER * sqrt(p.fusionEnergy());
 			for(size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
 			{
-				sf::Vector2f pos(p.getx() - xmidltrans + cos(ang) * rad, p.gety() - ymidltrans + sin(ang) * rad);
+				sf::Vector2f pos(p.getx() + cos(ang) * rad, p.gety() + sin(ang) * rad);
 				vertexArr.append(sf::Vertex(pos, col));
 				ang += deltaAng;
 			}
-			vertexArr.append(sf::Vertex(sf::Vector2f(p.getx() - xmidltrans + rad, p.gety() - ymidltrans), col));
+			vertexArr.append(sf::Vertex(sf::Vector2f(p.getx() + rad, p.gety()), col));
 			window.draw(vertexArr);
 
 			//SHORT RANGE LIGHT
 			col.a = LIGHT_START_STRENGTH * SHORT_LIGHT_STRENGTH_MULTIPLIER;
 			sf::VertexArray vertexArr2(sf::TrianglesFan);
-			vertexArr2.append(sf::Vertex(sf::Vector2f(p.getx() - xmidltrans, p.gety() - ymidltrans), col));
+			vertexArr2.append(sf::Vertex(sf::Vector2f(p.getx(), p.gety()), col));
 			col.a = LIGHT_END_STRENGTH;
 			ang = 0;
 			rad = SHORT_LIGHT_RANGE_MULTIPLIER * p.getRad();
 			for(size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
 			{
-				sf::Vector2f pos(p.getx() - xmidltrans + cos(ang) * rad, p.gety() - ymidltrans + sin(ang) * rad);
+				sf::Vector2f pos(p.getx() + cos(ang) * rad, p.gety() + sin(ang) * rad);
 				vertexArr2.append(sf::Vertex(pos, col));
 				ang += deltaAng;
 			}
-			vertexArr2.append(sf::Vertex(sf::Vector2f(p.getx() - xmidltrans + rad, p.gety() - ymidltrans), col));
+			vertexArr2.append(sf::Vertex(sf::Vector2f(p.getx() + rad, p.gety()), col));
 			window.draw(vertexArr2);
 		}
-	}
-}
-
-void Space::lockToObject(sf::RenderWindow& w, sf::View& v)
-{
-	//FINDING NEW OBJECT TO FOCUS ON
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && getSelectedFunction(functions) == FunctionType::FOLLOW_OBJECT && !mouseOnWidgets)
-	{
-		sf::Vector2i localPosition(w.mapPixelToCoords(sf::Mouse::getPosition(w), v));
-
-		//SEARCH
-		for(size_t i = 0; i < planets.size(); i++)
-		{
-			const auto dist = std::hypot(localPosition.x - planets[i].getx(), localPosition.y - planets[i].gety());
-			if (dist < planets[i].getRad())
-			{
-				lockToObjectId = planets[i].getId();
-				return;
-			}
-		}
-
-		//CHECKING IF WE PRESSED ON THE SPACESHIP (NOT USED FOR ANYTHING)
-		const auto dist_to_ship = std::hypot(localPosition.x - ship.getpos().x, localPosition.y - ship.getpos().y);
-		if (dist_to_ship < 4.5)
-		{
-			lockToObjectId = -1;
-			return;
-		}
-
-		//IN CASE WE DON'T FIND AN OBJECT
-		lockToObjectId = -2;
 	}
 }
 

@@ -1,7 +1,5 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
-#include <iostream>
 #include <random>
 #include "planet.h"
 #include "CONSTANTS.h"
@@ -28,7 +26,7 @@ public:
 	sf::Vector2f getpos();
 	double getsize();
 	sf::Color getcol();
-	virtual void render(sf::RenderWindow &w, int xm, int ym) = 0;
+	virtual void render(sf::RenderWindow &w) = 0;
 	void setID(int i);
 	int getID();
 	int getAge(double t);
@@ -55,7 +53,7 @@ public:
 		setcol(sf::Color::Yellow);
 	}
 
-	void render(sf::RenderWindow &w, int xm, int ym)
+	void render(sf::RenderWindow &w)
 	{
 
 
@@ -66,7 +64,7 @@ public:
 			sf::Color col = sf::Color(255, 255, 150);
 			col.a = EXPLOSION_LIGHT_START_STRENGTH;
 			sf::VertexArray vertexArr(sf::TrianglesFan);
-			vertexArr.append(sf::Vertex(sf::Vector2f(getpos().x - xm, getpos().y - ym), col));
+			vertexArr.append(sf::Vertex(getpos(), col));
 			col.a = 0;
 
 			double deltaAng = 2*PI / ((double)LIGHT_NUMBER_OF_VERTECES);
@@ -79,11 +77,11 @@ public:
 			//DRAWS VERTEXES
 			for (int nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
 			{
-				sf::Vector2f pos(getpos().x - xm + cos(ang) * rad, getpos().y - ym + sin(ang) * rad);
+				sf::Vector2f pos(getpos().x + cos(ang) * rad, getpos().y + sin(ang) * rad);
 				vertexArr.append(sf::Vertex(pos, col));
 				ang += deltaAng;
 			}
-			vertexArr.append(sf::Vertex(sf::Vector2f(getpos().x + rad - xm, getpos().y - ym), col));
+			vertexArr.append(sf::Vertex(sf::Vector2f(getpos().x + rad, getpos().y), col));
 			w.draw(vertexArr);
 		}
 
@@ -92,7 +90,7 @@ public:
 		sf::CircleShape eksplosjon(rad);
 
 		eksplosjon.setFillColor(getcol());
-		eksplosjon.setPosition(getpos().x - xm, getpos().y - ym);
+		eksplosjon.setPosition(getpos());
 		eksplosjon.setOrigin(rad, rad);
 
 		w.draw(eksplosjon);
@@ -114,10 +112,10 @@ public:
 		royk.setFillColor(getcol());
 		royk.setOrigin(TRAILRAD, TRAILRAD);
 	}
-	void render(sf::RenderWindow &w, int xm, int ym)
+	void render(sf::RenderWindow &w)
 	{
 
-		royk.setPosition(getpos().x - xm, getpos().y - ym);
+		royk.setPosition(getpos().x, getpos().y);
 
 		w.draw(royk);
 	}

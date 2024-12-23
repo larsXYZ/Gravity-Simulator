@@ -419,9 +419,9 @@ void Planet::collision(const Planet& p)
 	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
 }
 
-void Planet::draw(sf::RenderWindow& w, double xx, double yy)
+void Planet::draw(sf::RenderWindow& w)
 {
-	circle.setPosition(x - xx, y - yy);
+	circle.setPosition(x, y);
 	if (planetType != GASGIANT)
 	{
 		w.draw(circle);
@@ -443,8 +443,8 @@ void Planet::draw(sf::RenderWindow& w, double xx, double yy)
 
 			//FINDING COLOR
 			double r = atmoCol_r + atmoLinesBrightness[i] + temperature / 10;
-			double g = atmoCol_g + atmoLinesBrightness[i] - temperature / 15;
-			double b = atmoCol_b + atmoLinesBrightness[i] - temperature / 15;
+			double g = atmoCol_g + atmoLinesBrightness[i] - temperature / 13;
+			double b = atmoCol_b + atmoLinesBrightness[i] - temperature / 13;
 
 			if (r > 255) r = 255;
 			if (g > 255) g = 255;
