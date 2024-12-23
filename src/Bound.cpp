@@ -4,7 +4,7 @@
 
 Bound::Bound()
 {
-	isActive = true;
+	is_active = true;
 	indicator.setPosition(sf::Vector2f(0, 0));
 	indicator.setOrigin(START_RADIUS, START_RADIUS);
 	indicator.setRadius(START_RADIUS);
@@ -34,13 +34,14 @@ double Bound::getRad() const
 	return indicator.getRadius();
 }
 
-void Bound::setState(bool state)
+void Bound::setActiveState(bool state)
 { 
-	isActive = state;
+	is_active = state;
 }
-bool Bound::getState() const
+
+bool Bound::isActive() const
 {
-	return isActive;
+	return is_active;
 }
 
 bool Bound::isOutside(sf::Vector2f p) const

@@ -162,7 +162,6 @@ void Space::update()
 		if (findPlanet(ship.getPlanetID()).getmass() == -1)
 			ship.setLandedstate(false);
 	}
-	
 
 	//SHIPCHECK
 	for (size_t i = 0; i < planets.size(); i++)
@@ -301,7 +300,7 @@ void Space::update()
 	}
 	
 	//CHECKING IF ANYTHING IS OUTSIDE BOUNDS
-	if (bound.getState())
+	if (bound.isActive())
 	{
 		//PLANETS
 		for (size_t i = 0; i < planets.size(); i++)
@@ -318,7 +317,7 @@ void Space::update()
 	if (autoBound->isChecked() && iteration%BOUND_AUTO_UPDATE_RATE == 0)
 	{
 		bound.setPos(centerOfMassAll());
-		bound.setState(true);
+		bound.setActiveState(true);
 		bound.setRad(START_RADIUS);
 	}
 
@@ -327,7 +326,7 @@ void Space::update()
 		totalMass += planets[i].getmass();
 }
 
-void Space::hotkeys(sf::Window& w, sf::View& v)
+void Space::hotkeys(sf::Window& w)
 {
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) && timeStepSlider->getValue() > timeStepSlider->getMinimum())
 	{
@@ -339,6 +338,8 @@ void Space::hotkeys(sf::Window& w, sf::View& v)
 		timeStepSlider->setValue(timeStepSlider->getValue() + 1);
 		if (timeStepSlider->getValue() > timeStepSlider->getMaximum()) timeStepSlider->setValue(timeStepSlider->getMaximum());
 	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+		exit(0);
 
 	setFunctionGUIFromHotkeys(functions);
 }

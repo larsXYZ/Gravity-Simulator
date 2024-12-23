@@ -708,9 +708,9 @@ if (window.hasFocus())
 	{
 		if (getSelectedFunction(functions) == FunctionType::ADD_BOUND && !mouseOnWidgets)
 		{
-			if (bound.getState() && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			if (bound.isActive() && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{
-				bound.setState(false);
+				bound.setActiveState(false);
 				boundCounter = -1;
 			}
 			else
@@ -730,7 +730,7 @@ if (window.hasFocus())
 				}
 				else if (boundCounter == 1)
 				{
-					if (bound.getRad() > BOUND_MIN_RAD) bound.setState(true);
+					if (bound.getRad() > BOUND_MIN_RAD) bound.setActiveState(true);
 					boundCounter = 0;
 				}
 				else boundCounter = 0;
@@ -786,14 +786,14 @@ else
 	}
 
 }
-if (bound.getState()) bound.draw(window, xmidltrans, ymidltrans, zoom);
+if (bound.isActive()) bound.draw(window, xmidltrans, ymidltrans, zoom);
 drawPlanetInfo(window, view1);
 if (drawtext2 && findPlanet(fokusId).getmass() != -1) window.draw(text2);
 if (showGUI) gui.draw();
 
 
 //DRAWING WARNING IF MOUSE OUTSIDE BOUNDS
-if (!mouseOnWidgets && bound.getState() && bound.isOutside(sf::Vector2f(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1))))
+if (!mouseOnWidgets && bound.isActive() && bound.isOutside(sf::Vector2f(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1))))
 {
 	sf::Vector2f mousePos(window.mapPixelToCoords(sf::Mouse::getPosition(window), view1));
 

@@ -59,14 +59,13 @@ class SpaceShip;
 
 struct FunctionContext
 {
-	FunctionType type;
+	const FunctionType type;
 	Space & space;
 	SpaceShip & spaceship;
 	sf::View & view;
 	sf::RenderWindow & window;
 	tgui::Gui & gui;
-	sf::Vector2i mouse_pos_window;
-	sf::Vector2f mouse_pos_world;
-	sf::Event& event;
+	const sf::Vector2i & mouse_pos_window;
+	const sf::Vector2f & mouse_pos_world;
 };
 void executeFunction(FunctionContext& context);

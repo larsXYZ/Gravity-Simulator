@@ -106,7 +106,7 @@ public:
 	sf::Vector2f centerOfMassVelocity(std::vector<int> midlPList);
 
 	//USERFUNCTIONS
-	void hotkeys(sf::Window& w, sf::View& v);
+	void hotkeys(sf::Window& w);
 
 	//GUI
 	void initSetup();
