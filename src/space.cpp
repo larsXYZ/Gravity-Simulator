@@ -360,6 +360,7 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 	{
 		double mass = uniform_random(0.6*totmass /antall, 1.4*totmass /antall);
 
+		radius = std::max(radius, 2 * centerP.getRad());
 		double radius2 = uniform_random(2*centerP.getRad() , radius);
 		double randomelement1 = uniform_random(-speedmultRandom*0.5, speedmultRandom*0.5);
 		double randomelement2 = uniform_random(-speedmultRandom*0.5, speedmultRandom*0.5);
@@ -510,11 +511,11 @@ void Space::explodePlanet(Planet planet)
 
 void Space::giveId(Planet &p)
 {
-	p.mark(nesteid);
-	nesteid += 1;
+	p.giveID(next_id);
+	next_id += 1;
 }
 
-Planet Space::findPlanet(double id)
+Planet Space::findPlanet(int id)
 {
 	for(size_t i = 0; i < planets.size(); i++)
 	{
@@ -526,7 +527,7 @@ Planet Space::findPlanet(double id)
 	return Planet(-1);
 }
 
-Planet* Space::findPlanetPtr(double id)
+Planet* Space::findPlanetPtr(int id)
 {
 	for (auto & planet : planets)
 	{

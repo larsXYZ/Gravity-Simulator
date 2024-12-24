@@ -38,7 +38,7 @@ class Planet
 	double supportedBiomass = 0;
 
 	//OTHER
-	double id;
+	int id;
 	int ID_strongest_attractor;
 	double STRENGTH_strongest_attractor = 0;
 	bool marked_for_removal = false;
@@ -142,7 +142,7 @@ public:
 	double getRad() const;
 	pType getType() const;
 	static std::string getTypeString(pType type);
-	double getId() const;
+	int getId() const;
 
 	int getStrongestAttractorId() const;
 
@@ -185,7 +185,7 @@ public:
 	void incMass(double m);
 	double getDist(const Planet& forcer) const;
 	void collision(const Planet& p);
-	void mark(double i);
+	void giveID(int i);
 	void updateTemp();
 
 	//TEMPERATURE

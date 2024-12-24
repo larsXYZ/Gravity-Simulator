@@ -45,8 +45,16 @@ void Space::runSim()
 
 		while(window.pollEvent(event))
 		{
-			click_and_drag_handler.update(mainView, window, event);
+			if (!object_tracker.is_active())
+				click_and_drag_handler.update(mainView, window, event);
+
 			gui.handleEvent(event);
+		}
+
+		if (object_tracker.is_active())
+		{
+			object_tracker.update(*this, mainView);
+			window.setView(mainView);
 		}
 
 		window.setView(mainView);

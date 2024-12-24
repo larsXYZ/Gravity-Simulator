@@ -67,7 +67,7 @@ std::string Planet::getTypeString(pType type)
 	return "Unknown";
 }
 
-double Planet::getId() const
+int Planet::getId() const
 {
 	return id;
 }
@@ -92,7 +92,7 @@ std::string Planet::getName() const
 	return name;
 }
 
-void Planet::mark(double i)
+void Planet::giveID(int i)
 {
 	id = i;
 	life.giveId(i);

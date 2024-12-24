@@ -474,12 +474,32 @@ public:
 			context.window.draw(line, 2, sf::Lines);
 			context.window.draw(t);
 
-				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
-				{
-					context.space.randomPlanets(MASS_MULTIPLIER * cbrt(rad), NUMBER_OF_OBJECT_MULTIPLIER * rad, rad, location);
-					reset();
-				}
-				break;
+			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			{
+				context.space.randomPlanets(MASS_MULTIPLIER * cbrt(rad), NUMBER_OF_OBJECT_MULTIPLIER * rad, rad, location);
+				reset();
+			}
+			break;
+			}
+		}
+	}
+};
+
+class TrackObjectFunction : public IUserFunction
+{
+public:
+	void execute(FunctionContext& context) override
+	{
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		{
+			for (const auto& planet : context.space.planets)
+			{
+				const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
+					planet.gety() - context.mouse_pos_world.y);
+				if (dist >= planet.getRad())
+					continue;
+				context.space.object_tracker.activate(planet.getId());
+				return;
 			}
 		}
 	}
@@ -499,6 +519,7 @@ public:
 		executioners[FunctionType::SPAWN_SHIP] = std::make_shared<SpawnShipFunction>();
 		executioners[FunctionType::ADD_RINGS] = std::make_shared<AddRingsFunction>();
 		executioners[FunctionType::RANDOM_SYSTEM] = std::make_shared<RandomSystemFunction>();
+		executioners[FunctionType::FOLLOW_OBJECT] = std::make_shared<TrackObjectFunction>();
 	}
 	void execute(FunctionContext & context)
 	{

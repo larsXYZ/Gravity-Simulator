@@ -14,6 +14,7 @@
 #include "CONSTANTS.h"
 #include "Bound.h"
 #include "click_and_drag.h"
+#include "object_tracker.h"
 #include "particles/particle_container.h"
 
 
@@ -34,7 +35,7 @@ class Space
 	double totalMass = 0;
 	int xs;
 	int ys;
-	int nesteid = 0;
+	int next_id = 0;
 	double timeStep = TIMESTEP_VALUE_START;
 	double curr_time = 0;
 	int iteration = 0;
@@ -69,6 +70,7 @@ class Space
 	tgui::Slider::Ptr massExistingObjectSlider = std::make_shared<tgui::Slider>();
 	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();
 	ClickAndDragHandler click_and_drag_handler;
+	ObjectTracker object_tracker;
 
 public:
 
@@ -98,8 +100,8 @@ public:
 	void drawEffects(sf::RenderWindow & window);
 	void drawLightEffects(sf::RenderWindow& window);
 	void giveId(Planet &p);
-	Planet findPlanet(double id);
-	Planet* findPlanetPtr(double id);
+	Planet findPlanet(int id);
+	Planet* findPlanetPtr(int id);
 	int findBestPlanet(int q);
 	void updateSpaceship();
 	double thermalEnergyAtPosition(sf::Vector2f pos);
@@ -124,4 +126,5 @@ public:
 	friend class NewObjectInOrbitFunction;
 	friend class RemoveObjectFunction;
 	friend class AddRingsFunction;
+	friend class TrackObjectFunction;
 };
