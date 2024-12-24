@@ -13,6 +13,7 @@
 #include "Effect.h"
 #include "CONSTANTS.h"
 #include "Bound.h"
+#include "click_and_drag.h"
 #include "particles/particle_container.h"
 
 
@@ -67,6 +68,7 @@ class Space
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
 	tgui::Slider::Ptr massExistingObjectSlider = std::make_shared<tgui::Slider>();
 	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();
+	ClickAndDragHandler click_and_drag_handler;
 
 public:
 
@@ -78,7 +80,7 @@ public:
 	void removeExplosion(int ind);
 	void removeSmoke(int ind);
 	void removeTrail(int ind);
-	void clear(sf::View& v, sf::Window& w);
+	void full_reset(sf::View& view);
 
 	void disintegratePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
 	void explodePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
@@ -106,7 +108,7 @@ public:
 	sf::Vector2f centerOfMassVelocity(std::vector<int> midlPList);
 
 	//USERFUNCTIONS
-	void hotkeys(sf::Window& w);
+	void hotkeys(sf::Window & window, sf::View & view);
 
 	//GUI
 	void initSetup();

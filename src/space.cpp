@@ -326,20 +326,19 @@ void Space::update()
 		totalMass += planets[i].getmass();
 }
 
-void Space::hotkeys(sf::Window& w)
+void Space::hotkeys(sf::Window & window, sf::View & view)
 {
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) && timeStepSlider->getValue() > timeStepSlider->getMinimum())
-	{
-		timeStepSlider->setValue(timeStepSlider->getValue() - 1);
-		if (timeStepSlider->getValue() < timeStepSlider->getMinimum()) timeStepSlider->setValue(timeStepSlider->getMinimum());
-	}
+		timeStepSlider->setValue(std::max(timeStepSlider->getValue() - 1, timeStepSlider->getMinimum()));
+
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Period) && timeStepSlider->getValue() < timeStepSlider->getMaximum())
-	{
-		timeStepSlider->setValue(timeStepSlider->getValue() + 1);
-		if (timeStepSlider->getValue() > timeStepSlider->getMaximum()) timeStepSlider->setValue(timeStepSlider->getMaximum());
-	}
+		timeStepSlider->setValue(std::min(timeStepSlider->getValue() + 1, timeStepSlider->getMaximum()));
+
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
 		exit(0);
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
+		full_reset(view);
 
 	setFunctionGUIFromHotkeys(functions);
 }
@@ -404,21 +403,21 @@ void Space::removeSmoke(int ind)
 	particles->clear();
 }
 
-void Space::clear(sf::View& v, sf::Window& w)
+void Space::full_reset(sf::View& view)
 {
-	(void) w;
-
 	planets.clear();
 	explosions.clear();
 	particles->clear();
 	trail.clear();
 	bound = Bound();
 	
-	v = sf::View();
-	v.setSize(sf::Vector2f(xsize, ysize));
-	v.setCenter(0, 0);
+	view = sf::View();
+	view.setSize(sf::Vector2f(xsize, ysize));
+	view.setCenter(0, 0);
 	ship.reset(sf::Vector2f(0, 0));
 	iteration = 0;
+	curr_time = 0.0;
+	click_and_drag_handler.reset();
 }
 
 void Space::disintegratePlanet(Planet planet)
