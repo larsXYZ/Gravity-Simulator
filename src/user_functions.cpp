@@ -253,6 +253,125 @@ public:
 	}
 };
 
+class AddRingsFunction : public IUserFunction
+{
+	enum class AddRingsFunctionState
+	{
+		INACTIVE,
+		PARENT_FOUND,
+		INNER_CREATED
+	} state;
+
+	int target_planet_id{ -1 };
+	double inner_rad{ -1.0 };
+
+	void reset()
+	{
+		state = AddRingsFunctionState::INACTIVE;
+		target_planet_id = -1;
+		inner_rad = -1.0;
+	}
+
+public:
+	void execute(FunctionContext& context) override
+	{
+		switch (state)
+		{
+		case AddRingsFunctionState::INACTIVE:
+		{
+			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				return;
+
+			for (const auto& planet : context.space.planets)
+			{
+				const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
+					planet.gety() - context.mouse_pos_world.y);
+				if (dist < planet.getRad())
+				{
+					target_planet_id = planet.getId();
+					state = AddRingsFunctionState::PARENT_FOUND;
+					break;
+				}
+			}
+
+			break;
+		}
+		case AddRingsFunctionState::PARENT_FOUND:
+			{
+				Planet* parent = context.space.findPlanetPtr(target_planet_id);
+				if (!parent)
+				{
+					reset();
+					break;
+				}
+
+				const auto rad = std::hypot(context.mouse_pos_world.x - parent->getx(),
+													context.mouse_pos_world.y - parent->gety());
+
+				if (rad < parent->getRad())
+				{
+					if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+						reset();
+					break;
+				}
+
+				sf::CircleShape indicator(rad);
+				indicator.setPosition(sf::Vector2f(parent->getx(), parent->gety()));
+				indicator.setOrigin(rad, rad);
+				indicator.setFillColor(sf::Color(0, 0, 0, 0));
+				indicator.setOutlineColor(sf::Color::Red);
+				indicator.setOutlineThickness(1);
+				context.window.draw(indicator);
+
+				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				{
+					state = AddRingsFunctionState::INNER_CREATED;
+					inner_rad = rad;
+				}
+				break;
+			}
+		case AddRingsFunctionState::INNER_CREATED:
+			{
+				Planet* parent = context.space.findPlanetPtr(target_planet_id);
+				if (!parent)
+				{
+					reset();
+					break;
+				}
+
+				const auto rad = std::hypot(context.mouse_pos_world.x - parent->getx(),
+					context.mouse_pos_world.y - parent->gety());
+
+				if (rad < inner_rad)
+				{
+					if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+						reset();
+					break;
+				}
+
+				sf::CircleShape indicator(inner_rad);
+				indicator.setPosition(sf::Vector2f(parent->getx(), parent->gety()));
+				indicator.setOrigin(inner_rad, inner_rad);
+				indicator.setFillColor(sf::Color(0, 0, 0, 0));
+				indicator.setOutlineColor(sf::Color::Red);
+				indicator.setOutlineThickness(1);
+				context.window.draw(indicator);
+
+				indicator.setRadius(rad);
+				indicator.setOrigin(rad, rad);
+				context.window.draw(indicator);
+
+				if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				{
+					context.space.giveRings(*parent, inner_rad, rad);
+					reset();
+				}
+				break;
+			}
+		}
+	}
+};
+
 class ExecutionerContainer
 {
 	std::map<FunctionType, std::unique_ptr<IUserFunction>> executioners;
@@ -263,6 +382,7 @@ public:
 		executioners[FunctionType::OBJECT_IN_ORBIT] = std::make_unique<NewObjectInOrbitFunction>();
 		executioners[FunctionType::REMOVE_OBJECT] = std::make_unique<RemoveObjectFunction>();
 		executioners[FunctionType::SPAWN_SHIP] = std::make_unique<SpawnShipFunction>();
+		executioners[FunctionType::ADD_RINGS] = std::make_unique<AddRingsFunction>();
 	}
 	void execute(FunctionContext & context)
 	{
