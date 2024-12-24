@@ -566,14 +566,14 @@ void Space::addTrail(sf::Vector2f p, int l)
 
 void Space::giveRings(const Planet & planet, int inner, int outer)
 {
-	int antall = 0.05*outer*outer;
+	const int particle_count = 0.05*outer*outer;
+	const double delta_angle = 2.0 * PI / particle_count;
 	double angle = 0;
-	double delta_angle = 2*PI / antall;
 
-	for (int i = 0; i < antall; i++)
+	for (int i = 0; i < particle_count; i++)
 	{
-		double rad = ((double) uniform_random(inner*1000, outer*1000))/1000;
-		double speed = sqrt(G*planet.getmass() / rad);
+		const double rad = ((double) uniform_random(inner*1000, outer*1000))/1000;
+		const double speed = sqrt(G*planet.getmass() / rad);
 
 		const auto pos = sf::Vector2f(planet.getx() + cos(angle) * rad, planet.gety() + sin(angle) * rad);
 		const auto vel = sf::Vector2f(speed * cos(angle + PI / 2.0) + planet.getxv(), speed * sin(angle + PI / 2.0));
