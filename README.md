@@ -1,26 +1,16 @@
 ﻿# Gravity-Simulator-v1.0-SOURCE
 
-This is the source code for my gravity simulation project. DISCLAIMER: Keep in
-mind it started out as a simple test. So the code is horribly organized. I am
-also Norwegian, so some stuff might be in Norwegian. I've tried to make it
-easier to understand. https://www.youtube.com/channel/UCslIyA4_1rciR3loFI09pZQ
+This is the source code for my gravity simulation project. I made it when first learning C++ / programming in university back in 2016.
+The code was terrible and filled with poor solutions to simple problems. During Christmas 2025 I revisited it and replaced some of the old bad solutions with new bad solutions.
 
+You can see a trailer I made in 2016 here:
+https://youtu.be/2ksVjpxY5mI?si=pwDCNEDP6Kb8V7mD
 
-# Compiling for Debian
+# Creating a solution
 
 Gravity-Simulator uses the graphics library [SFML 2.6.2](http://www.sfml-dev.org/)
-and the user interface library [TGUI 1.6.1](https://www.tgui.eu/).
+and the user interface library [TGUI 1.6.1](https://www.tgui.eu/). It uses CMake for build management.
 
-## Dependencies
+Built the solution with:
 
-```bash
-# >> /etc/apt/sources.list <<< "deb http://ppa.launchpad.net/texus/tgui/ubuntu xenial main"
-# apt update
-# apt install libsfml-dev libtgui-dev
-```
-
-# Compile
-
-```bash
-$ make
-```
+    cmake .

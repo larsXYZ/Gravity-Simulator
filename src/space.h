@@ -118,7 +118,6 @@ public:
 	int uniform_random(int min, int max);
 	double uniform_random(double min, double max);
 	sf::Vector2f random_vector(double magn);
-	static std::string convertDoubleToString(double number);
 	static double convertStringToDouble(std::string string);
 	std::string calcTemperature(double q, int e);
 

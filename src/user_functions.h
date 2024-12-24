@@ -67,5 +67,6 @@ struct FunctionContext
 	const sf::Vector2i & mouse_pos_window;
 	const sf::Vector2f & mouse_pos_world;
 	tgui::Slider::Ptr mass_slider;
+	tgui::TextArea::Ptr new_object_info;
 };
 void executeFunction(FunctionContext& context);

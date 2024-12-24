@@ -45,9 +45,51 @@ pType Planet::getType() const
 	return planetType;
 }
 
+std::string Planet::getTypeString(pType type)
+{
+	switch (type)
+	{
+	case ROCKY: 
+		return "Rocky";
+	case TERRESTIAL:
+		return "Terrestial";
+	case GASGIANT:
+		return "Gas giant";
+	case SMALLSTAR:
+		return "Small star";
+	case STAR:
+		return "Star";
+	case BIGSTAR:
+		return "Big star";
+	case BLACKHOLE:
+		return "Black hole";
+	}
+	return "Unknown";
+}
+
 double Planet::getId() const
 {
 	return id;
+}
+
+int Planet::getStrongestAttractorId() const
+{
+	return ID_strongest_attractor;
+}
+
+int Planet::getStrongestAttractorIdRef() const
+{
+	return ID_strongest_attractor;
+}
+
+void Planet::setStrongestAttractorIdRef(int id)
+{
+	ID_strongest_attractor = id;
+}
+
+std::string Planet::getName() const
+{
+	return name;
 }
 
 void Planet::mark(double i)
@@ -402,6 +444,11 @@ void Planet::updateRadiAndType()
 	circle.setOrigin(radi, radi);
 }
 
+void Planet::resetAttractorMeasure()
+{
+	STRENGTH_strongest_attractor = 0;
+}
+
 void Planet::incMass(double m)
 {
 	mass += m;
@@ -501,6 +548,16 @@ void Planet::setColor()
 
 		circle.setFillColor(sf::Color(r, g, b));
 	}
+}
+
+double Planet::getTCap() const
+{
+	return tCapacity;
+}
+
+void Planet::setMass(double m)
+{
+	mass = m;
 }
 
 void Planet::updateAtmosphere(int t)

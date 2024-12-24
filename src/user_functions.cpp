@@ -23,6 +23,7 @@ void fillFunctionGUIDropdown(tgui::ListBox::Ptr listbox)
 {
 	for (const auto& function : function_info)
 		listbox->addItem(function.label);
+	listbox->setSelectedItemByIndex(0);
 }
 
 void setFunctionGUIFromHotkeys(tgui::ListBox::Ptr listbox)
@@ -34,11 +35,28 @@ void setFunctionGUIFromHotkeys(tgui::ListBox::Ptr listbox)
 	}
 }
 
+void fillTextBox(tgui::TextArea::Ptr textbox, double mass)
+{
+	Planet temp(mass);
+	textbox->setText("NEW OBJECT\nMass:   " + std::to_string(static_cast<int>(mass))
+							+ "\nType:      " + Planet::getTypeString(temp.getType()));
+}
+
 class IUserFunction
 {
+	virtual void reset() {}
 public:
 	virtual ~IUserFunction() = default;
+	virtual void on_selection(FunctionContext& context)
+	{
+		context.mass_slider->setVisible(false);
+		context.new_object_info->setVisible(false);
+	};
 	virtual void execute(FunctionContext& context) = 0;
+	virtual void on_deselection(FunctionContext& context)
+	{
+		reset();
+	};
 };
 
 class NewObjectFunction : public IUserFunction
@@ -46,8 +64,16 @@ class NewObjectFunction : public IUserFunction
 	bool mouseToggle{ false };
 	sf::Vector2f start_pos;
 public:
+	void on_selection(FunctionContext& context) override
+	{
+		context.mass_slider->setVisible(true);
+		context.new_object_info->setVisible(true);
+	}
+
 	void execute(FunctionContext& context) override
 	{
+		fillTextBox(context.new_object_info, context.mass_slider->getValue());
+
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
 			if (!mouseToggle)
@@ -94,14 +120,22 @@ class NewObjectInOrbitFunction : public IUserFunction
 	} state{InOrbitFunctionState::INACTIVE};
 	int target_planet_id{ -1 };
 
-	void reset()
+	void reset() override
 	{
 		state = InOrbitFunctionState::INACTIVE;
 		target_planet_id = -1;
 	}
 public:
+	void on_selection(FunctionContext& context) override
+	{
+		context.mass_slider->setVisible(true);
+		context.new_object_info->setVisible(true);
+	}
+
 	void execute(FunctionContext& context) override
 	{
+		fillTextBox(context.new_object_info, context.mass_slider->getValue());
+
 		switch (state)
 		{
 		case InOrbitFunctionState::INACTIVE:
@@ -265,7 +299,7 @@ class AddRingsFunction : public IUserFunction
 	int target_planet_id{ -1 };
 	double inner_rad{ -1.0 };
 
-	void reset()
+	void reset() override
 	{
 		state = AddRingsFunctionState::INACTIVE;
 		target_planet_id = -1;
@@ -453,23 +487,44 @@ public:
 
 class ExecutionerContainer
 {
-	std::map<FunctionType, std::unique_ptr<IUserFunction>> executioners;
+	FunctionType prev_type;
+	std::weak_ptr<IUserFunction> prev_function;
+	std::map<FunctionType, std::shared_ptr<IUserFunction>> executioners;
 public:
 	ExecutionerContainer()
 	{
-		executioners[FunctionType::NEW_OBJECT] = std::make_unique<NewObjectFunction>();
-		executioners[FunctionType::OBJECT_IN_ORBIT] = std::make_unique<NewObjectInOrbitFunction>();
-		executioners[FunctionType::REMOVE_OBJECT] = std::make_unique<RemoveObjectFunction>();
-		executioners[FunctionType::SPAWN_SHIP] = std::make_unique<SpawnShipFunction>();
-		executioners[FunctionType::ADD_RINGS] = std::make_unique<AddRingsFunction>();
-		executioners[FunctionType::RANDOM_SYSTEM] = std::make_unique<RandomSystemFunction>();
+		executioners[FunctionType::NEW_OBJECT] = std::make_shared<NewObjectFunction>();
+		executioners[FunctionType::OBJECT_IN_ORBIT] = std::make_shared<NewObjectInOrbitFunction>();
+		executioners[FunctionType::REMOVE_OBJECT] = std::make_shared<RemoveObjectFunction>();
+		executioners[FunctionType::SPAWN_SHIP] = std::make_shared<SpawnShipFunction>();
+		executioners[FunctionType::ADD_RINGS] = std::make_shared<AddRingsFunction>();
+		executioners[FunctionType::RANDOM_SYSTEM] = std::make_shared<RandomSystemFunction>();
 	}
 	void execute(FunctionContext & context)
 	{
 		auto match = executioners.find(context.type);
 		if (match == executioners.end())
+		{
+			if (auto prev = prev_function.lock())
+				prev->on_deselection(context);
+
+			prev_function.reset();
+
 			return;
+		}
+
+		if (context.type != prev_type)
+		{
+			if (auto prev = prev_function.lock())
+				prev->on_deselection(context);
+
+			match->second->on_selection(context);
+		}
+
 		match->second->execute(context);
+
+		prev_function = match->second;
+		prev_type = context.type;
 	}
 };
 

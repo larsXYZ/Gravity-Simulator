@@ -589,15 +589,15 @@ std::string Space::calcTemperature(double q, int e)
 {
 	if (e == 1)
 	{
-		return convertDoubleToString((int) q) + "K";
+		return std::to_string((int) q) + "K";
 	}
 	else if (e == 2)
 	{
-		return convertDoubleToString((int)(q - 273.15)) + "°C";
+		return std::to_string((int)(q - 273.15)) + "°C";
 	}
 	else if (e == 3)
 	{
-		return convertDoubleToString((int)((q - 273.15)* 1.8000 + 32.00)) + "°F";
+		return std::to_string((int)((q - 273.15)* 1.8000 + 32.00)) + "°F";
 	}
 	return "-";
 }
@@ -848,17 +848,6 @@ sf::Vector2f Space::random_vector(double magn)
 		static_cast<float>(cos(angle) * magnitude),
 		static_cast<float>(sin(angle) * magnitude)
 	};
-}
-
-std::string Space::convertDoubleToString(double number)
-{
-	std::string Result;
-
-	std::stringstream convert;
-
-	convert << std::setprecision(5) << number;
-
-	return convert.str();
 }
 
 double Space::convertStringToDouble(std::string string)

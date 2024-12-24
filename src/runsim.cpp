@@ -61,6 +61,7 @@ void Space::runSim()
 			.mouse_pos_window = sf::Mouse::getPosition(window),
 			.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView),
 			.mass_slider = massSlider,
+			.new_object_info = newPlanetInfo
 		};
 		executeFunction(context);
 

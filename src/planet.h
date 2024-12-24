@@ -141,27 +141,16 @@ public:
 	double getmass() const;
 	double getRad() const;
 	pType getType() const;
+	static std::string getTypeString(pType type);
 	double getId() const;
 
-	int getStrongestAttractorId() const
-	{
-		return ID_strongest_attractor;
-	}
+	int getStrongestAttractorId() const;
 
-	int getStrongestAttractorIdRef() const
-	{
-		return ID_strongest_attractor;
-	}
+	int getStrongestAttractorIdRef() const;
 
-	void setStrongestAttractorIdRef(int id)
-	{
-		ID_strongest_attractor = id;
-	}
+	void setStrongestAttractorIdRef(int id);
 
-	std::string getName() const
-	{
-		return name;
-	}
+	std::string getName() const;
 
 	bool emitsHeat() const;
 
@@ -190,10 +179,7 @@ public:
 	void sety(double y);
 	void updateRadiAndType();
 
-	void resetAttractorMeasure()
-	{
-		STRENGTH_strongest_attractor = 0;
-	}
+	void resetAttractorMeasure();
 
 	void draw(sf::RenderWindow& w);
 	void incMass(double m);
@@ -222,8 +208,8 @@ public:
 	void increaseThermalEnergy(double e);
 
 	void setColor();
-	double getTCap() const { return tCapacity; };
-	void setMass(double m) { mass = m; }
+	double getTCap() const;
+	void setMass(double m);
 
 	//ATMOSPHERE
 	void updateAtmosphere(int t);
