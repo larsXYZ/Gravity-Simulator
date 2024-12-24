@@ -91,7 +91,7 @@ class NewObjectInOrbitFunction : public IUserFunction
 	{
 		INACTIVE,
 		PARENT_FOUND,
-	} state;
+	} state{InOrbitFunctionState::INACTIVE};
 	int target_planet_id{ -1 };
 
 	void reset()
@@ -260,7 +260,7 @@ class AddRingsFunction : public IUserFunction
 		INACTIVE,
 		PARENT_FOUND,
 		INNER_CREATED
-	} state;
+	} state{AddRingsFunctionState::INACTIVE};
 
 	int target_planet_id{ -1 };
 	double inner_rad{ -1.0 };
@@ -372,6 +372,85 @@ public:
 	}
 };
 
+class RandomSystemFunction : public IUserFunction
+{
+	sf::Font font;
+
+	enum class RandomSystemState
+	{
+		INACTIVE,
+		LOCATION_FOUND
+	} state{RandomSystemState::INACTIVE};
+
+	sf::Vector2f location{};
+
+	void reset()
+	{
+		state = RandomSystemState::INACTIVE;
+		location = {};
+	}
+public:
+	RandomSystemFunction()
+	{
+		font.loadFromFile("sansation.ttf");
+	}
+
+	void execute(FunctionContext& context) override
+	{
+		switch (state)
+		{
+		case RandomSystemState::INACTIVE:
+			{
+				if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				{
+					location = context.mouse_pos_world;
+					state = RandomSystemState::LOCATION_FOUND;
+				}
+				break;
+			}
+		case RandomSystemState::LOCATION_FOUND:
+			{
+			const auto rad = std::hypot(context.mouse_pos_world.x - location.x,
+				context.mouse_pos_world.y - location.y);
+
+			sf::CircleShape indicator(rad);
+			indicator.setPosition(location);
+			indicator.setOrigin(rad, rad);
+			indicator.setFillColor(sf::Color(0, 0, 0, 0));
+			indicator.setOutlineColor(sf::Color::Red);
+			indicator.setOutlineThickness(1);
+			indicator.setPointCount(100);
+			context.window.draw(indicator);
+
+			sf::Vertex line[] =
+			{
+				sf::Vertex(location,sf::Color::Red),
+				sf::Vertex(context.mouse_pos_world, sf::Color::Red)
+			};
+
+			sf::Text t;
+			t.setString("Planets: " + std::to_string((int)((NUMBER_OF_OBJECT_MULTIPLIER * rad) + 1))
+				+ "\nMass: ca " + std::to_string(MASS_MULTIPLIER * cbrt(rad))
+				+ "\nRadius: " + std::to_string(rad));
+			t.setPosition(context.mouse_pos_world.x + 10, context.mouse_pos_world.y);
+			t.setColor(sf::Color::Red);
+			t.setFont(font);
+			t.setCharacterSize(10);
+
+			context.window.draw(line, 2, sf::Lines);
+			context.window.draw(t);
+
+				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				{
+					context.space.randomPlanets(MASS_MULTIPLIER * cbrt(rad), NUMBER_OF_OBJECT_MULTIPLIER * rad, rad, location);
+					reset();
+				}
+				break;
+			}
+		}
+	}
+};
+
 class ExecutionerContainer
 {
 	std::map<FunctionType, std::unique_ptr<IUserFunction>> executioners;
@@ -383,6 +462,7 @@ public:
 		executioners[FunctionType::REMOVE_OBJECT] = std::make_unique<RemoveObjectFunction>();
 		executioners[FunctionType::SPAWN_SHIP] = std::make_unique<SpawnShipFunction>();
 		executioners[FunctionType::ADD_RINGS] = std::make_unique<AddRingsFunction>();
+		executioners[FunctionType::RANDOM_SYSTEM] = std::make_unique<RandomSystemFunction>();
 	}
 	void execute(FunctionContext & context)
 	{

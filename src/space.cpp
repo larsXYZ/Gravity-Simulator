@@ -163,7 +163,8 @@ void Space::update()
 			ship.setLandedstate(false);
 	}
 
-	//SHIPCHECK
+	updateSpaceship();
+
 	for (size_t i = 0; i < planets.size(); i++)
 	{
 		if (ship.isExist() && !ship.pullofGravity(planets[i], ship, timeStep))
