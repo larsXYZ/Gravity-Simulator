@@ -1,6 +1,4 @@
 #pragma once
-#include <cmath>
-#include <math.h>
 #include "CONSTANTS.h"
 #include <SFML/Graphics.hpp>
 #include <random>
@@ -249,4 +247,11 @@ public:
 	
 	void setxv(double v);
 	void setyv(double v);
+
+	struct GoldilockInfo
+	{
+		double min_rad;
+		double max_rad;
+	};
+	GoldilockInfo getGoldilockInfo() const;
 };

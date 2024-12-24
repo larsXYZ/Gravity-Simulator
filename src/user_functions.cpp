@@ -41,7 +41,7 @@ public:
 	virtual void execute(FunctionContext& context) = 0;
 };
 
-class AddPlanetFunction : public IUserFunction
+class NewObjectFunction : public IUserFunction
 {
 	bool mouseToggle{ false };
 	sf::Vector2f start_pos;
@@ -85,13 +85,151 @@ public:
 	}
 };
 
+class NewObjectInOrbitFunction : public IUserFunction
+{
+	enum class InOrbitFunctionState
+	{
+		INACTIVE,
+		PARENT_FOUND,
+	} state;
+	int target_planet_id{ -1 };
+
+	void reset()
+	{
+		state = InOrbitFunctionState::INACTIVE;
+		target_planet_id = -1;
+	}
+public:
+	void execute(FunctionContext& context) override
+	{
+		switch (state)
+		{
+		case InOrbitFunctionState::INACTIVE:
+			{
+				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+					break;
+
+				for (const auto & planet : context.space.planets)
+				{
+					const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
+														planet.gety() - context.mouse_pos_world.y);
+					if (dist < planet.getRad())
+					{
+						target_planet_id = planet.getId();
+						state = InOrbitFunctionState::PARENT_FOUND;
+						break;
+					}
+				}
+
+				break;
+			}
+		case InOrbitFunctionState::PARENT_FOUND:
+			{
+				Planet* target = context.space.findPlanetPtr(target_planet_id);
+				if (!target)
+				{
+					reset();
+					break;
+				}
+
+				const auto rad = std::hypot(context.mouse_pos_world.x - target->getx(),
+													context.mouse_pos_world.y - target->gety());
+
+				Planet temp_planet(context.mass_slider->getValue());
+				
+				if (target->getType() == SMALLSTAR 
+					|| target->getType() == STAR 
+					|| target->getType() == BIGSTAR)
+				{
+					const auto goldilock_info = target->getGoldilockInfo();
+
+					sf::CircleShape goldilock_visualizer(goldilock_info.min_rad);
+					goldilock_visualizer.setPointCount(60);
+					goldilock_visualizer.setPosition(sf::Vector2f(target->getx(), target->gety()));
+					goldilock_visualizer.setOrigin(goldilock_info.min_rad, goldilock_info.min_rad);
+					goldilock_visualizer.setOutlineThickness(goldilock_info.max_rad - goldilock_info.min_rad);
+					goldilock_visualizer.setFillColor(sf::Color(0, 0, 0, 0));
+					goldilock_visualizer.setOutlineColor(sf::Color(0, 200, 0, goldi_strength));
+					context.window.draw(goldilock_visualizer);
+				}
+				
+				sf::CircleShape orbit_visualizer(rad);
+				orbit_visualizer.setPosition(sf::Vector2f(target->getx(), target->gety()));
+				orbit_visualizer.setRadius(rad);
+				orbit_visualizer.setOrigin(rad, rad);
+				orbit_visualizer.setFillColor(sf::Color(0, 0, 0, 0));
+				orbit_visualizer.setOutlineColor(sf::Color::Red);
+				orbit_visualizer.setOutlineThickness(1);
+				context.window.draw(orbit_visualizer);
+
+				//DRAWING MASS CENTER
+				sf::CircleShape center_point(2);
+				center_point.setOrigin(2, 2);
+				center_point.setFillColor(sf::Color(255, 0, 0));
+				
+				double dist = std::hypot(context.mouse_pos_world.x - target->getx(), context.mouse_pos_world.y - target->gety());
+				dist = dist * (temp_planet.getmass()) / (temp_planet.getmass() + target->getmass());
+				double angleb = atan2(context.mouse_pos_world.y - target->gety(), context.mouse_pos_world.x - target->getx());
+
+				center_point.setPosition(target->getx() + dist * cos(angleb), target->gety() + dist * sin(angleb));
+				context.window.draw(center_point);
+
+				//DRAWING ROCHE LIMIT
+				if (context.mass_slider->getValue() > MINIMUMBREAKUPSIZE 
+					&& context.mass_slider->getValue() / target->getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+				{
+					double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (temp_planet.getRad() + target->getRad());
+
+					sf::CircleShape omr(rocheRad);
+					omr.setPosition(sf::Vector2f(target->getx(), target->gety()));
+					omr.setOrigin(rocheRad, rocheRad);
+					omr.setFillColor(sf::Color(0, 0, 0, 0));
+					omr.setOutlineColor(sf::Color(255, 140, 0));
+					context.window.draw(omr);
+
+				}
+
+				//DRAWING PLANET
+				sf::CircleShape bump(temp_planet.getRad());
+				bump.setOrigin(temp_planet.getRad(), temp_planet.getRad());
+				bump.setFillColor(sf::Color::Red);
+				bump.setPosition(context.mouse_pos_world);
+				context.window.draw(bump);
+
+				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				{
+
+					const auto speed = sqrt(G * (target->getmass() + context.mass_slider->getValue()) / rad);
+					const auto angle = atan2(context.mouse_pos_world.y - target->gety(), context.mouse_pos_world.x - target->getx());
+
+					//To keep total momentum change = 0
+					const auto normalizing_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + target->getmass());
+
+					target->setxv(target->getxv() - normalizing_speed * cos(angle + PI / 2.0));
+					target->setyv(target->getyv() - normalizing_speed * sin(angle + PI / 2.0));
+
+					context.space.addPlanet(Planet(context.mass_slider->getValue(), 
+						target->getx() + rad * cos(angle), 
+						target->gety() + rad * sin(angle),
+						target->getxv() + speed * cos(angle + PI / 2.0),
+						target->getyv() + speed * sin(angle + PI / 2.0)));
+
+					reset();
+				}
+				break;
+			}
+		}
+	}
+};
+
 class ExecutionerContainer
 {
 	std::map<FunctionType, std::unique_ptr<IUserFunction>> executioners;
 public:
 	ExecutionerContainer()
 	{
-		executioners[FunctionType::NEW_OBJECT] = std::make_unique<AddPlanetFunction>();
+		executioners[FunctionType::NEW_OBJECT] = std::make_unique<NewObjectFunction>();
+		executioners[FunctionType::OBJECT_IN_ORBIT] = std::make_unique<NewObjectInOrbitFunction>();
 	}
 	void execute(FunctionContext & context)
 	{

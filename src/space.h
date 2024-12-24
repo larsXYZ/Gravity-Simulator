@@ -119,4 +119,6 @@ public:
 	static std::string convertDoubleToString(double number);
 	static double convertStringToDouble(std::string string);
 	std::string calcTemperature(double q, int e);
+
+	friend class NewObjectInOrbitFunction;
 };

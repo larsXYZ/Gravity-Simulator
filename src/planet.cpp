@@ -628,3 +628,10 @@ void Planet::setyv(double v)
 {
 	yv = v;
 }
+
+Planet::GoldilockInfo Planet::getGoldilockInfo() const
+{
+	const auto goldilock_inner_rad = (tempConstTwo * getRad() * getRad() * getTemp()) / inner_goldi_temp;
+	const auto goldilock_outer_rad = (tempConstTwo * getRad() * getRad() * getTemp()) / outer_goldi_temp;
+	return { goldilock_inner_rad, goldilock_outer_rad };
+}
