@@ -243,6 +243,16 @@ public:
 	}
 };
 
+class SpawnShipFunction : public IUserFunction
+{
+public:
+	void execute(FunctionContext& context) override
+	{
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			context.spaceship.reset(context.mouse_pos_world);
+	}
+};
+
 class ExecutionerContainer
 {
 	std::map<FunctionType, std::unique_ptr<IUserFunction>> executioners;
@@ -252,6 +262,7 @@ public:
 		executioners[FunctionType::NEW_OBJECT] = std::make_unique<NewObjectFunction>();
 		executioners[FunctionType::OBJECT_IN_ORBIT] = std::make_unique<NewObjectInOrbitFunction>();
 		executioners[FunctionType::REMOVE_OBJECT] = std::make_unique<RemoveObjectFunction>();
+		executioners[FunctionType::SPAWN_SHIP] = std::make_unique<SpawnShipFunction>();
 	}
 	void execute(FunctionContext & context)
 	{
