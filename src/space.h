@@ -121,4 +121,5 @@ public:
 	std::string calcTemperature(double q, int e);
 
 	friend class NewObjectInOrbitFunction;
+	friend class RemoveObjectFunction;
 };

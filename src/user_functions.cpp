@@ -222,6 +222,27 @@ public:
 	}
 };
 
+class RemoveObjectFunction : public IUserFunction
+{
+public:
+	void execute(FunctionContext& context) override
+	{
+		if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			return;
+
+		for (auto& planet : context.space.planets)
+		{
+			const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
+				planet.gety() - context.mouse_pos_world.y);
+			if (dist < planet.getRad())
+			{
+				planet.markForRemoval();
+				return;
+			}
+		}
+	}
+};
+
 class ExecutionerContainer
 {
 	std::map<FunctionType, std::unique_ptr<IUserFunction>> executioners;
@@ -230,6 +251,7 @@ public:
 	{
 		executioners[FunctionType::NEW_OBJECT] = std::make_unique<NewObjectFunction>();
 		executioners[FunctionType::OBJECT_IN_ORBIT] = std::make_unique<NewObjectInOrbitFunction>();
+		executioners[FunctionType::REMOVE_OBJECT] = std::make_unique<RemoveObjectFunction>();
 	}
 	void execute(FunctionContext & context)
 	{
