@@ -39,12 +39,10 @@ void Space::runSim()
 	{
 		window.clear(sf::Color::Black);
 
-		setInfo();
-
-		hotkeys(window, mainView);
-
 		while(window.pollEvent(event))
 		{
+			hotkeys(window, mainView);
+
 			if (!object_tracker.is_active())
 				click_and_drag_handler.update(mainView, window, event);
 
@@ -83,6 +81,9 @@ void Space::runSim()
 		if (bound.isActive())
 			bound.render(window);
 
+		if (object_info.is_active())
+			object_info.render(*this, window);
+
 		if (showGUI)
 			gui.draw();
 
@@ -97,5 +98,5 @@ void Space::runSim()
 			fps = 1.0f / time.asSeconds();
 
 		clock.restart().asSeconds();
-		}
+	}
 }

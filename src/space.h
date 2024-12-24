@@ -14,6 +14,7 @@
 #include "CONSTANTS.h"
 #include "Bound.h"
 #include "click_and_drag.h"
+#include "object_info.h"
 #include "object_tracker.h"
 #include "particles/particle_container.h"
 
@@ -71,6 +72,7 @@ class Space
 	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();
 	ClickAndDragHandler click_and_drag_handler;
 	ObjectTracker object_tracker;
+	ObjectInfo object_info;
 
 public:
 
@@ -107,12 +109,12 @@ public:
 	sf::Vector3f centerOfMass(std::vector<int> midlPList);
 	sf::Vector2f centerOfMassAll();
 	sf::Vector2f centerOfMassVelocity(std::vector<int> midlPList);
+	int get_iteration() const;
 	
 	void hotkeys(sf::Window & window, sf::View & view);
 
 	//GUI
 	void initSetup();
-	void setInfo();
 	void updateInfoBox();
 
 	//OTHER
@@ -122,8 +124,10 @@ public:
 	static double convertStringToDouble(std::string string);
 	std::string calcTemperature(double q, int e);
 
+	friend class ObjectInfo;
 	friend class NewObjectInOrbitFunction;
 	friend class RemoveObjectFunction;
 	friend class AddRingsFunction;
 	friend class TrackObjectFunction;
+	friend class ShowObjectInfoFunction;
 };

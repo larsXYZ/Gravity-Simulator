@@ -82,6 +82,11 @@ sf::Vector2f Space::centerOfMassVelocity(std::vector<int> midlPList)
 	return sf::Vector2f(xCont / tMass, yCont / tMass);
 }
 
+int Space::get_iteration() const
+{
+	return iteration;
+}
+
 sf::Vector2f Space::centerOfMassAll()
 {
 	double tMass = 0;
@@ -642,119 +647,6 @@ void Space::updateSpaceship()
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
 		addSmoke(p, v, uniform_random(1.3, 1.5), 200);
 	}
-}
-
-void Space::setInfo()
-{
-	//Mass
-	size = massSlider->getValue();
-
-	//Timestep
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))timeStepSlider->setValue(0);
-	timeStep = timeStepSlider->getValue();
-
-	/*
-	//Current planet sliders
-	if (findPlanet(fokusId).getmass() == -1)
-	{
-		currPlanetInfo->setVisible(false);
-		massExistingObjectSlider->setVisible(false);
-	}
-	else
-	{
-		//Gathering current object mass slider info
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-		{
-			if (Planet* ptr = findPlanetPtr(fokusId))
-			{
-				auto& planet = *ptr;
-
-				planet.setMass(massExistingObjectSlider->getValue());
-				planet.updateRadiAndType();
-			}
-			
-		}
-		else massExistingObjectSlider->setValue(findPlanet(fokusId).getmass());
-
-		std::string typeplanet = "Black hole";
-		if (findPlanet(fokusId).getmass() < ROCKYLIMIT)
-		{
-			typeplanet = "Rocky";
-		}
-		else if (findPlanet(fokusId).getmass() < TERRESTIALLIMIT)
-		{
-			typeplanet = "Terrestial";
-		}
-		else if (findPlanet(fokusId).getmass() < GASGIANTLIMIT)
-		{
-			typeplanet = "Gas giant";
-		}
-		else if (findPlanet(fokusId).getmass() < SMALLSTARLIMIT)
-		{
-			typeplanet = "Small star";
-		}
-		else if (findPlanet(fokusId).getmass() < STARLIMIT)
-		{
-			typeplanet = "Star";
-		}
-		else if (findPlanet(fokusId).getmass() < BIGSTARLIMIT)
-		{
-			typeplanet = "Big star";
-		}
-
-		currPlanetInfo->setText("FOCUSED OBJECT \nMass:   " + convertDoubleToString((int) findPlanet(fokusId).getmass()) + "\nType:      " + typeplanet);
-
-		currPlanetInfo->setVisible(true);
-		massExistingObjectSlider->setVisible(true);
-	}
-	
-	//Temp unit
-	if (temperatureUnitSelector->getSelectedIndex() < 2) tempEnhet = temperatureUnitSelector->getSelectedIndex() + 1;
-	else tempEnhet = 3;
-
-	//Hiding new planet
-	if (functions->getSelectedItemIndex() != 0 && functions->getSelectedItemIndex() != 1 && functions->getSelectedItemIndex() != 2)
-	{
-		massSlider->setVisible(false);
-		newPlanetInfo->setVisible(false);
-	}
-	else
-	{
-		massSlider->setVisible(true);
-		newPlanetInfo->setVisible(true);
-
-		std::string typeplanet = "Black hole";
-		if (size < ROCKYLIMIT)
-		{
-			typeplanet = "Rocky";
-		}
-		else if (size < TERRESTIALLIMIT)
-		{
-			typeplanet = "Terrestial";
-		}
-		else if (size < GASGIANTLIMIT)
-		{
-			typeplanet = "Gas giant";
-		}
-		else if (size < SMALLSTARLIMIT)
-		{
-			typeplanet = "Small star";
-		}
-		else if (size < STARLIMIT)
-		{
-			typeplanet = "Star";
-		}
-		else if (size < BIGSTARLIMIT)
-		{
-			typeplanet = "Big star";
-		}
-
-		newPlanetInfo->setText("NEW OBJECT\nMass:   " + convertDoubleToString(size) + "\nType:      " + typeplanet);
-		}
-
-	//Displaying sim-info
-	simInfo->setText("Framerate: " + convertDoubleToString(fps) + "\nFrame: " + convertDoubleToString(iteration) + "\nTimestep (,/.): " + convertDoubleToString(timeStep) + "\nTotal mass: " + convertDoubleToString(totalMass) + "\nObjects: " + convertDoubleToString(planets.size()) + "\nParticles: " + convertDoubleToString(particles->size()));
-	*/
 }
 
 void Space::updateInfoBox()
