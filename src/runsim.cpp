@@ -73,6 +73,7 @@ void Space::runSim()
 		};
 		executeFunction(context);
 
+		updateInfoBox();
 
 		drawPlanets(window);
 		drawEffects(window);

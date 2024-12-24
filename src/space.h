@@ -75,8 +75,7 @@ class Space
 public:
 
 	explicit Space(int x, int y, bool f);
-
-	//PLANET FUNCTIONS
+	
 	int addPlanet(Planet&& p);
 	void removePlanet(const int id);
 	void removeExplosion(int ind);
@@ -108,13 +107,13 @@ public:
 	sf::Vector3f centerOfMass(std::vector<int> midlPList);
 	sf::Vector2f centerOfMassAll();
 	sf::Vector2f centerOfMassVelocity(std::vector<int> midlPList);
-
-	//USERFUNCTIONS
+	
 	void hotkeys(sf::Window & window, sf::View & view);
 
 	//GUI
 	void initSetup();
 	void setInfo();
+	void updateInfoBox();
 
 	//OTHER
 	int uniform_random(int min, int max);

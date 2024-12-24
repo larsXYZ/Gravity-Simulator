@@ -77,4 +77,9 @@ public:
 		is_dragging = false;
 		last_mouse_pos_window = {};
 	}
+
+	float get_zoom() const
+	{
+		return zoom;
+	}
 };

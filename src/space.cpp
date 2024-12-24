@@ -757,6 +757,17 @@ void Space::setInfo()
 	*/
 }
 
+void Space::updateInfoBox()
+{
+	simInfo->setText("Frame rate: " + std::to_string(fps) +
+		"\nFrame: " + std::to_string(iteration) +
+		"\nTime step: " + std::to_string(static_cast<int>(timeStep)) +
+		"\nTotal mass: " + std::to_string(static_cast<int>(totalMass)) +
+		"\nObjects: " + std::to_string(planets.size()) +
+		"\nParticles: " + std::to_string(particles->size()) +
+		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()));
+}
+
 void Space::initSetup()
 {
 	simInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
