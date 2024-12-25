@@ -312,6 +312,15 @@ void Planet::increaseThermalEnergy(double e)
 	tEnergy += e;
 }
 
+void Planet::update_planet_sim(double timestep)
+{
+	coolDown(timestep);
+	setColor();
+	updateTemp();
+	updateAtmosphere(timestep);
+	updateLife(timestep);
+}
+
 bool Planet::canDisintegrate(double curr_time) const
 {
 	if (getType() == BLACKHOLE)
@@ -490,16 +499,12 @@ void Planet::draw(sf::RenderWindow& w)
 
 			//FINDING COLOR
 			double r = atmoCol_r + atmoLinesBrightness[i] + temperature / 10;
-			double g = atmoCol_g + atmoLinesBrightness[i] - temperature / 13;
-			double b = atmoCol_b + atmoLinesBrightness[i] - temperature / 13;
+			double g = atmoCol_g + atmoLinesBrightness[i] - temperature / 12;
+			double b = atmoCol_b + atmoLinesBrightness[i] - temperature / 12;
 
-			if (r > 255) r = 255;
-			if (g > 255) g = 255;
-			if (b > 255) b = 255;
-
-			if (r < 0) r = 0;
-			if (g < 0) g = 0;
-			if (b < 0) b = 0;
+			r = std::clamp(r, 0., 255.);
+			g = std::clamp(g, 0., 255.);
+			b = std::clamp(b, 0., 255.);
 
 			atmoLine.setFillColor(sf::Color(r, g, b));
 			w.draw(atmoLine);
@@ -651,7 +656,7 @@ std::string convertDoubleToString(double number)
 	return convert.str();
 }
 
-std::string Planet::genName()
+std::string Planet::generate_name()
 {
 	std::vector<std::string> navn_del_en = {
 		"Jup", "Jor", "Ear", "Mar", "Ven", "Cer", "Sat", "Pl", "Nep", "Ur", "Ker", "Mer", "Jov", "Qur", "Deb", "Car",

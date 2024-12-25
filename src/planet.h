@@ -7,7 +7,7 @@
 
 class Planet
 {
-	std::string name = genName();
+	std::string name = generate_name();
 
 	//PHYSICAL
 	double mass;
@@ -187,8 +187,7 @@ public:
 	void collision(const Planet& p);
 	void giveID(int i);
 	void updateTemp();
-
-	//TEMPERATURE
+	
 	double temp() const;
 
 	double getTemp() const;
@@ -207,30 +206,22 @@ public:
 
 	void increaseThermalEnergy(double e);
 
+	void update_planet_sim(double timestep);
+
 	void setColor();
 	double getTCap() const;
 	void setMass(double m);
-
-	//ATMOSPHERE
-	void updateAtmosphere(int t);
-
-	double getCurrentAtmosphere() const;
-
-	double getAtmospherePotensial() const;
-
-	//LIFE
-	void updateLife(int t);
-
-	void colonize(int i, sf::Color c, std::string d);
-
-	Life getLife() const;
-
-	double getSupportedBiomass() const;
-
-	int modernRandomWithLimits(int min, int max) const;
-
-	std::string genName();
 	
+	void updateAtmosphere(int t);
+	double getCurrentAtmosphere() const;
+	double getAtmospherePotensial() const;
+	
+	void updateLife(int t);
+	void colonize(int i, sf::Color c, std::string d);
+	Life getLife() const;
+	double getSupportedBiomass() const;
+	int modernRandomWithLimits(int min, int max) const;
+	std::string generate_name();
 	void setxv(double v);
 	void setyv(double v);
 

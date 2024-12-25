@@ -142,21 +142,12 @@ void Space::update()
 
 	//SETUP & OTHER
 	total_mass = 0;
-	if (planets.size() > 0) iteration += 1;
-	if (ship.getLandedState())
-	{
-		if (findPlanet(ship.getPlanetID()).getmass() == -1)
-			ship.setLandedstate(false);
-	}
 
-	updateSpaceship();
+	if (planets.size() > 0)
+		iteration += 1;
 
-	for (size_t i = 0; i < planets.size(); i++)
-	{
-		if (ship.isExist() && !ship.pullofGravity(planets[i], ship, timestep))
-			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
-	}
-	
+	update_spaceship();
+
 	particles->update(planets, bound, timestep, curr_time);
 
 	for (int i = 0; i < planets.size(); i++)
@@ -245,22 +236,9 @@ void Space::update()
 	}
 
 	std::erase_if(planets, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
-
-	//OTHER
-#pragma omp parallel for schedule(dynamic)
-	for (int i = 0; i < planets.size(); i++)
-	{
-		//TEMPERATURE
-		planets[i].coolDown(timestep);
-		planets[i].setColor();
-		planets[i].updateTemp();
-
-		//ATMOSPHERE
-		planets[i].updateAtmosphere(timestep);
-
-		//LIFE
-		planets[i].updateLife(timestep);
-	}
+	
+	for (auto & planet : planets)
+		planet.update_planet_sim(timestep);
 
 	//COLONIZATION
 	for (size_t i = 0; i < planets.size(); i++)
@@ -268,7 +246,8 @@ void Space::update()
 		if (planets[i].getLife().willExp())
 		{
 			int index = findBestPlanet(i);
-			if (index != -1) planets[index].colonize(planets[i].getLife().getId(), planets[i].getLife().getCol(), planets[i].getLife().getDesc());
+			if (index != -1) 
+				planets[index].colonize(planets[i].getLife().getId(), planets[i].getLife().getCol(), planets[i].getLife().getDesc());
 		}
 	}
 	
@@ -592,8 +571,14 @@ std::string Space::temperature_info_string(double temperature_kelvin, Temperatur
 	}
 }
 
-void Space::updateSpaceship()
+void Space::update_spaceship()
 {
+	if (ship.getLandedState())
+	{
+		if (findPlanet(ship.getPlanetID()).getmass() == -1)
+			ship.setLandedstate(false);
+	}
+
 	int mode = ship.move(timestep);
 	if (mode == 1)
 	{
@@ -630,6 +615,12 @@ void Space::updateSpaceship()
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
 		addSmoke(p, v, uniform_random(1.3, 1.5), 200);
+	}
+
+	for (const auto & planet : planets)
+	{
+		if (ship.isExist() && !ship.pullofGravity(planet, ship, timestep))
+			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
 	}
 }
 
