@@ -475,42 +475,38 @@ void Planet::collision(const Planet& p)
 	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
 }
 
+void Planet::render_shine(sf::RenderWindow& window, sf::Color& col, const double luminosity) const
+{
+	sf::VertexArray vertexArr(sf::TrianglesFan);
+	vertexArr.append(sf::Vertex(sf::Vector2f(getx(), gety()), col));
+	col.a = 0;
+	const auto delta_angle = 2 * PI / static_cast<double>(LIGHT_NUMBER_OF_VERTECES);
+	auto angle = 0.0;
+	auto rad = luminosity;
+	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
+	{
+		sf::Vector2f pos(getx() + cos(angle) * rad, 
+		                 gety() + sin(angle) * rad);
+		vertexArr.append(sf::Vertex(pos, col));
+		angle += delta_angle;
+	}
+	vertexArr.append(sf::Vertex(sf::Vector2f(getx() + rad, gety()), col));
+	window.draw(vertexArr);
+}
+
 void Planet::draw_starshine(sf::RenderWindow& window) const
 {
 	sf::Color col = getStarCol();
 
 	//LONG RANGE LIGHT
-	col.a = EXPLOSION_LIGHT_START_STRENGTH;
-	sf::VertexArray vertexArr(sf::TrianglesFan);
-	vertexArr.append(sf::Vertex(sf::Vector2f(getx(), gety()), col));
-	col.a = 0;
-	double deltaAng = 2 * PI / ((double)LIGHT_NUMBER_OF_VERTECES);
-	double ang = 0;
-	double rad = LIGHT_STRENGTH_MULTIPLIER * sqrt(fusionEnergy());
-	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
-	{
-		sf::Vector2f pos(getx() + cos(ang) * rad, gety() + sin(ang) * rad);
-		vertexArr.append(sf::Vertex(pos, col));
-		ang += deltaAng;
-	}
-	vertexArr.append(sf::Vertex(sf::Vector2f(getx() + rad, gety()), col));
-	window.draw(vertexArr);
+	col.a = 50;
+	const auto long_range_luminosity = 30 * sqrt(fusionEnergy());
+	render_shine(window, col, long_range_luminosity);
 
 	//SHORT RANGE LIGHT
-	col.a = LIGHT_START_STRENGTH * SHORT_LIGHT_STRENGTH_MULTIPLIER;
-	sf::VertexArray vertexArr2(sf::TrianglesFan);
-	vertexArr2.append(sf::Vertex(sf::Vector2f(getx(), gety()), col));
-	col.a = LIGHT_END_STRENGTH;
-	ang = 0;
-	rad = SHORT_LIGHT_RANGE_MULTIPLIER * getRad();
-	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
-	{
-		sf::Vector2f pos(getx() + cos(ang) * rad, gety() + sin(ang) * rad);
-		vertexArr2.append(sf::Vertex(pos, col));
-		ang += deltaAng;
-	}
-	vertexArr2.append(sf::Vertex(sf::Vector2f(getx() + rad, gety()), col));
-	window.draw(vertexArr2);
+	col.a = 250;
+	const auto short_range_luminosity = 1.5 * getRad();
+	render_shine(window, col, short_range_luminosity);
 }
 
 void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window)

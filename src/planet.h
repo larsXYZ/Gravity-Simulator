@@ -185,6 +185,7 @@ public:
 	void incMass(double m);
 	double getDist(const Planet& forcer) const;
 	void collision(const Planet& p);
+	void render_shine(sf::RenderWindow& window, sf::Color& col, double luminosity) const;
 	void draw_starshine(sf::RenderWindow& window) const;
 	void draw_gas_planet_atmosphere(sf::RenderWindow& window);
 	void giveID(int i);
