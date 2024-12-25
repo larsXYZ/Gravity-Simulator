@@ -27,19 +27,20 @@ enum class TemperatureUnit
 
 class Space
 {
-	double totalMass = 0;
-	int next_id = 0;
-	double timestep = TIMESTEP_VALUE_START;
-	double curr_time = 0;
-	int iteration = 0;
+	double total_mass{0.0};
 
-	int fps = 0;
-	bool showGUI = true;
+	int next_id{0};
 
-	sf::Text text;
-	sf::Text text2;
-	sf::Font font;
-	sf::Event event;
+	bool paused{ false };
+	double timestep{ TIMESTEP_VALUE_START };
+
+	double curr_time{ 0.0 };
+
+	int iteration{0};
+
+	int fps{ 0 };
+
+	bool show_gui{true};
 
 	//OBJECTS IN THE SIMULATION
 	SpaceShip ship;
@@ -99,7 +100,7 @@ public:
 	sf::Vector2f centerOfMassVelocity(std::vector<int> midlPList);
 	int get_iteration() const;
 	
-	void hotkeys(sf::Window & window, sf::View & view);
+	void hotkeys(sf::Event event, sf::View & view);
 
 	//GUI
 	void initSetup();

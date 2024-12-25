@@ -16,11 +16,6 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	window.setView(mainView);
 	sf::Clock clock;
 
-	font.loadFromFile("sansation.ttf");
-	text.setFont(font);
-	text.setCharacterSize(14);
-	text.setColor(sf::Color::White);
-
 	//LOADING GUI
 	tgui::Gui gui{ window };
 	gui.setFont("sansation.ttf");
@@ -33,15 +28,16 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.add(temperatureUnitSelector);
 	gui.add(autoBound);
 
+	sf::Event event;
 	while (window.isOpen())
 	{
 		window.clear(sf::Color::Black);
 
-		timestep = timeStepSlider->getValue();
+		timestep = paused ? 0.0 : timeStepSlider->getValue();
 
 		while(window.pollEvent(event))
 		{
-			hotkeys(window, mainView);
+			hotkeys(event, mainView);
 
 			if (!object_tracker.is_active())
 				click_and_drag_handler.update(mainView, window, event);
@@ -84,12 +80,12 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		if (object_info.is_active())
 			object_info.render(*this, window);
 
-		if (showGUI)
+		if (show_gui)
 			gui.draw();
 
 		window.display();
 
-		if (timestep != 0) 
+		if (timestep != 0.0) 
 			update();
 
 		sf::Time time = clock.getElapsedTime();

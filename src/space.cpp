@@ -156,7 +156,7 @@ void Space::update()
 	curr_time += timestep;
 
 	//SETUP & OTHER
-	totalMass = 0;
+	total_mass = 0;
 	if (planets.size() > 0) iteration += 1;
 	if (ship.getLandedState())
 	{
@@ -325,10 +325,10 @@ void Space::update()
 
 	//CHECKING TOTAL MASS
 	for (size_t i = 0; i < planets.size(); i++)
-		totalMass += planets[i].getmass();
+		total_mass += planets[i].getmass();
 }
 
-void Space::hotkeys(sf::Window & window, sf::View & view)
+void Space::hotkeys(sf::Event event, sf::View & view)
 {
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) && timeStepSlider->getValue() > timeStepSlider->getMinimum())
 		timeStepSlider->setValue(std::max(timeStepSlider->getValue() - 1, timeStepSlider->getMinimum()));
@@ -336,13 +336,22 @@ void Space::hotkeys(sf::Window & window, sf::View & view)
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Period) && timeStepSlider->getValue() < timeStepSlider->getMaximum())
 		timeStepSlider->setValue(std::min(timeStepSlider->getValue() + 1, timeStepSlider->getMaximum()));
 
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-		exit(0);
-
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
-		full_reset(view);
-
 	setFunctionGUIFromHotkeys(functions);
+
+	if (event.type == sf::Event::KeyReleased)
+	{
+		switch (event.key.code)
+		{
+		case sf::Keyboard::P:
+			paused = !paused;
+			break;
+		case sf::Keyboard::Escape:
+			exit(0);
+		case sf::Keyboard::R:
+			full_reset(view);
+			break;
+		}
+	}
 }
 
 void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f pos)
@@ -646,7 +655,7 @@ void Space::updateInfoBox()
 	simInfo->setText("Frame rate: " + std::to_string(fps) +
 		"\nFrame: " + std::to_string(iteration) +
 		"\nTime step: " + std::to_string(static_cast<int>(timestep)) +
-		"\nTotal mass: " + std::to_string(static_cast<int>(totalMass)) +
+		"\nTotal mass: " + std::to_string(static_cast<int>(total_mass)) +
 		"\nObjects: " + std::to_string(planets.size()) +
 		"\nParticles: " + std::to_string(particles->size()) +
 		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()));
