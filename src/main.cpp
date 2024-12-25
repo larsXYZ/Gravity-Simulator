@@ -10,39 +10,50 @@ void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c
 
 void getPrevSettings(tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode)
 {
-	std::ifstream fil;
-	fil.open("prevSettings.txt");
+	std::ifstream file;
+	file.open("settings.txt");
 
-	if (fil.fail()) return;
+	if (file.fail())
+		return;
 	
 	std::string m;
 	std::string x;
 	std::string y;
 	
-	fil >> m;
-	fil >> x;
-	fil >> y;
+	file >> m;
+	file >> x;
+	file >> y;
 
-	if (m == "w") mode->setSelectedItemByIndex(1);
+	file.close();
+
+	if (m == "w")
+		mode->setSelectedItemByIndex(1);
 
 	c1->setText(x);
 	c2->setText(y);
 
-	res->setSelectedItem("CUSTOM");
-	fil.close();
+	const auto& items = res->getItems();
+	if (auto match = std::find(items.begin(), items.end(), x + " x " + y); 
+		match != items.end())
+		res->setSelectedItem(*match);
+	else
+		res->setSelectedItem("CUSTOM");
 }
 
 void saveSettings(int x, int y, bool m)
 {
-	std::ofstream fil;
-	fil.open("prevSettings.txt");
+	std::ofstream file;
+	file.open("settings.txt");
 
-	if (fil.fail()) return;
+	if (file.fail())
+		return;
 
-	if (m) 	fil << "f" << " " << x << " " << y;
-	else fil << "w" << " " << x << " " << y;
+	if (m) 
+		file << "f" << " " << x << " " << y;
+	else
+		file << "w" << " " << x << " " << y;
 
-	fil.close();
+	file.close();
 }
 
 void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode, tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::Button::Ptr& b, tgui::Gui& sg)
@@ -197,7 +208,7 @@ int main()
 
 	while (settingScreen.isOpen())
 	{
-		if (settingScreen.pollEvent(event))
+		while (settingScreen.pollEvent(event))
 		{
 			settingScreen.clear(sf::Color(20, 20, 20));
 			settingGUI.handleEvent(event);
