@@ -273,9 +273,7 @@ void Space::update()
 		bound.setRad(START_RADIUS);
 	}
 
-	//CHECKING TOTAL MASS
-	for (size_t i = 0; i < planets.size(); i++)
-		total_mass += planets[i].getmass();
+	total_mass = std::accumulate(planets.begin(), planets.end(), 0.0, [](auto v, const auto & p) {return v + p.getmass(); });
 }
 
 void Space::hotkeys(sf::Event event, sf::View & view)
@@ -772,52 +770,6 @@ void Space::drawEffects(sf::RenderWindow &window)
 		}
 	}
 
-}
-
-void Space::drawLightEffects(sf::RenderWindow& window)
-{
-	for(size_t i = 0; i < planets.size(); i++)
-	{
-		Planet p = planets[i];
-		
-		if (p.getmass() >= GASGIANTLIMIT && p.getmass() < BIGSTARLIMIT)
-		{
-			sf::Color col = p.getStarCol();
-
-			//LONG RANGE LIGHT
-			col.a = EXPLOSION_LIGHT_START_STRENGTH;
-			sf::VertexArray vertexArr(sf::TrianglesFan);
-			vertexArr.append(sf::Vertex(sf::Vector2f(p.getx(), p.gety()), col));
-			col.a = 0;
-			double deltaAng = 2*PI / ((double)LIGHT_NUMBER_OF_VERTECES);
-			double ang = 0;
-			double rad = LIGHT_STRENGTH_MULTIPLIER * sqrt(p.fusionEnergy());
-			for(size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
-			{
-				sf::Vector2f pos(p.getx() + cos(ang) * rad, p.gety() + sin(ang) * rad);
-				vertexArr.append(sf::Vertex(pos, col));
-				ang += deltaAng;
-			}
-			vertexArr.append(sf::Vertex(sf::Vector2f(p.getx() + rad, p.gety()), col));
-			window.draw(vertexArr);
-
-			//SHORT RANGE LIGHT
-			col.a = LIGHT_START_STRENGTH * SHORT_LIGHT_STRENGTH_MULTIPLIER;
-			sf::VertexArray vertexArr2(sf::TrianglesFan);
-			vertexArr2.append(sf::Vertex(sf::Vector2f(p.getx(), p.gety()), col));
-			col.a = LIGHT_END_STRENGTH;
-			ang = 0;
-			rad = SHORT_LIGHT_RANGE_MULTIPLIER * p.getRad();
-			for(size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
-			{
-				sf::Vector2f pos(p.getx() + cos(ang) * rad, p.gety() + sin(ang) * rad);
-				vertexArr2.append(sf::Vertex(pos, col));
-				ang += deltaAng;
-			}
-			vertexArr2.append(sf::Vertex(sf::Vector2f(p.getx() + rad, p.gety()), col));
-			window.draw(vertexArr2);
-		}
-	}
 }
 
 double Space::thermalEnergyAtPosition(sf::Vector2f pos)

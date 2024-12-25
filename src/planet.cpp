@@ -475,83 +475,122 @@ void Planet::collision(const Planet& p)
 	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
 }
 
-void Planet::draw(sf::RenderWindow& w)
+void Planet::draw_starshine(sf::RenderWindow& window) const
+{
+	sf::Color col = getStarCol();
+
+	//LONG RANGE LIGHT
+	col.a = EXPLOSION_LIGHT_START_STRENGTH;
+	sf::VertexArray vertexArr(sf::TrianglesFan);
+	vertexArr.append(sf::Vertex(sf::Vector2f(getx(), gety()), col));
+	col.a = 0;
+	double deltaAng = 2 * PI / ((double)LIGHT_NUMBER_OF_VERTECES);
+	double ang = 0;
+	double rad = LIGHT_STRENGTH_MULTIPLIER * sqrt(fusionEnergy());
+	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
+	{
+		sf::Vector2f pos(getx() + cos(ang) * rad, gety() + sin(ang) * rad);
+		vertexArr.append(sf::Vertex(pos, col));
+		ang += deltaAng;
+	}
+	vertexArr.append(sf::Vertex(sf::Vector2f(getx() + rad, gety()), col));
+	window.draw(vertexArr);
+
+	//SHORT RANGE LIGHT
+	col.a = LIGHT_START_STRENGTH * SHORT_LIGHT_STRENGTH_MULTIPLIER;
+	sf::VertexArray vertexArr2(sf::TrianglesFan);
+	vertexArr2.append(sf::Vertex(sf::Vector2f(getx(), gety()), col));
+	col.a = LIGHT_END_STRENGTH;
+	ang = 0;
+	rad = SHORT_LIGHT_RANGE_MULTIPLIER * getRad();
+	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
+	{
+		sf::Vector2f pos(getx() + cos(ang) * rad, gety() + sin(ang) * rad);
+		vertexArr2.append(sf::Vertex(pos, col));
+		ang += deltaAng;
+	}
+	vertexArr2.append(sf::Vertex(sf::Vector2f(getx() + rad, gety()), col));
+	window.draw(vertexArr2);
+}
+
+void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window)
+{
+	for (size_t i = 0; i < atmoLinesBrightness.size(); i++)
+	{
+		sf::CircleShape atmoLine;
+
+		//SETTING FEATURES
+		int midlLines = (numAtmoLines - 1);
+		atmoLine.setRadius(
+			circle.getRadius() - i * i * i * circle.getRadius() / (midlLines * midlLines * midlLines));
+		atmoLine.setOrigin(atmoLine.getRadius(), atmoLine.getRadius());
+		atmoLine.setPosition(circle.getPosition());
+		atmoLine.setOutlineThickness(0);
+
+		//FINDING COLOR
+		double r = atmoCol_r + atmoLinesBrightness[i] + temperature / 10;
+		double g = atmoCol_g + atmoLinesBrightness[i] - temperature / 12;
+		double b = atmoCol_b + atmoLinesBrightness[i] - temperature / 12;
+
+		r = std::clamp(r, 0., 255.);
+		g = std::clamp(g, 0., 255.);
+		b = std::clamp(b, 0., 255.);
+
+		atmoLine.setFillColor(sf::Color(r, g, b));
+		window.draw(atmoLine);
+	}
+}
+
+void Planet::draw(sf::RenderWindow& window)
 {
 	circle.setPosition(x, y);
-	if (planetType != GASGIANT)
+	window.draw(circle);
+
+	switch (getType())
 	{
-		w.draw(circle);
-	}
-	else
-	{
-		w.draw(circle);
-		for (size_t i = 0; i < atmoLinesBrightness.size(); i++)
-		{
-			sf::CircleShape atmoLine;
+	case ROCKY:
+	case TERRESTIAL:
+		break;
 
-			//SETTING FEATURES
-			int midlLines = (numAtmoLines - 1);
-			atmoLine.setRadius(
-				circle.getRadius() - i * i * i * circle.getRadius() / (midlLines * midlLines * midlLines));
-			atmoLine.setOrigin(atmoLine.getRadius(), atmoLine.getRadius());
-			atmoLine.setPosition(circle.getPosition());
-			atmoLine.setOutlineThickness(0);
+	case GASGIANT:
+		draw_gas_planet_atmosphere(window);
+		break;
 
-			//FINDING COLOR
-			double r = atmoCol_r + atmoLinesBrightness[i] + temperature / 10;
-			double g = atmoCol_g + atmoLinesBrightness[i] - temperature / 12;
-			double b = atmoCol_b + atmoLinesBrightness[i] - temperature / 12;
-
-			r = std::clamp(r, 0., 255.);
-			g = std::clamp(g, 0., 255.);
-			b = std::clamp(b, 0., 255.);
-
-			atmoLine.setFillColor(sf::Color(r, g, b));
-			w.draw(atmoLine);
-		}
+	case SMALLSTAR:
+	case STAR:
+	case BIGSTAR:
+		draw_starshine(window);
+		break;
 	}
 }
 
 void Planet::setColor()
 {
-	if (planetType != ROCKY && planetType != TERRESTIAL && planetType != BLACKHOLE && planetType != GASGIANT)
+	switch (getType())
 	{
+	case ROCKY:
+	case TERRESTIAL:
+		{
+		const double r = 100.0 + randBrightness + temperature / 10.0;
+		const double g = 100.0 + randBrightness - temperature / 12.0 + getLife().getBmass() / 20.0;
+		const double b = 100.0 + randBrightness - temperature / 12.0;
+		circle.setFillColor(sf::Color(std::clamp(static_cast<int>(r), 0, 255),
+			std::clamp(static_cast<int>(g), 0, 255),
+			std::clamp(static_cast<int>(b), 0, 255)));
+		break;
+		}
+	case GASGIANT:
+		circle.setOutlineThickness(0);
+		circle.setFillColor(sf::Color::Transparent);
+		/* Handled in draw() */
+		break;
+	case SMALLSTAR:
+	case STAR:
+	case BIGSTAR:
 		circle.setFillColor(getStarCol());
-
 		circle.setOutlineColor(sf::Color(circle.getFillColor().r, circle.getFillColor().g, circle.getFillColor().b,
-		                                 20));
-	}
-	else if (planetType == ROCKY || planetType == TERRESTIAL)
-	{
-		double r = 100 + randBrightness + temperature / 10;
-		double g = 100 + randBrightness - temperature / 15 + getLife().getBmass() / 20;
-		double b = 100 + randBrightness - temperature / 15;
-
-		if (r > 255) r = 255;
-		if (g > 255) g = 255;
-		if (b > 255) b = 255;
-
-		if (r < 0) r = 0;
-		if (g < 0) g = 0;
-		if (b < 0) b = 0;
-
-		circle.setFillColor(sf::Color(r, g, b));
-	}
-	else if (planetType == GASGIANT)
-	{
-		double r = atmoCol_r + temperature / 10;
-		double g = atmoCol_g - temperature / 15;
-		double b = atmoCol_b - temperature / 15;
-
-		if (r > 255) r = 255;
-		if (g > 255) g = 255;
-		if (b > 255) b = 255;
-
-		if (r < 0) r = 0;
-		if (g < 0) g = 0;
-		if (b < 0) b = 0;
-
-		circle.setFillColor(sf::Color(r, g, b));
+			20));
+		break;
 	}
 }
 

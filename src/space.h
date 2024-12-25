@@ -80,7 +80,6 @@ public:
 	void runSim(sf::Vector2i window_size, bool fullscreen);
 	void drawPlanets(sf::RenderWindow &window);
 	void drawEffects(sf::RenderWindow & window);
-	void drawLightEffects(sf::RenderWindow& window);
 	void giveId(Planet &p);
 	Planet findPlanet(int id);
 	Planet* findPlanetPtr(int id);

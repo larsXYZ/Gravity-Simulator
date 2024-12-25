@@ -85,7 +85,6 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		drawPlanets(window);
 		drawEffects(window);
 		ship.draw(window);
-		drawLightEffects(window);
 		
 		if (bound.isActive())
 			bound.render(window);

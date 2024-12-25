@@ -181,10 +181,12 @@ public:
 
 	void resetAttractorMeasure();
 
-	void draw(sf::RenderWindow& w);
+	void draw(sf::RenderWindow& window);
 	void incMass(double m);
 	double getDist(const Planet& forcer) const;
 	void collision(const Planet& p);
+	void draw_starshine(sf::RenderWindow& window) const;
+	void draw_gas_planet_atmosphere(sf::RenderWindow& window);
 	void giveID(int i);
 	void updateTemp();
 	
