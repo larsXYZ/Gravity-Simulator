@@ -189,20 +189,6 @@ void Space::update()
 				disintegratePlanet(*thisPlanet);
 				thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
 
-				const auto& particles_by_rad = [rad]()
-				{
-					return static_cast<size_t>(50 * rad);
-				};
-
-				const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
-															static_cast<size_t>(0), particles_by_rad());
-				for (size_t i = 0; i < n_dust_particles; i++)
-				{
-					const auto scatter_pos = sf::Vector2f( thisPlanet->getx() , thisPlanet->gety()) + random_vector(rad);
-					const auto scatter_vel = sf::Vector2f(thisPlanet->getxv(), thisPlanet->getyv()) + CREATEDUSTSPEEDMULT * random_vector(20.0);
-					const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
-					addSmoke(scatter_pos, scatter_vel,2, lifespan);
-				}
 				break;
 			}
 
@@ -426,6 +412,21 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 	if (match->getmass() < MINIMUMBREAKUPSIZE)
 		return {};
 
+	const auto& particles_by_rad = [planet]()
+	{
+		return static_cast<size_t>(50 * planet.getRad());
+	};
+
+	const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
+		static_cast<size_t>(0), particles_by_rad());
+	for (size_t i = 0; i < n_dust_particles; i++)
+	{
+		const auto scatter_pos = sf::Vector2f(planet.getx(), planet.gety()) + random_vector(planet.getRad());
+		const auto scatter_vel = sf::Vector2f(planet.getxv(), planet.getyv()) + CREATEDUSTSPEEDMULT * random_vector(20.0);
+		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
+		addSmoke(scatter_pos, scatter_vel, 2, lifespan);
+	}
+
 	const auto n_planets{ std::floor(planet.getmass() / MINIMUMBREAKUPSIZE) };
 	const auto mass_per_planet = planet.getmass() / n_planets;
 
@@ -440,6 +441,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 
 		p.setx(p.getx() + cos(angle_offset) * offset_dist);
 		p.sety(p.gety() + sin(angle_offset) * offset_dist);
+		p.setTemp(1500.0);
 
 		generated_ids.push_back(addPlanet(std::move(p)));
 	}
@@ -484,7 +486,8 @@ void Space::explodePlanet(Planet planet)
 
 			const sf::Vector2f to_fragment = (fragment_pos - original_position);
 
-			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * original_mass * to_fragment / std::hypot(to_fragment.x, to_fragment.y);
+			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * original_mass * to_fragment / std::max(std::hypot(to_fragment.x, to_fragment.y), 0.1f) *	
+												static_cast<float>(uniform_random(0.95, 1.05));
 
 			fragment->setxv(fragment->getxv() + escape_speed.x);
 			fragment->setyv(fragment->getyv() + escape_speed.y);

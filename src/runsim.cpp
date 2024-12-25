@@ -2,6 +2,17 @@
 
 #include "user_functions.h"
 
+bool is_mouse_on_widgets(const sf::RenderWindow & window, const tgui::Gui & gui)
+{
+	for (const auto& gui_element : gui.getWidgets())
+	{
+		const sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+		if (gui_element->isMouseOnWidget(sf::Vector2f(mousePos.x, mousePos.y)))
+			return true;
+	}
+	return false;
+}
+
 void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 {
 	sf::RenderWindow window;
@@ -34,7 +45,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		window.clear(sf::Color::Black);
 
 		timestep = paused ? 0.0 : timeStepSlider->getValue();
-
+		
 		FunctionContext context
 		{
 			.type = getSelectedFunction(functions),
@@ -44,6 +55,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			.window = window,
 			.mouse_pos_window = sf::Mouse::getPosition(window),
 			.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView),
+			.is_mouse_on_widgets = is_mouse_on_widgets(window, gui),
 			.mass_slider = massSlider,
 			.new_object_info = newPlanetInfo
 		};
@@ -56,7 +68,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 				click_and_drag_handler.update(mainView, window, event);
 
 			gui.handleEvent(event);
-			
+
 			giveFunctionEvent(context, event);
 		}
 

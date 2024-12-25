@@ -66,6 +66,7 @@ struct FunctionContext
 	sf::RenderWindow & window;
 	const sf::Vector2i & mouse_pos_window;
 	const sf::Vector2f & mouse_pos_world;
+	const bool is_mouse_on_widgets;
 	tgui::Slider::Ptr mass_slider;
 	tgui::TextArea::Ptr new_object_info;
 };

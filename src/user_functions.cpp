@@ -52,7 +52,7 @@ public:
 		context.mass_slider->setVisible(false);
 		context.new_object_info->setVisible(false);
 	};
-	virtual void execute(FunctionContext& context) = 0;
+	virtual void execute(FunctionContext& context) {}
 	virtual void handle_event(FunctionContext& context, sf::Event event) {}
 	virtual void on_deselection(FunctionContext& context)
 	{
@@ -75,7 +75,7 @@ public:
 	{
 		fillTextBox(context.new_object_info, context.mass_slider->getValue());
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 		{
 			if (!mouseToggle)
 			{
@@ -141,7 +141,7 @@ public:
 		{
 		case InOrbitFunctionState::INACTIVE:
 			{
-				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) || context.is_mouse_on_widgets)
 					break;
 
 				for (const auto & planet : context.space.planets)
@@ -262,7 +262,7 @@ class RemoveObjectFunction : public IUserFunction
 public:
 	void execute(FunctionContext& context) override
 	{
-		if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) || context.is_mouse_on_widgets)
 			return;
 
 		for (auto& planet : context.space.planets)
@@ -283,7 +283,7 @@ class SpawnShipFunction : public IUserFunction
 public:
 	void execute(FunctionContext& context) override
 	{
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 			context.spaceship.reset(context.mouse_pos_world);
 	}
 };
@@ -314,7 +314,7 @@ public:
 		{
 		case AddRingsFunctionState::INACTIVE:
 		{
-			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) || context.is_mouse_on_widgets)
 				return;
 
 			for (const auto& planet : context.space.planets)
@@ -436,7 +436,7 @@ public:
 		{
 		case RandomSystemState::INACTIVE:
 			{
-				if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 				{
 					location = context.mouse_pos_world;
 					state = RandomSystemState::LOCATION_FOUND;
@@ -475,7 +475,7 @@ public:
 			context.window.draw(line, 2, sf::Lines);
 			context.window.draw(t);
 
-			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 			{
 				context.space.randomPlanets(MASS_MULTIPLIER * cbrt(rad), NUMBER_OF_OBJECT_MULTIPLIER * rad, rad, location);
 				reset();
@@ -489,9 +489,13 @@ public:
 class TrackObjectFunction : public IUserFunction
 {
 public:
-	void execute(FunctionContext& context) override
+
+	void handle_event(FunctionContext& context, sf::Event event) override
 	{
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (event.type != sf::Event::EventType::MouseButtonReleased)
+			return;
+
+		if (event.mouseButton.button == sf::Mouse::Left && !context.is_mouse_on_widgets)
 		{
 			for (const auto& planet : context.space.planets)
 			{
@@ -512,7 +516,7 @@ class ShowObjectInfoFunction : public IUserFunction
 public:
 	void execute(FunctionContext& context) override
 	{
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 		{
 			for (const auto& planet : context.space.planets)
 			{
@@ -549,7 +553,7 @@ public:
 		if (event.type != sf::Event::EventType::MouseButtonReleased)
 			return;
 
-		if (event.mouseButton.button == sf::Mouse::Left)
+		if (event.mouseButton.button == sf::Mouse::Left && !context.is_mouse_on_widgets)
 		{
 			for (const auto& planet : context.space.planets)
 			{
@@ -651,11 +655,14 @@ public:
 class ExplodeObjectFunction : public IUserFunction
 {
 public:
-	void execute(FunctionContext& context) override
+	void handle_event(FunctionContext& context, sf::Event event) override
 	{
-		if (sf::Mouse::isButtonPressed(sf:: Mouse::Left))
+		if (event.type != sf::Event::EventType::MouseButtonReleased)
+			return;
+
+		if (event.mouseButton.button == sf::Mouse::Left && !context.is_mouse_on_widgets)
 		{
-			for (auto & planet : context.space.planets)
+			for (const auto planet : context.space.planets)
 			{
 				if (std::hypot(planet.getx() - context.mouse_pos_world.x,
 					planet.gety() - context.mouse_pos_world.y) < planet.getRad())
