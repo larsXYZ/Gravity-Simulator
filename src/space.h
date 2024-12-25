@@ -27,26 +27,11 @@ enum class TemperatureUnit
 
 class Space
 {
-	//CONSTANTS
-	int xsize;
-	int ysize;
-	const static int framerate = FRAMERATE;
-	double createPlanetSpeedmult = CREATEPLANETSPEEDMULT;
-	double maxSize = MAXSIZEPLANETCREATOR;
-	double minSize = MINSIZEPLANETCREATOR;
-	double deltaMasse = DELTAMASSE;
-	double timeStepInc = TIDSKRITTINC;
-
-	//WINDOW
 	double totalMass = 0;
-	int xs;
-	int ys;
 	int next_id = 0;
-	double timeStep = TIMESTEP_VALUE_START;
+	double timestep = TIMESTEP_VALUE_START;
 	double curr_time = 0;
 	int iteration = 0;
-	bool fullScreen;
-	double size = 1;
 
 	int fps = 0;
 	bool showGUI = true;
@@ -79,7 +64,7 @@ class Space
 
 public:
 
-	explicit Space(int x, int y, bool f);
+	explicit Space();
 	
 	int addPlanet(Planet&& p);
 	void removePlanet(const int id);
@@ -99,7 +84,7 @@ public:
 	
 	//SIMULATION FUNCTIONS
 	void update();
-	void runSim();
+	void runSim(sf::Vector2i window_size, bool fullscreen);
 	void drawPlanets(sf::RenderWindow &window);
 	void drawEffects(sf::RenderWindow & window);
 	void drawLightEffects(sf::RenderWindow& window);

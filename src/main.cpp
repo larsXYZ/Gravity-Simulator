@@ -146,11 +146,11 @@ void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c
 	}
 
 	//STARTING
-	bool fullscreen = (mode->getSelectedItemIndex() == 0);
-	Space sim(x, y, fullscreen);
+	const auto fullscreen = (mode->getSelectedItemIndex() == 0);
 	saveSettings(x, y, fullscreen);
-	
-	sim.runSim();
+
+	Space space;
+	space.runSim({x, y}, fullscreen);
 	exit(0);
 }
 

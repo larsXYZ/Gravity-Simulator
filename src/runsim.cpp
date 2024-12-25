@@ -2,16 +2,16 @@
 
 #include "user_functions.h"
 
-void Space::runSim()
+void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 {
 	sf::RenderWindow window;
 
-	window.create(sf::VideoMode(xsize, ysize), "Gravity Simulator", 
-		fullScreen ? sf::Style::Fullscreen : sf::Style::Default);
+	window.create(sf::VideoMode(window_size.x, window_size.y), "Gravity Simulator",
+		fullscreen ? sf::Style::Fullscreen : sf::Style::Default);
 
 	sf::View mainView;
-	window.setFramerateLimit(framerate);
-	mainView.setSize(xsize, ysize);
+	window.setFramerateLimit(FRAMERATE);
+	mainView.setSize(window_size.x, window_size.y);
 	mainView.setCenter(0, 0);
 	window.setView(mainView);
 	sf::Clock clock;
@@ -36,6 +36,8 @@ void Space::runSim()
 	while (window.isOpen())
 	{
 		window.clear(sf::Color::Black);
+
+		timestep = timeStepSlider->getValue();
 
 		while(window.pollEvent(event))
 		{
@@ -87,7 +89,7 @@ void Space::runSim()
 
 		window.display();
 
-		if (timeStep != 0) 
+		if (timestep != 0) 
 			update();
 
 		sf::Time time = clock.getElapsedTime();

@@ -3,13 +3,9 @@
 #include "particles/particle_container.h"
 #include "user_functions.h"
 
-Space::Space(int x, int y, bool f)
+Space::Space()
 	: particles(std::make_unique<DecimatedLegacyParticleContainer>())
-{
-	xsize = x;
-	ysize = y;
-	fullScreen = f;
-}
+{}
 
 int Space::addPlanet(Planet&& p)
 {
@@ -157,7 +153,7 @@ bool isIgnoringOtherPlanet(const Planet & thisPlanet, const Planet & otherPlanet
 
 void Space::update()
 {
-	curr_time += timeStep;
+	curr_time += timestep;
 
 	//SETUP & OTHER
 	totalMass = 0;
@@ -172,11 +168,11 @@ void Space::update()
 
 	for (size_t i = 0; i < planets.size(); i++)
 	{
-		if (ship.isExist() && !ship.pullofGravity(planets[i], ship, timeStep))
+		if (ship.isExist() && !ship.pullofGravity(planets[i], ship, timestep))
 			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
 	}
 	
-	particles->update(planets, bound, timeStep, curr_time);
+	particles->update(planets, bound, timestep, curr_time);
 
 	for (int i = 0; i < planets.size(); i++)
 	{
@@ -242,8 +238,8 @@ void Space::update()
 
 			if (otherPlanet.emitsHeat())
 			{
-				const auto heat = tempConstTwo * thisPlanet->getRad() * thisPlanet->getRad() * otherPlanet.giveThermalEnergy(timeStep) / distance.dist;
-				thisPlanet->absorbHeat(heat, timeStep);
+				const auto heat = tempConstTwo * thisPlanet->getRad() * thisPlanet->getRad() * otherPlanet.giveThermalEnergy(timestep) / distance.dist;
+				thisPlanet->absorbHeat(heat, timestep);
 			}
 
 			if (acceleration_magnitude > thisPlanet->getStrongestAttractorStrength())
@@ -259,8 +255,8 @@ void Space::update()
 		/* Integrate (first part) (Leapfrog) */
 		/* https://en.wikipedia.org/wiki/Leapfrog_integration */
 
-		thisPlanet->setx(thisPlanet->getx() + thisPlanet->getxv() * timeStep + 0.5 * acc_sum_1.x * timeStep * timeStep);
-		thisPlanet->sety(thisPlanet->gety() + thisPlanet->getyv() * timeStep + 0.5 * acc_sum_1.y * timeStep * timeStep);
+		thisPlanet->setx(thisPlanet->getx() + thisPlanet->getxv() * timestep + 0.5 * acc_sum_1.x * timestep * timestep);
+		thisPlanet->sety(thisPlanet->gety() + thisPlanet->getyv() * timestep + 0.5 * acc_sum_1.y * timestep * timestep);
 
 		Acceleration2D acc_sum_2;
 		for (auto& otherPlanet : planets)
@@ -273,8 +269,8 @@ void Space::update()
 		}
 
 		/* Integrate (second part) (Leapfrog) */
-		thisPlanet->setxv(thisPlanet->getxv() + 0.5 * (acc_sum_1.x + acc_sum_2.x) * timeStep);
-		thisPlanet->setyv(thisPlanet->getyv() + 0.5 * (acc_sum_1.y + acc_sum_2.y) * timeStep);
+		thisPlanet->setxv(thisPlanet->getxv() + 0.5 * (acc_sum_1.x + acc_sum_2.x) * timestep);
+		thisPlanet->setyv(thisPlanet->getyv() + 0.5 * (acc_sum_1.y + acc_sum_2.y) * timestep);
 	}
 
 	std::erase_if(planets, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
@@ -284,15 +280,15 @@ void Space::update()
 	for (int i = 0; i < planets.size(); i++)
 	{
 		//TEMPERATURE
-		planets[i].coolDown(timeStep);
+		planets[i].coolDown(timestep);
 		planets[i].setColor();
 		planets[i].updateTemp();
 
 		//ATMOSPHERE
-		planets[i].updateAtmosphere(timeStep);
+		planets[i].updateAtmosphere(timestep);
 
 		//LIFE
-		planets[i].updateLife(timeStep);
+		planets[i].updateLife(timestep);
 	}
 
 	//COLONIZATION
@@ -417,9 +413,7 @@ void Space::full_reset(sf::View& view)
 	particles->clear();
 	trail.clear();
 	bound = Bound();
-	
-	view = sf::View();
-	view.setSize(sf::Vector2f(xsize, ysize));
+
 	view.setCenter(0, 0);
 	ship.reset(sf::Vector2f(0, 0));
 	iteration = 0;
@@ -608,7 +602,7 @@ std::string Space::temperature_info_string(double temperature_kelvin, Temperatur
 
 void Space::updateSpaceship()
 {
-	int mode = ship.move(timeStep);
+	int mode = ship.move(timestep);
 	if (mode == 1)
 	{
 		sf::Vector2f v;
@@ -651,7 +645,7 @@ void Space::updateInfoBox()
 {
 	simInfo->setText("Frame rate: " + std::to_string(fps) +
 		"\nFrame: " + std::to_string(iteration) +
-		"\nTime step: " + std::to_string(static_cast<int>(timeStep)) +
+		"\nTime step: " + std::to_string(static_cast<int>(timestep)) +
 		"\nTotal mass: " + std::to_string(static_cast<int>(totalMass)) +
 		"\nObjects: " + std::to_string(planets.size()) +
 		"\nParticles: " + std::to_string(particles->size()) +
@@ -768,11 +762,11 @@ void Space::drawEffects(sf::RenderWindow &window)
 
 	//EXPLOSIONS
 	int inc = 1;
-	if (timeStep == 0) inc = 0;
+	if (timestep == 0) inc = 0;
 
 	for(size_t i = 0; i < explosions.size(); i++)
 	{
-		explosions[i].move(timeStep);
+		explosions[i].move(timestep);
 
 		if (explosions[i].getAge(inc) < explosions[i].levetidmax()) explosions[i].render(window);
 		else
@@ -787,7 +781,7 @@ void Space::drawEffects(sf::RenderWindow &window)
 	//TRAILS
 	for(size_t i = 0; i < trail.size(); i++)
 	{
-		trail[i].move(timeStep);
+		trail[i].move(timestep);
 		if (trail[i].getAge(0) < trail[i].levetidmax() && !trail[i].killMe()) trail[i].render(window);
 		else
 		{
