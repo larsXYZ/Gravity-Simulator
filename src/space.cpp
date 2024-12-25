@@ -486,8 +486,8 @@ void Space::explodePlanet(Planet planet)
 
 			const sf::Vector2f to_fragment = (fragment_pos - original_position);
 
-			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * original_mass * to_fragment / std::max(std::hypot(to_fragment.x, to_fragment.y), 0.1f) *	
-												static_cast<float>(uniform_random(0.95, 1.05));
+			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * sqrt(original_mass) * to_fragment / std::max(std::hypot(to_fragment.x, to_fragment.y), 0.1f) *	
+												static_cast<float>(uniform_random(0.85, 1.15));
 
 			fragment->setxv(fragment->getxv() + escape_speed.x);
 			fragment->setyv(fragment->getyv() + escape_speed.y);
