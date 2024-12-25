@@ -557,6 +557,31 @@ public:
 						planet_ids.erase(match);
 				}
 			}
+
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
+			{
+				const auto massCenterInfoVector(context.space.centerOfMass(planet_ids));
+				const auto massCenterVelocity = context.space.centerOfMassVelocity(planet_ids);
+				const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x,
+					context.mouse_pos_world.y - massCenterInfoVector.y);
+				const auto speed = sqrt(G * (massCenterInfoVector.z + context.mass_slider->getValue()) / rad);
+				const auto angle = atan2(context.mouse_pos_world.y - massCenterInfoVector.y,
+					context.mouse_pos_world.x - massCenterInfoVector.x);
+				const auto adjust_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + massCenterInfoVector.z);
+				context.space.addPlanet(Planet(context.mass_slider->getValue(),
+					massCenterInfoVector.x + rad * cos(angle),
+					massCenterInfoVector.y + rad * sin(angle),
+					(massCenterVelocity.x + speed * cos(angle + PI / 2.0) - adjust_speed * cos(angle + PI / 2.0)),
+					(massCenterVelocity.y + speed * sin(angle + PI / 2.0) - adjust_speed * sin(angle + PI / 2.0))));
+
+				for (auto& planet : context.space.planets)
+				{
+					planet.setxv(planet.getxv() - adjust_speed * cos(angle + PI / 2.0));
+					planet.setyv(planet.getyv() - adjust_speed * sin(angle + PI / 2.0));
+				}
+
+				reset();
+			}
 		}
 	}
 
@@ -586,14 +611,13 @@ public:
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
 		{
+			const auto massCenterInfoVector(context.space.centerOfMass(planet_ids));
+			const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x,
+				context.mouse_pos_world.y - massCenterInfoVector.y);
+
 			//DRAWING NEW PLANET AND ORBIT
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{
-				const auto massCenterInfoVector(context.space.centerOfMass(planet_ids));
-				const auto massCenterVelocity = context.space.centerOfMassVelocity(planet_ids);
-				const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x, 
-					context.mouse_pos_world.y - massCenterInfoVector.y);
-
 				//DRAWING ORBIT
 				sf::CircleShape omr(rad);
 				omr.setPosition(sf::Vector2f(massCenterInfoVector.x, massCenterInfoVector.y));
