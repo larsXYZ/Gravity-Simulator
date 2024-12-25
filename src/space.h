@@ -112,4 +112,5 @@ public:
 	friend class TrackObjectFunction;
 	friend class ShowObjectInfoFunction;
 	friend class AdvancedInOrbitFunction;
+	friend class ExplodePlanetFunction;
 };

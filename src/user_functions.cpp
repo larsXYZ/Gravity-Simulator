@@ -648,6 +648,26 @@ public:
 	}
 };
 
+class ExplodeObjectFunction : public IUserFunction
+{
+public:
+	void execute(FunctionContext& context) override
+	{
+		if (sf::Mouse::isButtonPressed(sf:: Mouse::Left))
+		{
+			for (auto & planet : context.space.planets)
+			{
+				if (std::hypot(planet.getx() - context.mouse_pos_world.x,
+					planet.gety() - context.mouse_pos_world.y) < planet.getRad())
+				{
+					context.space.explodePlanet(planet);
+					return;
+				}
+			}
+		}
+	}
+};
+
 class ExecutionerContainer
 {
 	FunctionType prev_type;
@@ -665,6 +685,7 @@ public:
 		executioners[FunctionType::FOLLOW_OBJECT] = std::make_shared<TrackObjectFunction>();
 		executioners[FunctionType::SHOW_INFO] = std::make_shared<ShowObjectInfoFunction>();
 		executioners[FunctionType::ADVANCED_OBJECT_IN_ORBIT] = std::make_shared<AdvancedInOrbitFunction>();
+		executioners[FunctionType::EXPLODE_OBJECT] = std::make_shared<ExplodeObjectFunction>();
 	}
 	void execute(FunctionContext & context)
 	{
