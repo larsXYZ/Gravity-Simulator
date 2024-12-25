@@ -591,21 +591,19 @@ void Space::giveRings(const Planet & planet, int inner, int outer)
 	}
 }
 
-std::string Space::calcTemperature(double q, int e)
+std::string Space::temperature_info_string(double temperature_kelvin, TemperatureUnit unit)
 {
-	if (e == 1)
+	switch (unit)
 	{
-		return std::to_string((int) q) + "K";
+	case TemperatureUnit::KELVIN:
+		return std::to_string(static_cast<int>(temperature_kelvin)) + "K";
+	case TemperatureUnit::CELSIUS:
+		return std::to_string(static_cast<int>(temperature_kelvin - 273.15)) + "°C";
+	case TemperatureUnit::FAHRENHEIT:
+		return std::to_string(static_cast<int>((temperature_kelvin - 273.15) * 1.8 + 32.0)) + "°F";
+	default:
+		return "-";
 	}
-	else if (e == 2)
-	{
-		return std::to_string((int)(q - 273.15)) + "°C";
-	}
-	else if (e == 3)
-	{
-		return std::to_string((int)((q - 273.15)* 1.8000 + 32.00)) + "°F";
-	}
-	return "-";
 }
 
 void Space::updateSpaceship()
@@ -704,17 +702,6 @@ void Space::initSetup()
 	temperatureUnitSelector->setTextSize(10);
 	temperatureUnitSelector->setTabHeight(12);
 	temperatureUnitSelector->setPosition(165, 50);
-
-	currPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
-	currPlanetInfo->setSize(145, 45);
-	currPlanetInfo->setPosition(5, 75 + simInfo->getFullSize().y + functions->getItemCount()*functions->getItemHeight() + UI_SEPERATION_DISTANCE * 6);
-	currPlanetInfo->setTextSize(14);
-
-	massExistingObjectSlider->setPosition(5, 125 + simInfo->getFullSize().y + functions->getItemCount()*functions->getItemHeight() + UI_SEPERATION_DISTANCE * 7);
-	massExistingObjectSlider->setSize(200, 5);
-	massExistingObjectSlider->setValue(1);
-	massExistingObjectSlider->setMinimum(MASS_SLIDER_MIN_VALUE);
-	massExistingObjectSlider->setMaximum(MASS_SLIDER_MAX_VALUE);
 }
 
 template<typename T>

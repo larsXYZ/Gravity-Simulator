@@ -18,7 +18,12 @@
 #include "object_tracker.h"
 #include "particles/particle_container.h"
 
-
+enum class TemperatureUnit
+{
+	KELVIN,
+	CELSIUS,
+	FAHRENHEIT
+};
 
 class Space
 {
@@ -42,7 +47,7 @@ class Space
 	int iteration = 0;
 	bool fullScreen;
 	double size = 1;
-	int tempEnhet = 1;
+
 	int fps = 0;
 	bool showGUI = true;
 
@@ -63,12 +68,10 @@ class Space
 	//GUI
 	tgui::TextArea::Ptr simInfo = std::make_shared<tgui::TextArea>();
 	tgui::TextArea::Ptr newPlanetInfo = std::make_shared<tgui::TextArea>();
-	tgui::TextArea::Ptr currPlanetInfo = std::make_shared<tgui::TextArea>();
 	tgui::ListBox::Ptr functions = std::make_shared<tgui::ListBox>();
 	tgui::Tabs::Ptr temperatureUnitSelector = std::make_shared<tgui::Tabs>();
 	tgui::Slider::Ptr massSlider = std::make_shared<tgui::Slider>();
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
-	tgui::Slider::Ptr massExistingObjectSlider = std::make_shared<tgui::Slider>();
 	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();
 	ClickAndDragHandler click_and_drag_handler;
 	ObjectTracker object_tracker;
@@ -122,7 +125,7 @@ public:
 	double uniform_random(double min, double max);
 	sf::Vector2f random_vector(double magn);
 	static double convertStringToDouble(std::string string);
-	std::string calcTemperature(double q, int e);
+	static std::string temperature_info_string(double temperature_kelvin, TemperatureUnit unit);
 
 	friend class ObjectInfo;
 	friend class NewObjectInOrbitFunction;

@@ -31,8 +31,6 @@ void Space::runSim()
 	gui.add(massSlider);
 	gui.add(timeStepSlider);
 	gui.add(temperatureUnitSelector);
-	gui.add(currPlanetInfo);
-	gui.add(massExistingObjectSlider);
 	gui.add(autoBound);
 
 	while (window.isOpen())

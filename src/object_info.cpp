@@ -113,8 +113,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 			window.draw(g);
 		}
 	}
-
-	//DRAWING LINES TO OTHER PLANET WITH THE SAME SPECIES
+	
 	if (target->getLife().getTypeEnum() >= 6) {
 		for (const auto & planet : space.planets)
 		{
@@ -136,25 +135,19 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 			}
 		}
 	}
-
-	//FINDING GREENHOUSE EFFECT
-	const auto dTherEnergy = target->thermalEnergy() - target->thermalEnergy() / (1 + greenHouseEffectMult * target->getCurrentAtmosphere());
-	const auto dTemp = dTherEnergy / (target->getmass() * target->getTCap());
-	std::string dTempString;
-	if (space.tempEnhet == 1) 
-		dTempString = space.calcTemperature(dTemp, space.tempEnhet);
-	else 
-		dTempString = space.calcTemperature(dTemp + 273.15, space.tempEnhet);
-
-	//FIXING TEXT
+	
 	text.setPosition(pos.x + 1.5 * target->getRad(), 
 						pos.y + 1.5 * target->getRad());
+
+	const auto selected_temp_unit = static_cast<TemperatureUnit>(space.temperatureUnitSelector->getSelectedIndex());
 
 	text.setString(target->getName() + 
 		"\nType: " + target->getTypeString(target->getType())+ 
 		"\nRadius: " + std::to_string(static_cast<int>(target->getRad())) +
 		"\nMass: " + std::to_string(static_cast<int>(target->getmass())) +
-		"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())));
+		"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) + 
+		"\nTemperature: " + Space::temperature_info_string(target->getTemp(), selected_temp_unit));
+
 	if (target_parent)
 		text.setString(text.getString() +
 			"\nDistance: " + std::to_string(static_cast<int>(std::hypot(target->getx() - target_parent->getx(),
@@ -162,6 +155,15 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 
 	if (target->getType() == TERRESTIAL)
 	{
+		//FINDING GREENHOUSE EFFECT
+		const auto dTherEnergy = target->thermalEnergy() - target->thermalEnergy() / (1 + greenHouseEffectMult * target->getCurrentAtmosphere());
+		const auto dTemp = dTherEnergy / (target->getmass() * target->getTCap());
+		std::string dTempString;
+		if (selected_temp_unit == TemperatureUnit::KELVIN)
+			dTempString = Space::temperature_info_string(dTemp, selected_temp_unit);
+		else
+			dTempString = Space::temperature_info_string(dTemp + 273.15, selected_temp_unit);
+
 		text.setString(text.getString() + 
 			"\n\nAtmo: " + std::to_string((int)target->getCurrentAtmosphere()) + " / " + std::to_string((int)target->getAtmospherePotensial()) + "kPa \nGreenhouse Effect: " + dTempString);
 		if (target->getLife().getTypeEnum() == 0) 
