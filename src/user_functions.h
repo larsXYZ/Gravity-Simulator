@@ -70,3 +70,4 @@ struct FunctionContext
 	tgui::TextArea::Ptr new_object_info;
 };
 void executeFunction(FunctionContext& context);
+void giveFunctionEvent(FunctionContext& context, sf::Event event);

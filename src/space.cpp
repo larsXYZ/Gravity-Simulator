@@ -29,16 +29,16 @@ void Space::addSmoke(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan)
 	particles->add_particle(p, v, s, curr_time+lifespan);
 }
 
-sf::Vector3f Space::centerOfMass(std::vector<int> midlPList)
+sf::Vector3f Space::centerOfMass(std::vector<int> object_ids)
 {
 	double tMass = 0;
 	double xCont = 0;
 	double yCont = 0;
 
-	for (size_t i = 0; i < midlPList.size(); i++)
+	for (size_t i = 0; i < object_ids.size(); i++)
 	{
 
-		Planet p = findPlanet(midlPList[i]);
+		Planet p = findPlanet(object_ids[i]);
 		if (p.getmass() != -1)
 		{
 			double pMass = p.getmass();
@@ -54,16 +54,16 @@ sf::Vector3f Space::centerOfMass(std::vector<int> midlPList)
 
 }
 
-sf::Vector2f Space::centerOfMassVelocity(std::vector<int> midlPList)
+sf::Vector2f Space::centerOfMassVelocity(std::vector<int> object_ids)
 {
 	double tMass = 0;
 	double xCont = 0;
 	double yCont = 0;
 
-	for (size_t i = 0; i < midlPList.size(); i++)
+	for (size_t i = 0; i < object_ids.size(); i++)
 	{
 
-		Planet p = findPlanet(midlPList[i]);
+		Planet p = findPlanet(object_ids[i]);
 		if (p.getmass() != -1)
 		{
 			double pMass = p.getmass();

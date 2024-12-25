@@ -35,24 +35,6 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 
 		timestep = paused ? 0.0 : timeStepSlider->getValue();
 
-		while(window.pollEvent(event))
-		{
-			hotkeys(event, mainView);
-
-			if (!object_tracker.is_active())
-				click_and_drag_handler.update(mainView, window, event);
-
-			gui.handleEvent(event);
-		}
-
-		if (object_tracker.is_active())
-		{
-			object_tracker.update(*this, mainView);
-			window.setView(mainView);
-		}
-
-		window.setView(mainView);
-
 		FunctionContext context
 		{
 			.type = getSelectedFunction(functions),
@@ -65,7 +47,25 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			.mass_slider = massSlider,
 			.new_object_info = newPlanetInfo
 		};
+
+		while(window.pollEvent(event))
+		{
+			hotkeys(event, mainView);
+
+			if (!object_tracker.is_active())
+				click_and_drag_handler.update(mainView, window, event);
+
+			gui.handleEvent(event);
+			
+			giveFunctionEvent(context, event);
+		}
+
+		window.setView(mainView);
+		
 		executeFunction(context);
+
+		if (object_tracker.is_active())
+			object_tracker.update(*this, mainView);
 
 		updateInfoBox();
 

@@ -53,6 +53,7 @@ public:
 		context.new_object_info->setVisible(false);
 	};
 	virtual void execute(FunctionContext& context) = 0;
+	virtual void handle_event(FunctionContext& context, sf::Event event) {}
 	virtual void on_deselection(FunctionContext& context)
 	{
 		reset();
@@ -527,6 +528,93 @@ public:
 	}
 };
 
+class AdvancedInOrbitFunction : public IUserFunction
+{
+	std::vector<int> planet_ids;
+public:
+
+	void reset() override
+	{
+		planet_ids.clear();
+	}
+
+	void handle_event(FunctionContext& context, sf::Event event) override
+	{
+		if (event.type != sf::Event::EventType::MouseButtonReleased)
+			return;
+
+		if (event.mouseButton.button == sf::Mouse::Left)
+		{
+			for (const auto& planet : context.space.planets)
+			{
+				if (std::hypot(planet.getx() - context.mouse_pos_world.x,
+					planet.gety() - context.mouse_pos_world.y) < planet.getRad())
+				{
+					auto match = std::find(planet_ids.begin(), planet_ids.end(), planet.getId());
+					if (match == planet_ids.end())
+						planet_ids.push_back(planet.getId());
+					else
+						planet_ids.erase(match);
+				}
+			}
+		}
+	}
+
+	void execute(FunctionContext& context) override
+	{
+		std::erase_if(planet_ids,
+			[&context](auto id)
+			{
+				return !context.space.findPlanetPtr(id);
+			});
+
+		if (planet_ids.empty())
+			return;
+
+		for (const auto id : planet_ids)
+		{
+			Planet* planet = context.space.findPlanetPtr(id);
+			
+			sf::CircleShape indicator(planet->getRad() + 10);
+			indicator.setPosition(planet->getx(), planet->gety());
+			indicator.setOrigin(indicator.getRadius(), indicator.getRadius());
+			indicator.setFillColor(sf::Color(0, 0, 0, 0));
+			indicator.setOutlineColor(sf::Color::Red);
+			indicator.setOutlineThickness(10);
+			context.window.draw(indicator);
+		}
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
+		{
+			//DRAWING NEW PLANET AND ORBIT
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			{
+				const auto massCenterInfoVector(context.space.centerOfMass(planet_ids));
+				const auto massCenterVelocity = context.space.centerOfMassVelocity(planet_ids);
+				const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x, 
+					context.mouse_pos_world.y - massCenterInfoVector.y);
+
+				//DRAWING ORBIT
+				sf::CircleShape omr(rad);
+				omr.setPosition(sf::Vector2f(massCenterInfoVector.x, massCenterInfoVector.y));
+				omr.setOrigin(rad, rad);
+				omr.setFillColor(sf::Color(0, 0, 0, 0));
+				omr.setOutlineColor(sf::Color::Red);
+				omr.setOutlineThickness(1);
+				context.window.draw(omr);
+
+				//DRAWING PLANET
+				Planet temp(context.mass_slider->getValue());
+				sf::CircleShape bump(temp.getRad());
+				bump.setOrigin(temp.getRad(), temp.getRad());
+				bump.setFillColor(sf::Color::Red);
+				bump.setPosition(context.mouse_pos_world);
+				context.window.draw(bump);
+			}
+		}
+	}
+};
+
 class ExecutionerContainer
 {
 	FunctionType prev_type;
@@ -543,6 +631,7 @@ public:
 		executioners[FunctionType::RANDOM_SYSTEM] = std::make_shared<RandomSystemFunction>();
 		executioners[FunctionType::FOLLOW_OBJECT] = std::make_shared<TrackObjectFunction>();
 		executioners[FunctionType::SHOW_INFO] = std::make_shared<ShowObjectInfoFunction>();
+		executioners[FunctionType::ADVANCED_OBJECT_IN_ORBIT] = std::make_shared<AdvancedInOrbitFunction>();
 	}
 	void execute(FunctionContext & context)
 	{
@@ -570,10 +659,26 @@ public:
 		prev_function = match->second;
 		prev_type = context.type;
 	}
+
+	void handle_event(FunctionContext& context, sf::Event event)
+	{
+		auto match = executioners.find(context.type);
+		if (match == executioners.end())
+			return;
+
+		match->second->handle_event(context, event);
+	}
 };
+
+
+ExecutionerContainer executioners;
 
 void executeFunction(FunctionContext& context)
 {
-	static ExecutionerContainer executioners;
 	executioners.execute(context);
+}
+
+void giveFunctionEvent(FunctionContext& context, sf::Event event)
+{
+	executioners.handle_event(context, event);
 }

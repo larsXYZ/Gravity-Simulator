@@ -5,7 +5,6 @@
 
 class Space;
 
-
 class ObjectInfo
 {
 	int target_id{ -1 };

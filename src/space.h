@@ -28,30 +28,21 @@ enum class TemperatureUnit
 class Space
 {
 	double total_mass{0.0};
-
 	int next_id{0};
-
 	bool paused{ false };
 	double timestep{ TIMESTEP_VALUE_START };
-
 	double curr_time{ 0.0 };
-
 	int iteration{0};
-
 	int fps{ 0 };
-
 	bool show_gui{true};
-
-	//OBJECTS IN THE SIMULATION
+	
 	SpaceShip ship;
 	std::vector<Planet> planets;
 	std::unique_ptr<IParticleContainer> particles;
-	std::vector<int> temp_planet_ids;
 	std::vector<Explosion> explosions;
 	std::vector<Trail> trail;
 	Bound bound;
-
-	//GUI
+	
 	tgui::TextArea::Ptr simInfo = std::make_shared<tgui::TextArea>();
 	tgui::TextArea::Ptr newPlanetInfo = std::make_shared<tgui::TextArea>();
 	tgui::ListBox::Ptr functions = std::make_shared<tgui::ListBox>();
@@ -59,6 +50,7 @@ class Space
 	tgui::Slider::Ptr massSlider = std::make_shared<tgui::Slider>();
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
 	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();
+
 	ClickAndDragHandler click_and_drag_handler;
 	ObjectTracker object_tracker;
 	ObjectInfo object_info;
@@ -95,9 +87,9 @@ public:
 	int findBestPlanet(int q);
 	void updateSpaceship();
 	double thermalEnergyAtPosition(sf::Vector2f pos);
-	sf::Vector3f centerOfMass(std::vector<int> midlPList);
+	sf::Vector3f centerOfMass(std::vector<int> object_ids);
 	sf::Vector2f centerOfMassAll();
-	sf::Vector2f centerOfMassVelocity(std::vector<int> midlPList);
+	sf::Vector2f centerOfMassVelocity(std::vector<int> object_ids);
 	int get_iteration() const;
 	
 	void hotkeys(sf::Event event, sf::View & view);
@@ -119,4 +111,5 @@ public:
 	friend class AddRingsFunction;
 	friend class TrackObjectFunction;
 	friend class ShowObjectInfoFunction;
+	friend class AdvancedInOrbitFunction;
 };
