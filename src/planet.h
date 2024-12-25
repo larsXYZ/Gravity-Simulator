@@ -173,8 +173,6 @@ public:
 	
 	void becomeAbsorbedBy(Planet& absorbing_planet);
 	
-	//LIFE FUNCTIONS
-	
 	void setx(double x);
 	void sety(double y);
 	void updateRadiAndType();
@@ -185,9 +183,10 @@ public:
 	void incMass(double m);
 	double getDist(const Planet& forcer) const;
 	void collision(const Planet& p);
-	void render_shine(sf::RenderWindow& window, sf::Color& col, double luminosity) const;
+	void render_shine(sf::RenderWindow& window, sf::Color col, double luminosity) const;
 	void draw_starshine(sf::RenderWindow& window) const;
-	void draw_gas_planet_atmosphere(sf::RenderWindow& window);
+	void draw_planetshine(sf::RenderWindow& window) const;
+	void draw_gas_planet_atmosphere(sf::RenderWindow& window) const;
 	void giveID(int i);
 	void updateTemp();
 	

@@ -475,7 +475,7 @@ void Planet::collision(const Planet& p)
 	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
 }
 
-void Planet::render_shine(sf::RenderWindow& window, sf::Color& col, const double luminosity) const
+void Planet::render_shine(sf::RenderWindow& window, sf::Color col, const double luminosity) const
 {
 	sf::VertexArray vertexArr(sf::TrianglesFan);
 	vertexArr.append(sf::Vertex(sf::Vector2f(getx(), gety()), col));
@@ -509,24 +509,55 @@ void Planet::draw_starshine(sf::RenderWindow& window) const
 	render_shine(window, col, short_range_luminosity);
 }
 
-void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window)
+void Planet::draw_planetshine(sf::RenderWindow& window) const
+{
+	/*
+	 *	Caused by very hot temperatures
+	 */
+
+	sf::Color col{ sf::Color::White };
+	col.a = 70;
+
+	const auto temp = getTemp();
+	auto temp_effect_by_temp = [temp]() {
+		if (temp < 500.0)
+			return 0.0;
+		else
+			return sqrt((temp - 500.0)) / 30.0;
+	};
+
+	const auto temp_effect = temp_effect_by_temp();
+	if (temp_effect > 0.1)
+		render_shine(window, col, temp_effect * getRad());
+}
+
+sf::Color temperature_effect(double temp)
+{
+	sf::Uint8 r = std::clamp(temp / 10.0, 0., 255.);
+	sf::Uint8 g = std::clamp(temp / 30.0, 0., 255.);
+	sf::Uint8 b = std::clamp(temp / 30.0, 0., 255.);
+	return { r,g,b };
+}
+
+void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
 {
 	for (size_t i = 0; i < atmoLinesBrightness.size(); i++)
 	{
 		sf::CircleShape atmoLine;
 
 		//SETTING FEATURES
-		int midlLines = (numAtmoLines - 1);
+		int temp_lines = (numAtmoLines - 1);
 		atmoLine.setRadius(
-			circle.getRadius() - i * i * i * circle.getRadius() / (midlLines * midlLines * midlLines));
+			circle.getRadius() - i * i * i * circle.getRadius() / (temp_lines * temp_lines * temp_lines));
 		atmoLine.setOrigin(atmoLine.getRadius(), atmoLine.getRadius());
 		atmoLine.setPosition(circle.getPosition());
 		atmoLine.setOutlineThickness(0);
 
 		//FINDING COLOR
-		double r = atmoCol_r + atmoLinesBrightness[i] + temperature / 10;
-		double g = atmoCol_g + atmoLinesBrightness[i] - temperature / 12;
-		double b = atmoCol_b + atmoLinesBrightness[i] - temperature / 12;
+		auto temp_effect = temperature_effect(temperature);
+		double r = atmoCol_r + atmoLinesBrightness[i] + temp_effect.r;
+		double g = atmoCol_g + atmoLinesBrightness[i] + temp_effect.g;
+		double b = atmoCol_b + atmoLinesBrightness[i] + temp_effect.b;
 
 		r = std::clamp(r, 0., 255.);
 		g = std::clamp(g, 0., 255.);
@@ -540,21 +571,24 @@ void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window)
 void Planet::draw(sf::RenderWindow& window)
 {
 	circle.setPosition(x, y);
-	window.draw(circle);
 
 	switch (getType())
 	{
 	case ROCKY:
 	case TERRESTIAL:
+		draw_planetshine(window);
+		window.draw(circle);
 		break;
 
 	case GASGIANT:
+		draw_planetshine(window);
 		draw_gas_planet_atmosphere(window);
 		break;
 
 	case SMALLSTAR:
 	case STAR:
 	case BIGSTAR:
+		window.draw(circle);
 		draw_starshine(window);
 		break;
 	}
@@ -567,9 +601,10 @@ void Planet::setColor()
 	case ROCKY:
 	case TERRESTIAL:
 		{
-		const double r = 100.0 + randBrightness + temperature / 10.0;
-		const double g = 100.0 + randBrightness - temperature / 12.0 + getLife().getBmass() / 20.0;
-		const double b = 100.0 + randBrightness - temperature / 12.0;
+		auto temp_effect = temperature_effect(temperature);
+		const double r = 100.0 + randBrightness + temp_effect.r;
+		const double g = 100.0 + randBrightness + temp_effect.g + getLife().getBmass() / 20.0;
+		const double b = 100.0 + randBrightness + temp_effect.b / 30.0;
 		circle.setFillColor(sf::Color(std::clamp(static_cast<int>(r), 0, 255),
 			std::clamp(static_cast<int>(g), 0, 255),
 			std::clamp(static_cast<int>(b), 0, 255)));

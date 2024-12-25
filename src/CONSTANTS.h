@@ -20,7 +20,7 @@ const float CREATEDUSTSPEEDMULT = 0.003;
 
 //OBJECT-TYPE LIMITS
 const double ROCKYLIMIT = 15;
-const double TERRESTIALLIMIT = 50;
+const double TERRESTIALLIMIT = 100;
 const double GASGIANTLIMIT = 600;
 const double SMALLSTARLIMIT = 900;
 const double STARLIMIT = 1800;
