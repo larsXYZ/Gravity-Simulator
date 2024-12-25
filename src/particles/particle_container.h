@@ -46,7 +46,7 @@ public:
 
 		for (auto& particle : particles[current_dec_simulation_target])
 		{
-			if (bound.isOutside(particle.get_position()))
+			if (bound.isActive() && bound.isOutside(particle.get_position()))
 			{
 				particle.mark_for_removal();
 				continue;

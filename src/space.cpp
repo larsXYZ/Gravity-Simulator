@@ -356,6 +356,11 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 
 }
 
+bool Space::auto_bound_active() const
+{
+	return autoBound->isChecked();
+}
+
 void Space::removePlanet(const int id)
 {
 	if (Planet *planet = findPlanetPtr(id))

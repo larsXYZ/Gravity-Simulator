@@ -57,7 +57,8 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView),
 			.is_mouse_on_widgets = is_mouse_on_widgets(window, gui),
 			.mass_slider = massSlider,
-			.new_object_info = newPlanetInfo
+			.new_object_info = newPlanetInfo,
+			.bound = bound
 		};
 
 		while(window.pollEvent(event))

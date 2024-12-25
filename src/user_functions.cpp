@@ -675,6 +675,51 @@ public:
 	}
 };
 
+class BoundControlFunction : public IUserFunction
+{
+	bool has_center{ false };
+public:
+	void execute(FunctionContext& context) override
+	{
+		if (context.space.auto_bound_active())
+		{
+			reset();
+			return;
+		}
+
+		if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		{
+			if (has_center && context.bound.getRad() > BOUND_MIN_RAD)
+			{
+				context.bound.setActiveState(true);
+				reset();
+			}
+				
+			return;
+		}
+
+		if (!has_center)
+		{
+			has_center = true;
+			context.bound.setPos(context.mouse_pos_world);
+			context.bound.setActiveState(false);
+		}
+
+		double rad = std::hypot(context.mouse_pos_world.x - context.bound.getPos().x,
+								context.mouse_pos_world.y - context.bound.getPos().y);
+		context.bound.setRad(rad);
+
+		if (context.bound.getRad() > BOUND_MIN_RAD)
+			context.bound.render(context.window);
+
+	}
+
+	void reset()
+	{
+		has_center = false;
+	}
+};
+
 class ExecutionerContainer
 {
 	FunctionType prev_type;
@@ -693,6 +738,7 @@ public:
 		executioners[FunctionType::SHOW_INFO] = std::make_shared<ShowObjectInfoFunction>();
 		executioners[FunctionType::ADVANCED_OBJECT_IN_ORBIT] = std::make_shared<AdvancedInOrbitFunction>();
 		executioners[FunctionType::EXPLODE_OBJECT] = std::make_shared<ExplodeObjectFunction>();
+		executioners[FunctionType::ADD_BOUND] = std::make_shared<BoundControlFunction>();
 	}
 	void execute(FunctionContext & context)
 	{

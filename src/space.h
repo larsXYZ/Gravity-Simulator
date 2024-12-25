@@ -91,14 +91,13 @@ public:
 	sf::Vector2f centerOfMassVelocity(const std::vector<int> & object_ids);
 	sf::Vector2f centerOfMassAll();
 	int get_iteration() const;
+	bool auto_bound_active() const;
 	
 	void hotkeys(sf::Event event, sf::View & view);
-
-	//GUI
+	
 	void initSetup();
 	void updateInfoBox();
-
-	//OTHER
+	
 	int uniform_random(int min, int max);
 	double uniform_random(double min, double max);
 	sf::Vector2f random_vector(double magn);

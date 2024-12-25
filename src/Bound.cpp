@@ -10,6 +10,7 @@ Bound::Bound()
 	indicator.setRadius(START_RADIUS);
 	indicator.setFillColor(sf::Color(0, 0, 0, 0));
 	indicator.setOutlineColor(sf::Color(255, 0, 0, 50));
+	indicator.setOutlineThickness(10);
 	indicator.setPointCount(100);
 }
 

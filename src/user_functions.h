@@ -56,6 +56,7 @@ void setFunctionGUIFromHotkeys(tgui::ListBox::Ptr listbox);
 
 class Space;
 class SpaceShip;
+class Bound;
 
 struct FunctionContext
 {
@@ -69,6 +70,7 @@ struct FunctionContext
 	const bool is_mouse_on_widgets;
 	tgui::Slider::Ptr mass_slider;
 	tgui::TextArea::Ptr new_object_info;
+	Bound& bound;
 };
 void executeFunction(FunctionContext& context);
 void giveFunctionEvent(FunctionContext& context, sf::Event event);
