@@ -29,52 +29,37 @@ void Space::addSmoke(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan)
 	particles->add_particle(p, v, s, curr_time+lifespan);
 }
 
-sf::Vector3f Space::centerOfMass(std::vector<int> object_ids)
+sf::Vector3f Space::centerOfMass(const std::vector<int> & object_ids)
 {
-	double tMass = 0;
-	double xCont = 0;
-	double yCont = 0;
-
-	for (size_t i = 0; i < object_ids.size(); i++)
+	auto tMass = 0.0;
+	auto xCont = 0.0;
+	auto yCont = 0.0;
+	for (const auto id : object_ids)
 	{
-
-		Planet p = findPlanet(object_ids[i]);
-		if (p.getmass() != -1)
+		if (Planet* planet = findPlanetPtr(id))
 		{
-			double pMass = p.getmass();
-
-			tMass += pMass;
-			xCont += pMass*p.getx();
-			yCont += pMass*p.gety();
+			tMass += planet->getmass();
+			xCont += planet->getmass() * planet->getx();
+			yCont += planet->getmass() * planet->gety();
 		}
-
 	}
-
 	return sf::Vector3f(xCont / tMass, yCont / tMass, tMass);
-
 }
 
-sf::Vector2f Space::centerOfMassVelocity(std::vector<int> object_ids)
+sf::Vector2f Space::centerOfMassVelocity(const std::vector<int> & object_ids)
 {
-	double tMass = 0;
-	double xCont = 0;
-	double yCont = 0;
-
-	for (size_t i = 0; i < object_ids.size(); i++)
+	auto tMass = 0.0;
+	auto xCont = 0.0;
+	auto yCont = 0.0;
+	for (const auto id : object_ids)
 	{
-
-		Planet p = findPlanet(object_ids[i]);
-		if (p.getmass() != -1)
+		if (Planet * planet = findPlanetPtr(id))
 		{
-			double pMass = p.getmass();
-
-			tMass += pMass;
-			xCont += pMass*p.getxv();
-			yCont += pMass*p.getyv();
+			tMass += planet->getmass();
+			xCont += planet->getmass()*planet->getxv();
+			yCont += planet->getmass()*planet->getyv();
 		}
-
 	}
-
 	return sf::Vector2f(xCont / tMass, yCont / tMass);
 }
 

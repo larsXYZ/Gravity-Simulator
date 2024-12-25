@@ -530,12 +530,18 @@ public:
 
 class AdvancedInOrbitFunction : public IUserFunction
 {
-	std::vector<int> planet_ids;
+	std::vector<int> object_ids;
 public:
+
+	void on_selection(FunctionContext& context) override
+	{
+		context.mass_slider->setVisible(true);
+		context.new_object_info->setVisible(true);
+	}
 
 	void reset() override
 	{
-		planet_ids.clear();
+		object_ids.clear();
 	}
 
 	void handle_event(FunctionContext& context, sf::Event event) override
@@ -550,18 +556,18 @@ public:
 				if (std::hypot(planet.getx() - context.mouse_pos_world.x,
 					planet.gety() - context.mouse_pos_world.y) < planet.getRad())
 				{
-					auto match = std::find(planet_ids.begin(), planet_ids.end(), planet.getId());
-					if (match == planet_ids.end())
-						planet_ids.push_back(planet.getId());
+					auto match = std::find(object_ids.begin(), object_ids.end(), planet.getId());
+					if (match == object_ids.end())
+						object_ids.push_back(planet.getId());
 					else
-						planet_ids.erase(match);
+						object_ids.erase(match);
 				}
 			}
 
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
 			{
-				const auto massCenterInfoVector(context.space.centerOfMass(planet_ids));
-				const auto massCenterVelocity = context.space.centerOfMassVelocity(planet_ids);
+				const auto massCenterInfoVector(context.space.centerOfMass(object_ids));
+				const auto massCenterVelocity = context.space.centerOfMassVelocity(object_ids);
 				const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x,
 					context.mouse_pos_world.y - massCenterInfoVector.y);
 				const auto speed = sqrt(G * (massCenterInfoVector.z + context.mass_slider->getValue()) / rad);
@@ -574,10 +580,13 @@ public:
 					(massCenterVelocity.x + speed * cos(angle + PI / 2.0) - adjust_speed * cos(angle + PI / 2.0)),
 					(massCenterVelocity.y + speed * sin(angle + PI / 2.0) - adjust_speed * sin(angle + PI / 2.0))));
 
-				for (auto& planet : context.space.planets)
+				for (const auto id : object_ids)
 				{
-					planet.setxv(planet.getxv() - adjust_speed * cos(angle + PI / 2.0));
-					planet.setyv(planet.getyv() - adjust_speed * sin(angle + PI / 2.0));
+					if (Planet* planet = context.space.findPlanetPtr(id))
+					{
+						planet->setxv(planet->getxv() - adjust_speed * cos(angle + PI / 2.0));
+						planet->setyv(planet->getyv() - adjust_speed * sin(angle + PI / 2.0));
+					}
 				}
 
 				reset();
@@ -587,16 +596,16 @@ public:
 
 	void execute(FunctionContext& context) override
 	{
-		std::erase_if(planet_ids,
+		std::erase_if(object_ids,
 			[&context](auto id)
 			{
 				return !context.space.findPlanetPtr(id);
 			});
 
-		if (planet_ids.empty())
+		if (object_ids.empty())
 			return;
 
-		for (const auto id : planet_ids)
+		for (const auto id : object_ids)
 		{
 			Planet* planet = context.space.findPlanetPtr(id);
 			
@@ -611,7 +620,7 @@ public:
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
 		{
-			const auto massCenterInfoVector(context.space.centerOfMass(planet_ids));
+			const auto massCenterInfoVector(context.space.centerOfMass(object_ids));
 			const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x,
 				context.mouse_pos_world.y - massCenterInfoVector.y);
 

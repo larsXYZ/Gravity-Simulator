@@ -87,9 +87,9 @@ public:
 	int findBestPlanet(int q);
 	void updateSpaceship();
 	double thermalEnergyAtPosition(sf::Vector2f pos);
-	sf::Vector3f centerOfMass(std::vector<int> object_ids);
+	sf::Vector3f centerOfMass(const std::vector<int> & object_ids);
+	sf::Vector2f centerOfMassVelocity(const std::vector<int> & object_ids);
 	sf::Vector2f centerOfMassAll();
-	sf::Vector2f centerOfMassVelocity(std::vector<int> object_ids);
 	int get_iteration() const;
 	
 	void hotkeys(sf::Event event, sf::View & view);
