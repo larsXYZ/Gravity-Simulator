@@ -75,7 +75,7 @@ build/
 *.exp
 Release/
 
-prevSettings.txt
+settings.txt
 
 *.rc
 *.depend

@@ -63,6 +63,9 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 
 		while(window.pollEvent(event))
 		{
+			if (event.type == sf::Event::Closed)
+				window.close();
+
 			hotkeys(event, mainView, window);
 
 			if (!object_tracker.is_active())
