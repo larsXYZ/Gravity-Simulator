@@ -415,16 +415,16 @@ void Space::full_reset(sf::View& view)
 	click_and_drag_handler.reset();
 }
 
-void Space::disintegratePlanet(Planet planet)
+std::vector<int> Space::disintegratePlanet(Planet planet)
 {
 	const auto match = std::find_if(planets.begin(), planets.end(),
 		[&planet](const auto& p) { return p.getId() == planet.getId(); });
 
 	if (match == planets.end())
-		return;
+		return {};
 
 	if (match->getmass() < MINIMUMBREAKUPSIZE)
-		return;
+		return {};
 
 	const auto n_planets{ std::floor(planet.getmass() / MINIMUMBREAKUPSIZE) };
 	const auto mass_per_planet = planet.getmass() / n_planets;
@@ -455,49 +455,39 @@ void Space::disintegratePlanet(Planet planet)
 	}
 
 	removePlanet(planet.getId());
+
+	return generated_ids;
 }
 
 void Space::explodePlanet(Planet planet)
 {
-	const auto match = std::find_if(planets.begin(), planets.end(), 
-		[&planet](const auto& p) { return p.getId() == planet.getId(); });
-	if (match == planets.end())
-		return;
+	const float original_mass = planet.getmass();
 
-	if (match->getmass() < MINIMUMBREAKUPSIZE)
-		return;
+	const sf::Vector2f original_position = { static_cast<float>(planet.getx()),
+										static_cast<float>(planet.gety()) };
 
-	double origMass = planet.getmass();
-	double antall = ceil(origMass / MINIMUMBREAKUPSIZE);
-	double mass = origMass / antall;
-	double rad = (Planet(mass)).getRad();
-	double x = planet.getx();
-	double y = planet.gety();
-	double xv = planet.getxv();
-	double yv = planet.getyv();
+	const sf::Vector2f original_velocity = { static_cast<float>(planet.getxv()),
+										static_cast<float>(planet.getyv()) };
 
-	removePlanet(planet.getId());
-	addExplosion(sf::Vector2f(x, y), 90, sf::Vector2f(xv, yv), 10);
+	const auto lifetime = 0.1 * planet.getRad();
+	const auto size = 5.0 * planet.getRad();
 
-	double kanter = 5;
-	int added = 0;
+	addExplosion(original_position, size, original_velocity, lifetime);
 
-	for (size_t i = 0; i < antall; i += kanter)
+	const auto fragment_ids = disintegratePlanet(planet);
+	for (auto id : fragment_ids)
 	{
-		double angle = uniform_random(0.0, 2.0 * PI);
-		double deltaVinkel = 2 * PI / kanter;
-		double dist = 2 * rad * (1 / sin(deltaVinkel) - 1) + EXPLODE_PLANET_DISTCONST + 2 * rad + (2 * kanter - 10) * rad;
-		double escVel = G * sqrt(origMass) * EXPLODE_PLANET_SPEEDMULT_OTHER / cbrt(dist + 0.1);
-		kanter++;
-
-		for (size_t q = 0; q < kanter; q++)
+		if (auto fragment = findPlanetPtr(id))
 		{
-			Planet Q(mass, x + dist * cos(angle), y + dist * sin(angle), xv + escVel * cos(angle), yv + escVel * sin(angle));
-			Q.setTemp(1500);
-			addPlanet(std::move(Q));
-			angle += deltaVinkel;
-			added++;
-			if (added >= antall) return;
+			const sf::Vector2f fragment_pos = { static_cast<float>(fragment->getx()),
+													static_cast<float>(fragment->gety()) };
+
+			const sf::Vector2f to_fragment = (fragment_pos - original_position);
+
+			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * original_mass * to_fragment / std::hypot(to_fragment.x, to_fragment.y);
+
+			fragment->setxv(fragment->getxv() + escape_speed.x);
+			fragment->setyv(fragment->getyv() + escape_speed.y);
 		}
 	}
 }

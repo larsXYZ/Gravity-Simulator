@@ -66,7 +66,7 @@ public:
 	void removeTrail(int ind);
 	void full_reset(sf::View& view);
 
-	void disintegratePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
+	std::vector<int> disintegratePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
 	void explodePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
 
 	void randomPlanets(int totmass, int antall, double radius, sf::Vector2f pos);
@@ -112,5 +112,5 @@ public:
 	friend class TrackObjectFunction;
 	friend class ShowObjectInfoFunction;
 	friend class AdvancedInOrbitFunction;
-	friend class ExplodePlanetFunction;
+	friend class ExplodeObjectFunction;
 };
