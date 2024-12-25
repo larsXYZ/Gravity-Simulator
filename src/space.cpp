@@ -276,7 +276,7 @@ void Space::update()
 	total_mass = std::accumulate(planets.begin(), planets.end(), 0.0, [](auto v, const auto & p) {return v + p.getmass(); });
 }
 
-void Space::hotkeys(sf::Event event, sf::View & view)
+void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& window)
 {
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) && timeStepSlider->getValue() > timeStepSlider->getMinimum())
 		timeStepSlider->setValue(std::max(timeStepSlider->getValue() - 1, timeStepSlider->getMinimum()));
@@ -296,7 +296,7 @@ void Space::hotkeys(sf::Event event, sf::View & view)
 		case sf::Keyboard::Escape:
 			exit(0);
 		case sf::Keyboard::R:
-			full_reset(view);
+			full_reset(view, window);
 			break;
 		}
 	}
@@ -368,7 +368,7 @@ void Space::removeSmoke(int ind)
 	particles->clear();
 }
 
-void Space::full_reset(sf::View& view)
+void Space::full_reset(sf::View& view, const sf::RenderWindow& window)
 {
 	planets.clear();
 	explosions.clear();
@@ -377,6 +377,7 @@ void Space::full_reset(sf::View& view)
 	bound = Bound();
 
 	view.setCenter(0, 0);
+	view.setSize(window.getSize().x, window.getSize().y);
 	ship.reset(sf::Vector2f(0, 0));
 	iteration = 0;
 	curr_time = 0.0;

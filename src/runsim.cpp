@@ -63,7 +63,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 
 		while(window.pollEvent(event))
 		{
-			hotkeys(event, mainView);
+			hotkeys(event, mainView, window);
 
 			if (!object_tracker.is_active())
 				click_and_drag_handler.update(mainView, window, event);

@@ -64,7 +64,7 @@ public:
 	void removeExplosion(int ind);
 	void removeSmoke(int ind);
 	void removeTrail(int ind);
-	void full_reset(sf::View& view);
+	void full_reset(sf::View& view, const sf::RenderWindow & window);
 
 	std::vector<int> disintegratePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
 	void explodePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
@@ -92,7 +92,7 @@ public:
 	int get_iteration() const;
 	bool auto_bound_active() const;
 	
-	void hotkeys(sf::Event event, sf::View & view);
+	void hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow & window);
 	
 	void initSetup();
 	void updateInfoBox();
