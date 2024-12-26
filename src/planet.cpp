@@ -533,7 +533,7 @@ void Planet::draw_planetshine(sf::RenderWindow& window) const
 
 sf::Color temperature_effect(double temp)
 {
-	sf::Uint8 r = std::clamp(temp / 10.0, 0., 255.);
+	sf::Uint8 r = std::clamp(temp / 5.0, 0., 255.);
 	sf::Uint8 g = std::clamp(temp / 30.0, 0., 255.);
 	sf::Uint8 b = std::clamp(temp / 30.0, 0., 255.);
 	return { r,g,b };
@@ -590,6 +590,10 @@ void Planet::draw(sf::RenderWindow& window)
 	case BIGSTAR:
 		window.draw(circle);
 		draw_starshine(window);
+		break;
+
+	case BLACKHOLE:
+		window.draw(circle);
 		break;
 	}
 }

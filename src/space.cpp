@@ -424,7 +424,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 
 		p.setx(p.getx() + cos(angle_offset) * offset_dist);
 		p.sety(p.gety() + sin(angle_offset) * offset_dist);
-		p.setTemp(1500.0);
+		p.setTemp(uniform_random(1500.,4000.));
 
 		generated_ids.push_back(addPlanet(std::move(p)));
 	}
