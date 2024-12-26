@@ -1,4 +1,4 @@
-﻿# Gravity-Simulator-v1.0-SOURCE
+﻿# Gravity Simulator
 
 This is the source code for my gravity simulation project. I made it when first learning C++ / programming in university back in 2016.
 The code was terrible and filled with poor solutions to simple problems. During Christmas 2024 I revisited it and replaced some of the old bad solutions with new bad solutions.
