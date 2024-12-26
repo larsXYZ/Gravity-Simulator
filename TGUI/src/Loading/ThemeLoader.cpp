@@ -269,7 +269,7 @@ namespace tgui
             throw Exception{U"Failed to open theme file '" + fullFilename + U"'."};
 
         std::stringstream stream;
-        stream.write(reinterpret_cast<char*>(fileContents.get()), static_cast<std::streamsize>(fileSize));
+        stream.write(reinterpret_cast<const char*>(fileContents.get()), static_cast<std::streamsize>(fileSize));
 
         std::unique_ptr<DataIO::Node> root = DataIO::parse(stream);
 

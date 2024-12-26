@@ -40,6 +40,8 @@
 #include <TGUI/Widgets/FileDialog.hpp>
 #include <TGUI/Widgets/Group.hpp>
 #include <TGUI/Widgets/Grid.hpp>
+#include <TGUI/Widgets/GrowHorizontalLayout.hpp>
+#include <TGUI/Widgets/GrowVerticalLayout.hpp>
 #include <TGUI/Widgets/HorizontalLayout.hpp>
 #include <TGUI/Widgets/HorizontalWrap.hpp>
 #include <TGUI/Widgets/Knob.hpp>

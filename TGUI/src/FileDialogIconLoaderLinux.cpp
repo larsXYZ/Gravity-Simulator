@@ -425,7 +425,7 @@ namespace tgui
             Filesystem::Path("/usr/share/icons/hicolor/48x48/places/"),
         };
 
-        std::map<String, std::pair<Filesystem::Path, int>> foundIcons;
+        std::map<String, std::pair<Filesystem::Path, std::size_t>> foundIcons;
         for (std::size_t i = 0; i < potentialIconPaths.size(); ++i)
         {
             const Filesystem::Path& iconDir = potentialIconPaths[i];
@@ -449,7 +449,7 @@ namespace tgui
                     continue;
 
                 // If both an SVG and a PNG file exist then we will select the svg file
-                int themeIconPriority = 10 * themePriority;
+                std::size_t themeIconPriority = 10 * themePriority;
                 if (isSvg)
                     themeIconPriority += 2;
                 else if (isPng)

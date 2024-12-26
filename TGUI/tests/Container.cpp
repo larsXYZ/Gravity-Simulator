@@ -22,6 +22,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <iostream>
+
 #include "Tests.hpp"
 
 TEST_CASE("[Container]")
@@ -122,6 +124,9 @@ TEST_CASE("[Container]")
 
         SECTION("reusing name")
         {
+            // Ignore warnings about duplicate names being used
+            std::streambuf *oldbuf = std::cerr.rdbuf(nullptr);
+
             container->removeAllWidgets();
 
             auto child1 = tgui::Panel::create();
@@ -160,6 +165,17 @@ TEST_CASE("[Container]")
             // Removing the found indirect child means that there is no more widget with that name
             child1->remove(child4);
             REQUIRE(container->get("name") == nullptr);
+
+            // Changing the name of a widget affects which one is found
+            container->add(child2, "other");
+            container->add(child3, "name");
+            REQUIRE(container->get("name") == child3);
+            REQUIRE(container->get("other") == child2);
+            child2->setWidgetName("name");
+            REQUIRE(container->get("name") == child2);
+            REQUIRE(container->get("other") == nullptr);
+
+            std::cerr.rdbuf(oldbuf);
         }
     }
 

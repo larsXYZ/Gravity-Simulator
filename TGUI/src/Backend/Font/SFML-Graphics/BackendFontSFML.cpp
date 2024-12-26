@@ -178,9 +178,9 @@ namespace tgui
         if (!m_font->hasGlyph(U'\u00CA'))
             return static_cast<float>(scaledTextSize) / m_fontScale;
 
-        const FontGlyph& glyph = getGlyph(U'\u00CA', scaledTextSize, false, 0);
+        const FontGlyph& glyph = getGlyph(U'\u00CA', characterSize, false, 0);
 #else
-        const FontGlyph& glyph = getGlyph(U'\u00CA', scaledTextSize, false, 0);
+        const FontGlyph& glyph = getGlyph(U'\u00CA', characterSize, false, 0);
         if ((glyph.advance == 0) && (glyph.bounds == FloatRect{}) && (glyph.textureRect == UIntRect{}))
             return static_cast<float>(scaledTextSize) / m_fontScale;
 #endif
@@ -194,8 +194,7 @@ namespace tgui
     {
         // SFML doesn't provide a method to access the descent of the font.
         // We extract the descent by examining the 'g' glyph, assuming it exists.
-        const unsigned int scaledTextSize = static_cast<unsigned int>(characterSize * m_fontScale);
-        const FontGlyph& glyph = getGlyph(U'g', scaledTextSize, false);
+        const FontGlyph& glyph = getGlyph(U'g', characterSize, false);
         return glyph.bounds.height + glyph.bounds.top;
     }
 
@@ -244,7 +243,8 @@ namespace tgui
         }
         m_textures[scaledTextSize] = texture;
 
-        textureVersion = ++m_textureVersions[scaledTextSize];
+        textureVersion = ++m_lastTextureVersion;
+        m_textureVersions[scaledTextSize] = textureVersion;
         return texture;
     }
 

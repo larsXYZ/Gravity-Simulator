@@ -185,6 +185,44 @@ namespace tgui
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if SDL_MAJOR_VERSION < 3
+    static std::uint32_t getWindowIdFromEvent(const SDL_Event& eventSDL)
+    {
+        switch (eventSDL.type)
+        {
+            case SDL_WINDOWEVENT:
+                return eventSDL.window.windowID;
+
+            case SDL_EVENT_TEXT_INPUT:
+                return eventSDL.text.windowID;
+
+            case SDL_EVENT_KEY_DOWN:
+                return eventSDL.key.windowID;
+
+            case SDL_EVENT_MOUSE_WHEEL:
+                return eventSDL.wheel.windowID;
+
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+                return eventSDL.button.windowID;
+
+            case SDL_EVENT_MOUSE_MOTION:
+                return eventSDL.motion.windowID;
+
+    #if ((SDL_MAJOR_VERSION == 2) && (SDL_MINOR_VERSION > 0)) || ((SDL_MAJOR_VERSION == 2) && (SDL_MINOR_VERSION == 0) && (SDL_PATCHLEVEL >= 12))
+            case SDL_EVENT_FINGER_DOWN:
+            case SDL_EVENT_FINGER_UP:
+            case SDL_EVENT_FINGER_MOTION:
+                return eventSDL.tfinger.windowID;
+    #endif
+            default:
+                return 0;
+        }
+    }
+#endif
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     bool BackendGuiSDL::convertEvent(const SDL_Event& eventSDL, Event& eventTGUI)
     {
         switch (eventSDL.type)
@@ -460,6 +498,20 @@ namespace tgui
 
     bool BackendGuiSDL::handleEvent(const SDL_Event& sdlEvent)
     {
+        // Ignore events from a window other than the one used by the gui.
+        // Not all events are related to a window, and manually crafted events will also not have a valid window id,
+        // so if the event has no associated window then we will also process it.
+#if SDL_MAJOR_VERSION >= 3
+        SDL_Window* window = SDL_GetWindowFromEvent(&sdlEvent);
+        if (window && (window != m_window))
+            return false;
+#else
+        const std::uint32_t eventWindowId = getWindowIdFromEvent(sdlEvent);
+        const std::uint32_t windowId = SDL_GetWindowID(m_window);
+        if ((eventWindowId != 0) && (windowId != 0) && (eventWindowId != windowId))
+            return false;
+#endif
+
         // Detect scrolling with two fingers by examining touch events
         if ((sdlEvent.type == SDL_EVENT_FINGER_DOWN) || (sdlEvent.type == SDL_EVENT_FINGER_UP) || (sdlEvent.type == SDL_EVENT_FINGER_MOTION))
         {

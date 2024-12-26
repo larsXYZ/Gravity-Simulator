@@ -37,7 +37,6 @@ cmake_modules/
 Gravity-Simulator.dir/*
 x64/
 *.tlog
-*.cmake
 *.rule
 *.vcxproj
 CMakeCache.txt

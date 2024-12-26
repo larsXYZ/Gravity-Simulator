@@ -138,8 +138,8 @@ TEST_CASE("[PanelListBox]")
         REQUIRE(panelListBox->getItemByIndex(0) == item3);
 
         const auto item5 = panelListBox->addItem("5");
-        const auto item5_second = panelListBox->addItem("5");
         const auto item6 = panelListBox->addItem("6");
+        const auto item7 = panelListBox->addItem("7");
         REQUIRE(panelListBox->getItemCount() == 4);
         panelListBox->removeAllItems();
         REQUIRE(panelListBox->getItemCount() == 0);

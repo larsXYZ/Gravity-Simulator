@@ -34,6 +34,8 @@
 #include "WidgetProperties/EditBoxProperties.hpp"
 #include "WidgetProperties/EditBoxSliderProperties.hpp"
 #include "WidgetProperties/GroupProperties.hpp"
+#include "WidgetProperties/GrowHorizontalLayoutProperties.hpp"
+#include "WidgetProperties/GrowVerticalLayoutProperties.hpp"
 #include "WidgetProperties/HorizontalLayoutProperties.hpp"
 #include "WidgetProperties/HorizontalWrapProperties.hpp"
 #include "WidgetProperties/KnobProperties.hpp"
@@ -279,6 +281,8 @@ GuiBuilder::GuiBuilder(const tgui::String& programName) :
     m_widgetProperties["EditBox"] = std::make_unique<EditBoxProperties>();
     m_widgetProperties["EditBoxSlider"] = std::make_unique<EditBoxSliderProperties>();
     m_widgetProperties["Group"] = std::make_unique<GroupProperties>();
+    m_widgetProperties["GrowHorizontalLayout"] = std::make_unique<GrowHorizontalLayoutProperties>();
+    m_widgetProperties["GrowVerticalLayout"] = std::make_unique<GrowVerticalLayoutProperties>();
     m_widgetProperties["HorizontalLayout"] = std::make_unique<HorizontalLayoutProperties>();
     m_widgetProperties["HorizontalWrap"] = std::make_unique<HorizontalWrapProperties>();
     m_widgetProperties["Knob"] = std::make_unique<KnobProperties>();
@@ -1057,6 +1061,8 @@ void GuiBuilder::loadToolbox()
         {"EditBox", []{ return tgui::EditBox::create(); }},
         {"EditBoxSlider", []{ return tgui::EditBoxSlider::create(); }},
         {"Group", []{ return tgui::Group::create({150, 150}); }},
+        {"GrowHorizontalLayout", []{ return tgui::GrowHorizontalLayout::create(150); }},
+        {"GrowVerticalLayout", []{ return tgui::GrowVerticalLayout::create(150); }},
         {"HorizontalLayout", []{ return tgui::HorizontalLayout::create({150, 150}); }},
         {"HorizontalWrap", []{ return tgui::HorizontalWrap::create({150, 150}); }},
         {"Knob", []{ return tgui::Knob::create(); }},

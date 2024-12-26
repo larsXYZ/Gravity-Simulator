@@ -576,7 +576,9 @@ TEST_CASE("[Widget]")
         REQUIRE(parent->getWidgets().size() == 1);
         parent->loadWidgetsFromFile("WidgetFileClickableWidget1.txt");
         REQUIRE(parent->getWidgets().size() == 1);
+        std::streambuf *oldbuf = std::cerr.rdbuf(nullptr); // Ignore warning about duplicate name being used
         parent->loadWidgetsFromFile("WidgetFileClickableWidget1.txt", false);
+        std::cerr.rdbuf(oldbuf);
         REQUIRE(parent->getWidgets().size() == 2);
     }
 
@@ -636,6 +638,28 @@ TEST_CASE("[Widget]")
             button->setScale({2, 4});
 
             TEST_DRAW("OriginScaleRotation.png")
+        }
+
+        SECTION("Font scale")
+        {
+            auto button = tgui::Button::create();
+            button->setSize(150, 50);
+            button->setText("Scaling");
+            button->setTextSize(32);
+            button->setPosition(5, 10);
+
+            TEST_DRAW_INIT(400, 175, button)
+
+            auto oldView = gui.getView();
+            gui.setAbsoluteView({0, 0, 160, 70});
+
+            TEST_DRAW("FontScale_Unscaled.png")
+
+            tgui::getBackend()->setFontScale(2.5f);
+            TEST_DRAW("FontScale_Scaled.png")
+
+            tgui::getBackend()->setFontScale(1);
+            gui.setAbsoluteView(oldView.getRect());
         }
     }
 

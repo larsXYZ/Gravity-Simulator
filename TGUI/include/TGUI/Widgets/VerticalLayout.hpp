@@ -35,6 +35,9 @@ TGUI_MODULE_EXPORT namespace tgui
     /// @brief Container that automatically resizes children to fit the entire available space between children
     ///
     /// The children are stacked vertically.
+    ///
+    /// If you don't want the height of child widgets to be altered and instead want the vertical layout to grow in size as new
+    /// widgets are added, then check out the GrowVerticalLayout instead.
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     class TGUI_API VerticalLayout : public BoxLayoutRatios
     {

@@ -22,7 +22,7 @@
 
 # If the cmake version is higher than the minimum version then enable all new policies, up to the maximum version specified.
 # When cmake is newer than the highest version then its newest policies will still be set to the old behavior for compatibility.
-cmake_minimum_required(VERSION 3.16...3.29)
+cmake_minimum_required(VERSION 3.16...3.31)
 
 # Include macros such as tgui_set_option
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Macros.cmake)
@@ -31,7 +31,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Macros.cmake)
 tgui_set_option(CMAKE_BUILD_TYPE Release STRING "Choose the type of build (Debug or Release)")
 
 # Project name and version
-project(TGUI VERSION 1.6.1 LANGUAGES CXX)
+project(TGUI VERSION 1.7.0 LANGUAGES CXX)
 
 # Use the paths from the cmake GNUInstallDirs module as defaults (https://cmake.org/cmake/help/latest/module/GNUInstallDirs.html)
 include(GNUInstallDirs)
@@ -159,6 +159,9 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
     if(TGUI_BUILD_AS_CXX_MODULE)
         if(TGUI_CXX_STANDARD LESS 20)
             message(FATAL_ERROR "TGUI_BUILD_AS_CXX_MODULE can only be turned on if TGUI_CXX_STANDARD is set to at least 20")
+        endif()
+        if(TGUI_OS_WINDOWS AND TGUI_SHARED_LIBS)
+            message(FATAL_ERROR "On Windows, BUILD_SHARED_LIBS must be OFF if TGUI_BUILD_AS_CXX_MODULE is ON")
         endif()
     endif()
 endif()

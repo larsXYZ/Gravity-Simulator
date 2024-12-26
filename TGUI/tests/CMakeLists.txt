@@ -71,6 +71,8 @@ set(TEST_SOURCES
     Widgets/FileDialog.cpp
     Widgets/Group.cpp
     Widgets/Grid.cpp
+    Widgets/GrowHorizontalLayout.cpp
+    Widgets/GrowVerticalLayout.cpp
     Widgets/HorizontalLayout.cpp
     Widgets/HorizontalWrap.cpp
     Widgets/Knob.cpp

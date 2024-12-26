@@ -44,6 +44,8 @@ namespace tgui
         {"FileDialog", std::make_shared<FileDialog>},
         {"Grid", std::make_shared<Grid>},
         {"Group", std::make_shared<Group>},
+        {"GrowHorizontalLayout", std::make_shared<GrowHorizontalLayout>},
+        {"GrowVerticalLayout", std::make_shared<GrowVerticalLayout>},
         {"HorizontalLayout", std::make_shared<HorizontalLayout>},
         {"HorizontalWrap", std::make_shared<HorizontalWrap>},
         {"Knob", std::make_shared<Knob>},

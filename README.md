@@ -9,7 +9,7 @@ https://youtu.be/2ksVjpxY5mI?si=pwDCNEDP6Kb8V7mD
 # Creating a solution
 
 Gravity-Simulator uses the graphics library [SFML 2.6.2](http://www.sfml-dev.org/)
-and the user interface library [TGUI 1.6.1](https://www.tgui.eu/). It uses CMake for build management.
+and the user interface library [TGUI 1.7.0](https://www.tgui.eu/). It uses CMake for build management.
 
 Built the solution with:
 
