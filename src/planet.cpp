@@ -1,5 +1,7 @@
 #include "planet.h"
 
+#include <sstream>
+
 //GET FUNCTIONS
 
 double Planet::getx() const
@@ -43,17 +45,54 @@ pType Planet::getType() const
 	return planetType;
 }
 
-double Planet::getId() const
+std::string Planet::getTypeString(pType type)
+{
+	switch (type)
+	{
+	case ROCKY: 
+		return "Rocky";
+	case TERRESTIAL:
+		return "Terrestial";
+	case GASGIANT:
+		return "Gas giant";
+	case SMALLSTAR:
+		return "Small star";
+	case STAR:
+		return "Star";
+	case BIGSTAR:
+		return "Big star";
+	case BLACKHOLE:
+		return "Black hole";
+	}
+	return "Unknown";
+}
+
+int Planet::getId() const
 {
 	return id;
 }
 
-double Planet::getG() const
+int Planet::getStrongestAttractorId() const
 {
-	return G;
+	return ID_strongest_attractor;
 }
 
-void Planet::mark(double i)
+int Planet::getStrongestAttractorIdRef() const
+{
+	return ID_strongest_attractor;
+}
+
+void Planet::setStrongestAttractorIdRef(int id)
+{
+	ID_strongest_attractor = id;
+}
+
+std::string Planet::getName() const
+{
+	return name;
+}
+
+void Planet::giveID(int i)
 {
 	id = i;
 	life.giveId(i);
@@ -126,36 +165,224 @@ std::string Planet::getFlavorTextLife() const
 	}
 }
 
-//SIMULATION FUNCTIONS
-
-void Planet::updateVel(const Planet& forcer, double timeStep)
+class StarColorInterpolator
 {
-	double aks = 0;
-	double distanceSquared = (forcer.getx() - getx()) * (forcer.getx() - getx()) + (forcer.gety() - gety()) * (forcer.
-		gety() - gety());
-	double angle = atan2(forcer.gety() - gety(), forcer.getx() - getx());
-	if (distanceSquared != 0) aks = G * forcer.getmass() / (distanceSquared);
-
-	if (aks > STRENGTH_strongest_attractor)
+	struct TempColorPair
 	{
-		STRENGTH_strongest_attractor = aks;
-		ID_strongest_attractor = forcer.getId();
+		double temperature;
+		sf::Color color;
+	};
+
+	std::vector<TempColorPair> temperatures_and_colors;
+
+public:
+
+	StarColorInterpolator()
+	{
+		temperatures_and_colors.push_back({ 1600.0, sf::Color(255, 118, 0) });
+		temperatures_and_colors.push_back({ 3000.0, sf::Color(255, 162, 60) });
+		temperatures_and_colors.push_back({ 3700.0, sf::Color(255, 180, 107) });
+		temperatures_and_colors.push_back({ 4500.0, sf::Color(255, 206, 146) });
+		temperatures_and_colors.push_back({ 5500.0, sf::Color(255, 219, 186) });
+		temperatures_and_colors.push_back({ 6500.0, sf::Color(255, 238, 222) });
+		temperatures_and_colors.push_back({ 7200.0, sf::Color(255, 249, 251) });
+		temperatures_and_colors.push_back({ 8000.0, sf::Color(240, 241, 255) });
+		temperatures_and_colors.push_back({ 9000.0, sf::Color(227, 233, 255) });
+		temperatures_and_colors.push_back({ 10000.0, sf::Color(214, 225, 255) });
+		temperatures_and_colors.push_back({ 11000.0, sf::Color(207, 218, 255) });
+		temperatures_and_colors.push_back({ 12000.0, sf::Color(200, 213, 255) });
+		temperatures_and_colors.push_back({ 13000.0, sf::Color(191, 211, 255) });
 	}
 
-	xv += cos(angle) * aks * timeStep;
-	yv += sin(angle) * aks * timeStep;
+	sf::Color interpolate(TempColorPair a, TempColorPair b, double temp) const
+	{
+		const auto dist_to_a = std::abs(a.temperature - temp);
+		const auto dist_to_b = std::abs(b.temperature - temp);
+		const auto range = std::abs(a.temperature - b.temperature);
+
+		const auto a_ = 1.0 - dist_to_a / range;
+		const auto b_ = 1.0 - dist_to_b / range;
+
+		return sf::Color(
+			a.color.r * a_ + b.color.r * b_,
+			a.color.g * a_ + b.color.g * b_,
+			a.color.b * a_ + b.color.b * b_,
+			a.color.a * a_ + b.color.a * b_
+		);
+	}
+
+	sf::Color getStarColor(double temperature) const
+	{
+		if (temperature <= temperatures_and_colors.front().temperature)
+			return temperatures_and_colors.front().color;
+		if (temperature >= temperatures_and_colors.back().temperature)
+			return temperatures_and_colors.back().color;
+
+		auto lower = temperatures_and_colors.begin();
+		auto higher = temperatures_and_colors.end();
+		for (auto tempcol = temperatures_and_colors.begin();
+			tempcol != temperatures_and_colors.end();
+			++tempcol)
+		{
+			const auto point_temp = tempcol->temperature;
+			if (point_temp < temperature)
+			{
+				lower = tempcol;
+				higher = std::next(tempcol);
+			}
+			else
+				break;
+		}
+
+		return interpolate(*lower, *higher, temperature);
+	}
+};
+
+sf::Color Planet::getStarCol() const
+{
+	const static StarColorInterpolator interpolator;
+	return interpolator.getStarColor(temperature);	
 }
+
+//SIMULATION FUNCTIONS
 
 void Planet::updateTemp()
 {
 	temperature = temp();
 }
 
-void Planet::move(double timeStep)
+double Planet::temp() const
 {
-	x += xv * timeStep;
-	y += yv * timeStep;
-	circle.setPosition(x, y);
+	return tEnergy / (mass * tCapacity);
+}
+
+double Planet::getTemp() const
+{
+	return temperature;
+}
+
+void Planet::setTemp(double t)
+{
+	tEnergy = mass * t * tCapacity;
+}
+
+double Planet::fusionEnergy() const
+{
+	switch (planetType)
+	{
+	case ROCKY:
+		return 0;
+	case TERRESTIAL:
+		return 0;
+	case GASGIANT:
+		return 0;
+	case SMALLSTAR:
+		return HEAT_SMALL_STAR_MULT * mass;
+	case STAR:
+		return HEAT_STAR_MULT * mass;
+	case BIGSTAR:
+		return HEAT_BIG_STAR_MULT * mass;
+	default:
+		return 0;
+	}
+}
+
+double Planet::thermalEnergy() const
+{
+	return tEnergy;
+}
+
+void Planet::coolDown(int t)
+{
+	tEnergy -= t * (SBconst * (radi * radi * temp()) - fusionEnergy());
+}
+
+void Planet::absorbHeat(double e, int t)
+{
+	tEnergy += (e * (1 + greenHouseEffectMult * atmoCur));
+}
+
+double Planet::giveThermalEnergy(int t) const
+{
+	return t * (SBconst * (radi * radi * temp()));
+}
+
+void Planet::increaseThermalEnergy(double e)
+{
+	tEnergy += e;
+}
+
+void Planet::update_planet_sim(double timestep)
+{
+	coolDown(timestep);
+	setColor();
+	updateTemp();
+	updateAtmosphere(timestep);
+	updateLife(timestep);
+}
+
+bool Planet::canDisintegrate(double curr_time) const
+{
+	if (getType() == BLACKHOLE)
+		return false;
+
+	if (getmass() < MINIMUMBREAKUPSIZE)
+		return false;
+
+	if (!ignore_ids.empty())
+		return false;
+
+	return true;
+}
+
+void Planet::setDisintegrationGraceTime(double grace_time, double curr_time)
+{
+	disintegrate_grace_end_time = curr_time + grace_time;
+}
+
+bool Planet::disintegrationGraceTimeIsActive(double curr_time) const
+{
+	return !disintegrationGraceTimeOver(curr_time);
+}
+
+bool Planet::disintegrationGraceTimeOver(double curr_time) const
+{
+	return curr_time > disintegrate_grace_end_time;
+}
+
+void Planet::registerIgnoredId(int id)
+{
+	ignore_ids.push_back(id);
+}
+
+void Planet::clearIgnores()
+{
+	ignore_ids.clear();
+}
+
+bool Planet::isIgnoring(int id) const
+{
+	if (ignore_ids.empty())
+		return false;
+
+	return std::find(ignore_ids.begin(), ignore_ids.end(), id) != ignore_ids.end();
+}
+
+void Planet::becomeAbsorbedBy(Planet& absorbing_planet)
+{
+	markForRemoval();
+	absorbing_planet.collision(*this);
+	absorbing_planet.incMass(getmass());
+}
+
+void Planet::setx(double x_)
+{
+	x = x_;
+}
+
+void Planet::sety(double y_)
+{
+	y = y_;
 }
 
 void Planet::updateRadiAndType()
@@ -226,33 +453,15 @@ void Planet::updateRadiAndType()
 	circle.setOrigin(radi, radi);
 }
 
+void Planet::resetAttractorMeasure()
+{
+	STRENGTH_strongest_attractor = 0;
+}
+
 void Planet::incMass(double m)
 {
 	mass += m;
 	updateRadiAndType();
-}
-
-void Planet::printInfo() const
-{
-	std::cout << "\n#############\n" << std::endl;
-
-	std::cout << "Mass: " << getmass() << std::endl;
-
-	std::cout << "X-posisjon: " << getx() << std::endl;
-
-	std::cout << "Y-posisjon: " << gety() << std::endl;
-
-	std::cout << "X-hastighet: " << getxv() << std::endl;
-
-	std::cout << "Y-hastighet: " << getyv() << std::endl;
-
-	std::cout << "\n#############\n" << std::endl;
-}
-
-void Planet::printInfoShort() const
-{
-	std::cout << "ID: " << getId() << " // " << "M: " << getmass() << "    X: " << getx() << "    | " << getxv() <<
-		"    Y: " << gety() << "    | " << getyv() << "    | " << std::endl;
 }
 
 void Planet::collision(const Planet& p)
@@ -260,94 +469,254 @@ void Planet::collision(const Planet& p)
 	xv = (mass * xv + p.mass * p.getxv()) / (mass + p.getmass());
 	yv = (mass * yv + p.mass * p.getyv()) / (mass + p.getmass());
 
-	double dXV = xv - p.getxv();
-	double dYV = yv - p.getyv();
+	const auto dXV = xv - p.getxv();
+	const auto dYV = yv - p.getyv();
 
-	incTEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
+	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
 }
 
-void Planet::draw(sf::RenderWindow& w, double xx, double yy)
+void Planet::render_shine(sf::RenderWindow& window, sf::Color col, const double luminosity) const
 {
-	circle.setPosition(x - xx, y - yy);
-	if (planetType != GASGIANT)
+	sf::VertexArray vertexArr(sf::TrianglesFan);
+	vertexArr.append(sf::Vertex(sf::Vector2f(getx(), gety()), col));
+	col.a = 0;
+	const auto delta_angle = 2 * PI / static_cast<double>(LIGHT_NUMBER_OF_VERTECES);
+	auto angle = 0.0;
+	auto rad = luminosity;
+	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
 	{
-		w.draw(circle);
+		sf::Vector2f pos(getx() + cos(angle) * rad, 
+		                 gety() + sin(angle) * rad);
+		vertexArr.append(sf::Vertex(pos, col));
+		angle += delta_angle;
 	}
-	else
+	vertexArr.append(sf::Vertex(sf::Vector2f(getx() + rad, gety()), col));
+	window.draw(vertexArr);
+}
+
+void Planet::draw_starshine(sf::RenderWindow& window) const
+{
+	sf::Color col = getStarCol();
+
+	//LONG RANGE LIGHT
+	col.a = 50;
+	const auto long_range_luminosity = 30 * sqrt(fusionEnergy());
+	render_shine(window, col, long_range_luminosity);
+
+	//SHORT RANGE LIGHT
+	col.a = 250;
+	const auto short_range_luminosity = 1.5 * getRad();
+	render_shine(window, col, short_range_luminosity);
+}
+
+void Planet::draw_planetshine(sf::RenderWindow& window) const
+{
+	/*
+	 *	Caused by very hot temperatures
+	 */
+
+	sf::Color col{ sf::Color::White };
+	col.a = 70;
+
+	const auto temp = getTemp();
+	auto temp_effect_by_temp = [temp]() {
+		if (temp < 500.0)
+			return 0.0;
+		else
+			return sqrt((temp - 500.0)) / 30.0;
+	};
+
+	const auto temp_effect = temp_effect_by_temp();
+	if (temp_effect > 0.1)
+		render_shine(window, col, temp_effect * getRad());
+}
+
+sf::Color temperature_effect(double temp)
+{
+	sf::Uint8 r = std::clamp(temp / 5.0, 0., 255.);
+	sf::Uint8 g = std::clamp(temp / 30.0, 0., 255.);
+	sf::Uint8 b = std::clamp(temp / 30.0, 0., 255.);
+	return { r,g,b };
+}
+
+void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
+{
+	for (size_t i = 0; i < atmoLinesBrightness.size(); i++)
 	{
-		w.draw(circle);
-		for (size_t i = 0; i < atmoLinesBrightness.size(); i++)
-		{
-			sf::CircleShape atmoLine;
+		sf::CircleShape atmoLine;
 
-			//SETTING FEATURES
-			int midlLines = (numAtmoLines - 1);
-			atmoLine.setRadius(
-				circle.getRadius() - i * i * i * circle.getRadius() / (midlLines * midlLines * midlLines));
-			atmoLine.setOrigin(atmoLine.getRadius(), atmoLine.getRadius());
-			atmoLine.setPosition(circle.getPosition());
-			atmoLine.setOutlineThickness(0);
+		//SETTING FEATURES
+		int temp_lines = (numAtmoLines - 1);
+		atmoLine.setRadius(
+			circle.getRadius() - i * i * i * circle.getRadius() / (temp_lines * temp_lines * temp_lines));
+		atmoLine.setOrigin(atmoLine.getRadius(), atmoLine.getRadius());
+		atmoLine.setPosition(circle.getPosition());
+		atmoLine.setOutlineThickness(0);
 
-			//FINDING COLOR
-			double r = atmoCol_r + atmoLinesBrightness[i] + temperature / 10;
-			double g = atmoCol_g + atmoLinesBrightness[i] - temperature / 15;
-			double b = atmoCol_b + atmoLinesBrightness[i] - temperature / 15;
+		//FINDING COLOR
+		auto temp_effect = temperature_effect(temperature);
+		double r = atmoCol_r + atmoLinesBrightness[i] + temp_effect.r;
+		double g = atmoCol_g + atmoLinesBrightness[i] + temp_effect.g;
+		double b = atmoCol_b + atmoLinesBrightness[i] + temp_effect.b;
 
-			if (r > 255) r = 255;
-			if (g > 255) g = 255;
-			if (b > 255) b = 255;
+		r = std::clamp(r, 0., 255.);
+		g = std::clamp(g, 0., 255.);
+		b = std::clamp(b, 0., 255.);
 
-			if (r < 0) r = 0;
-			if (g < 0) g = 0;
-			if (b < 0) b = 0;
+		atmoLine.setFillColor(sf::Color(r, g, b));
+		window.draw(atmoLine);
+	}
+}
 
-			atmoLine.setFillColor(sf::Color(r, g, b));
-			w.draw(atmoLine);
-		}
+void Planet::draw(sf::RenderWindow& window)
+{
+	circle.setPosition(x, y);
+
+	switch (getType())
+	{
+	case ROCKY:
+	case TERRESTIAL:
+		draw_planetshine(window);
+		window.draw(circle);
+		break;
+
+	case GASGIANT:
+		draw_planetshine(window);
+		draw_gas_planet_atmosphere(window);
+		break;
+
+	case SMALLSTAR:
+	case STAR:
+	case BIGSTAR:
+		window.draw(circle);
+		draw_starshine(window);
+		break;
+
+	case BLACKHOLE:
+		window.draw(circle);
+		break;
 	}
 }
 
 void Planet::setColor()
 {
-	if (planetType != ROCKY && planetType != TERRESTIAL && planetType != BLACKHOLE && planetType != GASGIANT)
+	switch (getType())
 	{
+	case ROCKY:
+	case TERRESTIAL:
+		{
+		auto temp_effect = temperature_effect(temperature);
+		const double r = 100.0 + randBrightness + temp_effect.r;
+		const double g = 100.0 + randBrightness + temp_effect.g + getLife().getBmass() / 20.0;
+		const double b = 100.0 + randBrightness + temp_effect.b / 30.0;
+		circle.setFillColor(sf::Color(std::clamp(static_cast<int>(r), 0, 255),
+			std::clamp(static_cast<int>(g), 0, 255),
+			std::clamp(static_cast<int>(b), 0, 255)));
+		break;
+		}
+	case GASGIANT:
+		circle.setOutlineThickness(0);
+		circle.setFillColor(sf::Color::Transparent);
+		/* Handled in draw() */
+		break;
+	case SMALLSTAR:
+	case STAR:
+	case BIGSTAR:
 		circle.setFillColor(getStarCol());
-
 		circle.setOutlineColor(sf::Color(circle.getFillColor().r, circle.getFillColor().g, circle.getFillColor().b,
-		                                 20));
+			20));
+		break;
 	}
-	else if (planetType == ROCKY || planetType == TERRESTIAL)
+}
+
+double Planet::getTCap() const
+{
+	return tCapacity;
+}
+
+void Planet::setMass(double m)
+{
+	mass = m;
+}
+
+void Planet::updateAtmosphere(int t)
+{
+	if (planetType != TERRESTIAL)
 	{
-		double r = 100 + randBrightness + temperature / 10;
-		double g = 100 + randBrightness - temperature / 15 + getLife().getBmass() / 20;
-		double b = 100 + randBrightness - temperature / 15;
-
-		if (r > 255) r = 255;
-		if (g > 255) g = 255;
-		if (b > 255) b = 255;
-
-		if (r < 0) r = 0;
-		if (g < 0) g = 0;
-		if (b < 0) b = 0;
-
-		circle.setFillColor(sf::Color(r, g, b));
+		if (planetType == ROCKY)
+		{
+			atmoCur = 0;
+			return;
+		}
+		return;
 	}
-	else if (planetType == GASGIANT)
+
+	if (temperature < 600 && temperature > 200 && atmoCur < atmoPot)
 	{
-		double r = atmoCol_r + temperature / 10;
-		double g = atmoCol_g - temperature / 15;
-		double b = atmoCol_b - temperature / 15;
-
-		if (r > 255) r = 255;
-		if (g > 255) g = 255;
-		if (b > 255) b = 255;
-
-		if (r < 0) r = 0;
-		if (g < 0) g = 0;
-		if (b < 0) b = 0;
-
-		circle.setFillColor(sf::Color(r, g, b));
+		atmoCur += t * 0.05;
+		if (atmoCur > atmoPot) atmoCur = atmoPot;
 	}
+	else
+	{
+		atmoCur -= t * 0.1;
+
+		if (atmoCur < 0) atmoCur = 0;
+	}
+
+	circle.setOutlineColor(sf::Color(atmoCol_r, atmoCol_g, atmoCol_b, atmoCur * atmoAlphaMult));
+	circle.setOutlineThickness(sqrt(atmoCur) * atmoThicknessMult);
+}
+
+double Planet::getCurrentAtmosphere() const
+{
+	return atmoCur;
+}
+
+double Planet::getAtmospherePotensial() const
+{
+	return atmoPot;
+}
+
+void Planet::updateLife(int t)
+{
+	if (planetType == ROCKY || planetType == TERRESTIAL)
+	{
+		supportedBiomass = 100000 / (1 + (LIFE_PREFERRED_TEMP_MULTIPLIER *
+			pow((temperature - LIFE_PREFERRED_TEMP), 2) + LIFE_PREFERRED_ATMO_MULTIPLIER * pow(
+				(atmoCur - LIFE_PREFERRED_ATMO), 2))) - 5000;
+		if (supportedBiomass < 0) supportedBiomass = 0;
+
+		life.update(supportedBiomass, t, radi);
+	}
+	else
+	{
+		life.kill();
+	}
+}
+
+void Planet::colonize(int i, sf::Color c, std::string d)
+{
+	life = Life(i);
+	life.giveCol(c);
+	life.giveDesc(d);
+}
+
+Life Planet::getLife() const
+{
+	return life;
+}
+
+double Planet::getSupportedBiomass() const
+{
+	return supportedBiomass;
+}
+
+int Planet::modernRandomWithLimits(int min, int max) const
+{
+	std::random_device seeder;
+	std::default_random_engine generator(seeder());
+	std::uniform_int_distribution<int> uniform(min, max);
+	return uniform(generator);
 }
 
 std::string convertDoubleToString(double number)
@@ -361,7 +730,7 @@ std::string convertDoubleToString(double number)
 	return convert.str();
 }
 
-std::string Planet::genName()
+std::string Planet::generate_name()
 {
 	std::vector<std::string> navn_del_en = {
 		"Jup", "Jor", "Ear", "Mar", "Ven", "Cer", "Sat", "Pl", "Nep", "Ur", "Ker", "Mer", "Jov", "Qur", "Deb", "Car",
@@ -394,4 +763,11 @@ void Planet::setxv(double v)
 void Planet::setyv(double v)
 {
 	yv = v;
+}
+
+Planet::GoldilockInfo Planet::getGoldilockInfo() const
+{
+	const auto goldilock_inner_rad = (tempConstTwo * getRad() * getRad() * getTemp()) / inner_goldi_temp;
+	const auto goldilock_outer_rad = (tempConstTwo * getRad() * getRad() * getTemp()) / outer_goldi_temp;
+	return { goldilock_inner_rad, goldilock_outer_rad };
 }

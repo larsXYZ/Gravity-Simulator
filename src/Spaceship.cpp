@@ -92,7 +92,7 @@ int SpaceShip::move(int timeStep)
 	return isFiring;
 }
 
-void SpaceShip::draw(sf::RenderWindow &w, int midlx, int midly)
+void SpaceShip::draw(sf::RenderWindow &w)
 {
 	if (exist)
 	{
@@ -100,11 +100,11 @@ void SpaceShip::draw(sf::RenderWindow &w, int midlx, int midly)
 		box.setFillColor(sf::Color(160, 160, 160));
 		box.setOrigin(2, 2);
 		box.setRotation(angle);
-		box.setPosition(pos.x - 2 * cos(2 * PI*angle / 360) - midlx, pos.y - 2 * sin(2 * PI*angle / 360) - midly);
+		box.setPosition(pos.x - 2 * cos(2 * PI*angle / 360), pos.y - 2 * sin(2 * PI*angle / 360));
 		w.draw(box);
 
 
-		ship.setPosition(pos.x - midlx, pos.y - midly);
+		ship.setPosition(pos);
 		ship.setRotation(angle);
 
 		if (isFiring == 1)
@@ -113,20 +113,20 @@ void SpaceShip::draw(sf::RenderWindow &w, int midlx, int midly)
 			flamme.setFillColor(sf::Color::Yellow);
 			flamme.setOrigin(4, 2);
 			flamme.setRotation(angle);
-			flamme.setPosition(pos.x - 3 * cos(2 * PI*angle / 360) - midlx, pos.y - 3 * sin(2 * PI*angle / 360) - midly);
+			flamme.setPosition(pos.x - 3 * cos(2 * PI*angle / 360), pos.y - 3 * sin(2 * PI*angle / 360));
 			w.draw(flamme);
 
 			sf::CircleShape flamme3(1.5);
 			flamme3.setFillColor(sf::Color::Yellow);
 			flamme3.setOrigin(4.5, 1.5);
 			flamme3.setRotation(angle);
-			flamme3.setPosition(pos.x - 3 * cos(2 * PI*angle / 360) - midlx, pos.y - 3 * sin(2 * PI*angle / 360) - midly);
+			flamme3.setPosition(pos.x - 3 * cos(2 * PI*angle / 360), pos.y - 3 * sin(2 * PI*angle / 360));
 			w.draw(flamme3);
 
 			sf::CircleShape flamme2(1);
 			flamme2.setFillColor(sf::Color::Red);
 			flamme2.setOrigin(1, 1);
-			flamme2.setPosition(pos.x - 4 * cos(2 * PI*angle / 360) - midlx, pos.y - 4 * sin(2 * PI*angle / 360) - midly);
+			flamme2.setPosition(pos.x - 4 * cos(2 * PI*angle / 360), pos.y - 4 * sin(2 * PI*angle / 360));
 			w.draw(flamme2);
 		}
 		if (isFiring == -1)
@@ -135,21 +135,21 @@ void SpaceShip::draw(sf::RenderWindow &w, int midlx, int midly)
 			flamme.setFillColor(sf::Color::Yellow);
 			flamme.setOrigin(4, 2);
 			flamme.setRotation(180 + angle);
-			flamme.setPosition(pos.x + 3 * cos(2 * PI*angle / 360) - midlx, pos.y + 3 * sin(2 * PI*angle / 360) - midly);
+			flamme.setPosition(pos.x + 3 * cos(2 * PI*angle / 360), pos.y + 3 * sin(2 * PI*angle / 360));
 			w.draw(flamme);
 
 			sf::CircleShape flamme3(1.5);
 			flamme3.setFillColor(sf::Color::Yellow);
 			flamme3.setOrigin(4.5, 1.5);
 			flamme3.setRotation(180 + angle);
-			flamme3.setPosition(pos.x + 3 * cos(2 * PI*angle / 360) - midlx, pos.y + 3 * sin(2 * PI*angle / 360) - midly);
+			flamme3.setPosition(pos.x + 3 * cos(2 * PI*angle / 360), pos.y + 3 * sin(2 * PI*angle / 360));
 			w.draw(flamme3);
 
 			sf::CircleShape flamme2(1);
 			flamme2.setFillColor(sf::Color::Red);
 			flamme2.setOrigin(1, 1);
 			flamme2.setRotation(180 + angle);
-			flamme2.setPosition(pos.x + 4 * cos(2 * PI*angle / 360) - midlx, pos.y + 4 * sin(2 * PI*angle / 360) - midly);
+			flamme2.setPosition(pos.x + 4 * cos(2 * PI*angle / 360), pos.y + 4 * sin(2 * PI*angle / 360));
 			w.draw(flamme2);
 		}
 
@@ -230,8 +230,8 @@ bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 	else if (!isLanded)
 	{
 		double angle = atan2(forcer.gety() - ship.getpos().y, forcer.getx() - ship.getpos().x);
-		double xf = forcer.getG() * forcer.getmass() / (dist*dist) * cos(angle);
-		double yf = forcer.getG() * forcer.getmass() / (dist*dist)* sin(angle);
+		double xf = G * forcer.getmass() / (dist*dist) * cos(angle);
+		double yf = G * forcer.getmass() / (dist*dist)* sin(angle);
 
 		if (dist > forcer.getRad())
 		{

@@ -1,19 +1,13 @@
 #pragma once
-#include <cmath>
-#include <math.h>
-#include <iostream>
 #include "CONSTANTS.h"
 #include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
 #include <random>
-#include <sstream>
 #include <vector>
 #include "Life.h"
 
 class Planet
 {
-private:
-	std::string name = genName();
+	std::string name = generate_name();
 
 	//PHYSICAL
 	double mass;
@@ -44,10 +38,14 @@ private:
 	double supportedBiomass = 0;
 
 	//OTHER
-	double id;
+	int id;
 	int ID_strongest_attractor;
 	double STRENGTH_strongest_attractor = 0;
 	bool marked_for_removal = false;
+
+	//FOR DISINTEGRATION AND IGNORING
+	double disintegrate_grace_end_time = 0;
+	std::vector<int> ignore_ids;
 
 	//GRAPHICS
 	sf::CircleShape circle;
@@ -141,229 +139,98 @@ public:
 	double getxv() const;
 	double getyv() const;
 	double getmass() const;
-	void printInfo() const;
-	void printInfoShort() const;
 	double getRad() const;
 	pType getType() const;
-	double getId() const;
-	double getG() const;
+	static std::string getTypeString(pType type);
+	int getId() const;
 
-	int getStrongestAttractorId() const
-	{
-		return ID_strongest_attractor;
-	}
+	int getStrongestAttractorId() const;
 
-	int getStrongestAttractorIdRef() const
-	{
-		return ID_strongest_attractor;
-	}
+	int getStrongestAttractorIdRef() const;
 
-	void setStrongestAttractorIdRef(int id)
-	{
-		ID_strongest_attractor = id;
-	}
+	void setStrongestAttractorIdRef(int id);
 
-	std::string getName() const
-	{
-		return name;
-	}
+	std::string getName() const;
 
 	bool emitsHeat() const;
 
 	std::string getFlavorTextLife() const;
 
-	sf::Color getStarCol() const
-	{
-		if (temperature < 1600) return (sf::Color(255, 38, 00));
-		if (temperature < 2400) return (sf::Color(255, 118, 00));
-		if (temperature < 3000) return (sf::Color(255, 162, 60));
-		if (temperature < 3700) return (sf::Color(255, 180, 107));
-		if (temperature < 4500) return (sf::Color(255, 206, 146));
-		if (temperature < 5500) return (sf::Color(255, 219, 186));
-		if (temperature < 6500) return (sf::Color(255, 238, 222));
-		if (temperature < 7200) return (sf::Color(255, 249, 251));
-		if (temperature < 8000) return (sf::Color(240, 241, 255));
-		if (temperature < 9000) return (sf::Color(227, 233, 255));
-		if (temperature < 10000) return (sf::Color(214, 225, 255));
-		if (temperature < 11000) return (sf::Color(207, 218, 255));
-		if (temperature < 12000) return (sf::Color(200, 213, 255));
-		if (temperature < 13000) return (sf::Color(191, 211, 255));
-		return (sf::Color(186, 208, 255));
-	}
+	sf::Color getStarCol() const;
 
 	void markForRemoval() { marked_for_removal = true; }
 	bool isMarkedForRemoval() const { return marked_for_removal; }
 	double getStrongestAttractorStrength() { return STRENGTH_strongest_attractor; }
 	void setStrongestAttractorStrength(double strength) { STRENGTH_strongest_attractor = strength; }
 
-	//LIFE FUNCTIONS
-
-	void updateVel(const Planet& forcer, double timeStep);
-	void move(double timeStep);
+	bool canDisintegrate(double curr_time) const;
+	void setDisintegrationGraceTime(double grace_time, double curr_time);
+	bool disintegrationGraceTimeIsActive(double curr_time) const;
+	bool disintegrationGraceTimeOver(double curr_time) const;
+	void registerIgnoredId(int id);
+	void clearIgnores();
+	bool isIgnoring(int id) const;
+	
+	void becomeAbsorbedBy(Planet& absorbing_planet);
+	
+	void setx(double x);
+	void sety(double y);
 	void updateRadiAndType();
 
-	void resetAttractorMeasure()
-	{
-		STRENGTH_strongest_attractor = 0;
-	}
+	void resetAttractorMeasure();
 
-	void draw(sf::RenderWindow& w, double xx, double yy);
+	void draw(sf::RenderWindow& window);
 	void incMass(double m);
 	double getDist(const Planet& forcer) const;
 	void collision(const Planet& p);
-	void mark(double i);
+	void render_shine(sf::RenderWindow& window, sf::Color col, double luminosity) const;
+	void draw_starshine(sf::RenderWindow& window) const;
+	void draw_planetshine(sf::RenderWindow& window) const;
+	void draw_gas_planet_atmosphere(sf::RenderWindow& window) const;
+	void giveID(int i);
 	void updateTemp();
+	
+	double temp() const;
 
-	//TEMPERATURE
-	double temp() const
-	{
-		return tEnergy / (mass * tCapacity);
-	}
+	double getTemp() const;
 
-	double getTemp() const
-	{
-		return temperature;
-	}
+	void setTemp(double t);
 
-	void setTemp(double t)
-	{
-		tEnergy = mass * t * tCapacity;
-	}
+	double fusionEnergy() const;
 
-	double fusionEnergy() const
-	{
-		switch (planetType)
-		{
-		case ROCKY:
-			return 0;
-		case TERRESTIAL:
-			return 0;
-		case GASGIANT:
-			return 0;
-		case SMALLSTAR:
-			return HEAT_SMALL_STAR_MULT * mass;
-		case STAR:
-			return HEAT_STAR_MULT * mass;
-		case BIGSTAR:
-			return HEAT_BIG_STAR_MULT * mass;
-		default:
-			return 0;
-		}
-	}
+	double thermalEnergy() const;
 
-	double thermalEnergy() const
-	{
-		return tEnergy;
-	}
+	void coolDown(int t);
 
-	void coolDOWN(int t)
-	{
-		tEnergy -= t * (SBconst * (radi * radi * temp()) - fusionEnergy());
-	}
+	void absorbHeat(double e, int t);
 
-	void absorbHeat(double e, int t)
-	{
-		tEnergy += (e * (1 + greenHouseEffectMult * atmoCur));
-	}
+	double giveThermalEnergy(int t) const;
 
-	double giveTEnergy(int t) const
-	{
-		return t * (SBconst * (radi * radi * temp()));
-	}
+	void increaseThermalEnergy(double e);
 
-	void incTEnergy(double e)
-	{
-		tEnergy += e;
-	}
+	void update_planet_sim(double timestep);
 
 	void setColor();
-	double getTCap() const { return tCapacity; };
-	void setMass(double m) { mass = m; }
-
-	//ATMOSPHERE
-	void updateAtmo(int t)
-	{
-		if (planetType != TERRESTIAL)
-		{
-			if (planetType == ROCKY)
-			{
-				atmoCur = 0;
-				return;
-			}
-			return;
-		}
-
-		if (temperature < 600 && temperature > 200 && atmoCur < atmoPot)
-		{
-			atmoCur += t * 0.05;
-			if (atmoCur > atmoPot) atmoCur = atmoPot;
-		}
-		else
-		{
-			atmoCur -= t * 0.1;
-
-			if (atmoCur < 0) atmoCur = 0;
-		}
-
-		circle.setOutlineColor(sf::Color(atmoCol_r, atmoCol_g, atmoCol_b, atmoCur * atmoAlphaMult));
-		circle.setOutlineThickness(sqrt(atmoCur) * atmoThicknessMult);
-	}
-
-	double getAtmoCur() const
-	{
-		return atmoCur;
-	}
-
-	double getAtmoPot() const
-	{
-		return atmoPot;
-	}
-
-	//LIFE
-	void updateLife(int t)
-	{
-		if (planetType == ROCKY || planetType == TERRESTIAL)
-		{
-			supportedBiomass = 100000 / (1 + (LIFE_PREFERRED_TEMP_MULTIPLIER *
-				pow((temperature - LIFE_PREFERRED_TEMP), 2) + LIFE_PREFERRED_ATMO_MULTIPLIER * pow(
-					(atmoCur - LIFE_PREFERRED_ATMO), 2))) - 5000;
-			if (supportedBiomass < 0) supportedBiomass = 0;
-
-			life.update(supportedBiomass, t, radi);
-		}
-		else
-		{
-			life.kill();
-		}
-	}
-
-	void colonize(int i, sf::Color c, std::string d)
-	{
-		life = Life(i);
-		life.giveCol(c);
-		life.giveDesc(d);
-	}
-
-	Life getLife() const
-	{
-		return life;
-	}
-
-	double getSupportedBiomass() const
-	{
-		return supportedBiomass;
-	}
-
-	int modernRandomWithLimits(int min, int max) const
-	{
-		std::random_device seeder;
-		std::default_random_engine generator(seeder());
-		std::uniform_int_distribution<int> uniform(min, max);
-		return uniform(generator);
-	}
-
-	std::string genName();
+	double getTCap() const;
+	void setMass(double m);
 	
+	void updateAtmosphere(int t);
+	double getCurrentAtmosphere() const;
+	double getAtmospherePotensial() const;
+	
+	void updateLife(int t);
+	void colonize(int i, sf::Color c, std::string d);
+	Life getLife() const;
+	double getSupportedBiomass() const;
+	int modernRandomWithLimits(int min, int max) const;
+	std::string generate_name();
 	void setxv(double v);
 	void setyv(double v);
+
+	struct GoldilockInfo
+	{
+		double min_rad;
+		double max_rad;
+	};
+	GoldilockInfo getGoldilockInfo() const;
 };

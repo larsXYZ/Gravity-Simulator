@@ -1,13 +1,9 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
 #include "planet.h"
-#include "Effect.h"
-#include <vector>
 
 class SpaceShip
 {
-private:
 	sf::Vector2f pos;
 	sf::Vector2f speed;
 	double acc;
@@ -42,5 +38,5 @@ public:
 	bool isExist();
 	float getAngle();
 	
-	void draw(sf::RenderWindow &w, int midlx, int midly);
+	void draw(sf::RenderWindow &w);
 };

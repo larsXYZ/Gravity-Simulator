@@ -3,7 +3,7 @@
 
 class Bound
 {
-	bool isActive;
+	bool is_active;
 	sf::CircleShape indicator;
 
 public:
@@ -18,12 +18,12 @@ public:
 
 	double getRad() const;
 
-	void setState(bool state);
+	void setActiveState(bool state);
 
-	bool getState() const;
+	bool isActive() const;
 
 	bool isOutside(sf::Vector2f p) const;
 
-	void draw(sf::RenderWindow& w, double xx, double yy, double z);
+	void render(sf::RenderWindow& window, float zoom);
 
 };

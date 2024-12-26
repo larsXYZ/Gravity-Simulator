@@ -3,45 +3,57 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
+#include <TGUI/Backend/SFML-Graphics.hpp>
 
 
 void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2);
 
 void getPrevSettings(tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode)
 {
-	std::ifstream fil;
-	fil.open("prevSettings.txt");
+	std::ifstream file;
+	file.open("settings.txt");
 
-	if (fil.fail()) return;
+	if (file.fail())
+		return;
 	
 	std::string m;
 	std::string x;
 	std::string y;
 	
-	fil >> m;
-	fil >> x;
-	fil >> y;
+	file >> m;
+	file >> x;
+	file >> y;
 
-	if (m == "w") mode->setSelectedItemByIndex(1);
+	file.close();
+
+	if (m == "w")
+		mode->setSelectedItemByIndex(1);
 
 	c1->setText(x);
 	c2->setText(y);
 
-	res->setSelectedItem("CUSTOM");
-	fil.close();
+	const auto& items = res->getItems();
+	if (auto match = std::find(items.begin(), items.end(), x + " x " + y); 
+		match != items.end())
+		res->setSelectedItem(*match);
+	else
+		res->setSelectedItem("CUSTOM");
 }
 
 void saveSettings(int x, int y, bool m)
 {
-	std::ofstream fil;
-	fil.open("prevSettings.txt");
+	std::ofstream file;
+	file.open("settings.txt");
 
-	if (fil.fail()) return;
+	if (file.fail())
+		return;
 
-	if (m) 	fil << "f" << " " << x << " " << y;
-	else fil << "w" << " " << x << " " << y;
+	if (m) 
+		file << "f" << " " << x << " " << y;
+	else
+		file << "w" << " " << x << " " << y;
 
-	fil.close();
+	file.close();
 }
 
 void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode, tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::Button::Ptr& b, tgui::Gui& sg)
@@ -145,11 +157,11 @@ void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c
 	}
 
 	//STARTING
-	bool fullscreen = (mode->getSelectedItemIndex() == 0);
-	Space sim(x, y, fullscreen);
+	const auto fullscreen = (mode->getSelectedItemIndex() == 0);
 	saveSettings(x, y, fullscreen);
-	
-	sim.runSim();
+
+	Space space;
+	space.runSim({x, y}, fullscreen);
 	exit(0);
 }
 
@@ -196,7 +208,7 @@ int main()
 
 	while (settingScreen.isOpen())
 	{
-		if (settingScreen.pollEvent(event))
+		while (settingScreen.pollEvent(event))
 		{
 			settingScreen.clear(sf::Color(20, 20, 20));
 			settingGUI.handleEvent(event);
@@ -206,17 +218,17 @@ int main()
 				settingScreen.close();
 				exit(0);
 			}
-				
-			evaluateCustomResolutionInputsVisibility(resSetup, customResX, customResY);
-			evaluateStartButtonVisibility(resSetup, customResX, customResY, startButton);
-			
-			settingScreen.draw(title);
-			settingScreen.draw(version);
-			settingGUI.draw();
-			settingScreen.display();
-
-			if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
-				start(resSetup, modeSetup, customResX, customResY);
 		}
+
+		evaluateCustomResolutionInputsVisibility(resSetup, customResX, customResY);
+		evaluateStartButtonVisibility(resSetup, customResX, customResY, startButton);
+
+		settingScreen.draw(title);
+		settingScreen.draw(version);
+		settingGUI.draw();
+		settingScreen.display();
+
+		if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+			start(resSetup, modeSetup, customResX, customResY);
 	}
 }

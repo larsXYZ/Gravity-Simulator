@@ -4,12 +4,13 @@
 
 Bound::Bound()
 {
-	isActive = true;
+	is_active = true;
 	indicator.setPosition(sf::Vector2f(0, 0));
 	indicator.setOrigin(START_RADIUS, START_RADIUS);
 	indicator.setRadius(START_RADIUS);
 	indicator.setFillColor(sf::Color(0, 0, 0, 0));
 	indicator.setOutlineColor(sf::Color(255, 0, 0, 50));
+	indicator.setOutlineThickness(10);
 	indicator.setPointCount(100);
 }
 
@@ -34,24 +35,24 @@ double Bound::getRad() const
 	return indicator.getRadius();
 }
 
-void Bound::setState(bool state)
+void Bound::setActiveState(bool state)
 { 
-	isActive = state;
+	is_active = state;
 }
-bool Bound::getState() const
+
+bool Bound::isActive() const
 {
-	return isActive;
+	return is_active;
 }
 
 bool Bound::isOutside(sf::Vector2f p) const
 {
-	return sqrt((p.x - getPos().x) * (p.x - getPos().x) + (p.y - getPos().y) * (p.y - getPos().y)) > indicator.getRadius();
+	return std::hypot((p.x - getPos().x), (p.y - getPos().y)) > indicator.getRadius();
 }
 
-void Bound::draw(sf::RenderWindow& w, double xx, double yy, double z)
+void Bound::render(sf::RenderWindow& window, float zoom)
 {
-	indicator.setOutlineThickness(BOUND_THICKNESS * z);
-	indicator.setPosition(sf::Vector2f(getPos().x - xx, getPos().y - yy));
-	w.draw(indicator);
-	indicator.setPosition(sf::Vector2f(getPos().x + xx, getPos().y + yy));
+	indicator.setPosition(getPos());
+	indicator.setOutlineThickness(40 * zoom);
+	window.draw(indicator);
 }

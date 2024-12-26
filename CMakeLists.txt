@@ -12,7 +12,13 @@ set(SFML_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SFML/Include)
 set(TGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/TGUI/Include)
 set(SFML_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SFML/)
 set(TGUI_BACKEND "SFML_GRAPHICS")
-file(GLOB SOURCE "src/*")
+file(GLOB_RECURSE SOURCE "src/*")
+
+if(MSVC)
+    add_compile_options(/ZI)
+    add_link_options(/INCREMENTAL)
+endif()
+
 
 add_subdirectory(SFML)
 add_subdirectory(TGUI)
