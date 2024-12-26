@@ -34,6 +34,9 @@
 #   pragma GCC diagnostic ignored "-Wconversion"
 #   pragma GCC diagnostic ignored "-Wcast-align"
 #   pragma GCC diagnostic ignored "-Wshadow"
+#   if !defined(__clang__)
+#       pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#   endif
 #elif defined (_MSC_VER)
 #   if defined(__clang__)
 #       pragma clang diagnostic push

@@ -597,14 +597,20 @@ void Form::updateSelectionSquarePositions()
         parentWidget = parentWidget->getParent();
     }
 
-    m_selectionSquares[0]->setPosition({position.x,                               position.y});
-    m_selectionSquares[1]->setPosition({position.x + (widget->getSize().x / 2.f), position.y});
-    m_selectionSquares[2]->setPosition({position.x + widget->getSize().x,         position.y});
-    m_selectionSquares[3]->setPosition({position.x + widget->getSize().x,         position.y + (widget->getSize().y / 2.f)});
-    m_selectionSquares[4]->setPosition({position.x + widget->getSize().x,         position.y + widget->getSize().y});
-    m_selectionSquares[5]->setPosition({position.x + (widget->getSize().x / 2.f), position.y + widget->getSize().y});
-    m_selectionSquares[6]->setPosition({position.x,                               position.y + widget->getSize().y});
-    m_selectionSquares[7]->setPosition({position.x,                               position.y + (widget->getSize().y / 2.f)});
+    auto size = widget->getSize();
+    if (std::abs(size.x) < 5)
+        size.x = 5;
+    if (std::abs(size.y) < 5)
+        size.y = 5;
+
+    m_selectionSquares[0]->setPosition({position.x,                  position.y + (size.y / 2.f)}); // Left
+    m_selectionSquares[1]->setPosition({position.x + (size.x / 2.f), position.y}); // Top
+    m_selectionSquares[2]->setPosition({position.x + (size.x / 2.f), position.y + size.y}); // Bottom
+    m_selectionSquares[3]->setPosition({position.x + size.x,         position.y + (size.y / 2.f)}); // Right
+    m_selectionSquares[4]->setPosition({position.x,                  position.y}); // Top left
+    m_selectionSquares[5]->setPosition({position.x,                  position.y + size.y}); // Bottom left
+    m_selectionSquares[6]->setPosition({position.x + size.x,         position.y}); // Top right
+    m_selectionSquares[7]->setPosition({position.x + size.x,         position.y + size.y}); // Bottom right
 
     // The positions given to the squares where those of its center
     for (auto& square : m_selectionSquares)
@@ -1050,13 +1056,14 @@ tgui::Widget::Ptr Form::getWidgetBelowMouse(const tgui::Container::Ptr& parent, 
     for (auto it = widgets.rbegin(); it != widgets.rend(); ++it)
     {
         tgui::Widget::Ptr widget = *it;
-        if (widget && tgui::FloatRect{widget->getPosition().x, widget->getPosition().y, widget->getFullSize().x, widget->getFullSize().y}.contains(pos))
-        {
-            // Skip invisible widgets, those have to be selected using the combo box in the properties window.
-            // This prevents clicking on stuff you don't see instead of the thing you are trying to click on.
-            if (!widget->isVisible())
-                continue;
 
+        // Skip invisible widgets, those have to be selected using the combo box in the properties window.
+        // This prevents clicking on stuff you don't see instead of the thing you are trying to click on.
+        if (!widget || !widget->isVisible())
+            continue;
+
+        if (tgui::FloatRect{widget->getPosition().x + widget->getWidgetOffset().x, widget->getPosition().y + widget->getWidgetOffset().y, widget->getFullSize().x, widget->getFullSize().y}.contains(pos))
+        {
             if (widget->isContainer())
             {
                 tgui::Container::Ptr container = std::static_pointer_cast<tgui::Container>(widget);
@@ -1065,6 +1072,21 @@ tgui::Widget::Ptr Form::getWidgetBelowMouse(const tgui::Container::Ptr& parent, 
                     return child;
             }
 
+            return widget;
+        }
+    }
+
+    // If a widget has a width or height of 0 then we still select it if the mouse is nearby it and there was no sibling widget below the mouse
+    for (auto it = widgets.rbegin(); it != widgets.rend(); ++it)
+    {
+        tgui::Widget::Ptr widget = *it;
+        if (!widget || !widget->isVisible())
+            continue;
+
+        if (((widget->getSize().x < 5) && (widget->getSize().y < 5) && tgui::FloatRect{widget->getPosition().x - 5, widget->getPosition().y - 5, 10, 10}.contains(pos))
+         || ((widget->getSize().x < 5) && tgui::FloatRect{widget->getPosition().x - 5, widget->getPosition().y, 10, widget->getSize().y}.contains(pos))
+         || ((widget->getSize().y < 5) && tgui::FloatRect{widget->getPosition().x, widget->getPosition().y - 5, widget->getSize().x, 10}.contains(pos)))
+        {
             return widget;
         }
     }
@@ -1178,7 +1200,7 @@ void Form::onDrag(tgui::Vector2i mousePos)
                 updated = true;
             }
         }
-        else if (m_draggingSelectionSquare == m_selectionSquares[5]) // Bottom
+        else if (m_draggingSelectionSquare == m_selectionSquares[2]) // Bottom
         {
             while (pos.y - m_draggingPos.y >= MOVE_STEP)
             {
@@ -1194,7 +1216,7 @@ void Form::onDrag(tgui::Vector2i mousePos)
                 updated = true;
             }
         }
-        else if (m_draggingSelectionSquare == m_selectionSquares[7]) // Left
+        else if (m_draggingSelectionSquare == m_selectionSquares[0]) // Left
         {
             while (pos.x - m_draggingPos.x >= MOVE_STEP)
             {
@@ -1214,15 +1236,19 @@ void Form::onDrag(tgui::Vector2i mousePos)
         }
         else // Corner
         {
-            const float ratio = selectedWidget->getSize().y / selectedWidget->getSize().x;
+            float ratio;
+            if ((selectedWidget->getSize().x != 0) && (selectedWidget->getSize().y != 0))
+                ratio = selectedWidget->getSize().y / selectedWidget->getSize().x;
+            else
+                ratio = 1;
 
             tgui::Vector2f change;
             if (ratio <= 1)
-                change = tgui::Vector2f(MOVE_STEP, MOVE_STEP * ratio);
+                change = tgui::Vector2f(MOVE_STEP, std::max(MOVE_STEP * ratio, 1.f));
             else
-                change = tgui::Vector2f(MOVE_STEP / ratio, MOVE_STEP);
+                change = tgui::Vector2f(std::max(MOVE_STEP / ratio, 1.f), MOVE_STEP);
 
-            if (m_draggingSelectionSquare == m_selectionSquares[0]) // Top left
+            if (m_draggingSelectionSquare == m_selectionSquares[4]) // Top left
             {
                 while ((pos.x - m_draggingPos.x >= change.x) && (pos.y - m_draggingPos.y >= change.y))
                 {
@@ -1242,7 +1268,7 @@ void Form::onDrag(tgui::Vector2i mousePos)
                     updated = true;
                 }
             }
-            else if (m_draggingSelectionSquare == m_selectionSquares[2]) // Top right
+            else if (m_draggingSelectionSquare == m_selectionSquares[6]) // Top right
             {
                 while ((m_draggingPos.x - pos.x >= change.x) && (pos.y - m_draggingPos.y >= change.y))
                 {
@@ -1262,7 +1288,7 @@ void Form::onDrag(tgui::Vector2i mousePos)
                     updated = true;
                 }
             }
-            else if (m_draggingSelectionSquare == m_selectionSquares[4]) // Bottom right
+            else if (m_draggingSelectionSquare == m_selectionSquares[7]) // Bottom right
             {
                 while ((m_draggingPos.x - pos.x >= change.x) && (m_draggingPos.y - pos.y >= change.y))
                 {
@@ -1280,7 +1306,7 @@ void Form::onDrag(tgui::Vector2i mousePos)
                     updated = true;
                 }
             }
-            else if (m_draggingSelectionSquare == m_selectionSquares[6]) // Bottom left
+            else if (m_draggingSelectionSquare == m_selectionSquares[5]) // Bottom left
             {
                 while ((pos.x - m_draggingPos.x >= change.x) && (m_draggingPos.y - pos.y >= change.y))
                 {

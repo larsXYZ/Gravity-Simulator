@@ -307,8 +307,27 @@ namespace tgui
         TGUI_ASSERT(widgetPtr != nullptr, "Can't add nullptr to container");
 
         m_widgets.push_back(widgetPtr);
+
         if (!widgetName.empty())
             widgetPtr->setWidgetName(widgetName);
+
+#if !defined(NDEBUG) && !defined(TGUI_NO_RUNTIME_WARNINGS)
+        // TGUI_NEXT: Disallow multiple widgets with the same name (if name isn't empty). Throw exception if duplicate found.
+        // If the name passed to this function is empty then it's still possible that the widget already had a name,
+        // otherwise usedWidgetName will be the same value as widgetName.
+        const String& usedWidgetName = widgetPtr->getWidgetName();
+        if (!usedWidgetName.empty() && !usedWidgetName.starts_with("#TGUI_INTERNAL$"))
+        {
+            for (const auto& existingWidget : m_widgets)
+            {
+                if ((existingWidget != widgetPtr) && (existingWidget->getWidgetName() == usedWidgetName))
+                {
+                    TGUI_PRINT_WARNING("Multiple widgets with name '" + usedWidgetName + "' were added to the same parent.");
+                    break;
+                }
+            }
+        }
+#endif
 
         widgetAdded(widgetPtr);
 

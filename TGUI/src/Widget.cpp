@@ -1164,15 +1164,31 @@ namespace tgui
 
     void Widget::setWidgetName(const String& name)
     {
-        if (m_name != name)
+        if (m_name == name)
+            return;
+
+        m_name = name;
+
+        if (!m_parent)
+            return;
+
+        SignalManager::getSignalManager()->remove(this);
+        SignalManager::getSignalManager()->add(shared_from_this());
+
+#if !defined(NDEBUG) && !defined(TGUI_NO_RUNTIME_WARNINGS)
+        // TGUI_NEXT: Disallow multiple widgets with the same name (if name isn't empty). Throw exception if duplicate found.
+        if (!name.empty() && !name.starts_with("#TGUI_INTERNAL$"))
         {
-            m_name = name;
-            if (m_parent)
+            for (const auto& widget : m_parent->getWidgets())
             {
-                SignalManager::getSignalManager()->remove(this);
-                SignalManager::getSignalManager()->add(shared_from_this());
+                if ((widget.get() != this) && (widget->getWidgetName() == name))
+                {
+                    TGUI_PRINT_WARNING("Multiple widgets with name '" + name + "' were added to the same parent.");
+                    break;
+                }
             }
         }
+#endif
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

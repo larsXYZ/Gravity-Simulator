@@ -441,7 +441,11 @@ TGUI_MODULE_EXPORT namespace tgui
 #if TGUI_HAS_WINDOW_BACKEND_SFML
         // This constructor has to be explicit or it will cause MSVC to no longer compile code that performs sf::String + std::string
         explicit String(const sf::String& str)
+    #if SFML_VERSION_MAJOR >= 3
+            : m_string{str.toUtf32()}
+    #else
             : m_string{reinterpret_cast<const char32_t*>(str.toUtf32().c_str())}
+    #endif
         {
         }
 

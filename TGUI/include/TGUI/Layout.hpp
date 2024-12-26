@@ -89,7 +89,7 @@ TGUI_MODULE_EXPORT namespace tgui
         Right,      //!< Places the widget on the right side and sets its height to the area between Top and Bottom aligned components. Width needs to be manually set.
         Bottom,     //!< Places the widget on on the bottom and sets its width to the area between Leftmost and Rightmost aligned components. Height needs to be manually set.
         Leftmost,   //!< Places the widget on the left side and sets height to 100%. Width needs to be manually set. Same as Left alignment if no widget uses Top or Bottom alignment.
-        Rightmost,  //!< Places the widget on the right side and sets height to 100%. Width needs to be manually set. Same as Left alignment if no widget uses Top or Bottom alignment.
+        Rightmost,  //!< Places the widget on the right side and sets height to 100%. Width needs to be manually set. Same as Right alignment if no widget uses Top or Bottom alignment.
         Fill        //!< Sets the position and size to fill the entire area that isn't already taken by components with the other AutoLayout values.
     };
 

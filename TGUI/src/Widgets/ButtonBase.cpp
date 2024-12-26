@@ -138,7 +138,7 @@ namespace tgui
         {
             text.style.disconnectCallback(m_textStyleChangedCallbackId);
 
-            ClickableWidget::operator=(other);
+            ClickableWidget::operator=(std::move(other));
             m_string                       = std::move(other.m_string);
             m_down                         = std::move(other.m_down);
             m_state                        = std::move(other.m_state);

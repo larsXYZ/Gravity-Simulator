@@ -218,6 +218,10 @@ TGUI_MODULE_EXPORT namespace tgui
         // from breaking since sf::Font does the same.
         std::map<unsigned int, std::shared_ptr<BackendTexture>> m_textures;
         std::map<unsigned int, unsigned int> m_textureVersions;
+
+        // We use a single version that is unique across all text sizes. Otherwise switching from size by changing the font scale
+        // can result in the same version being accidentally returned and the text not realizing that the texture changed.
+        unsigned int m_lastTextureVersion = 0;
     };
 }
 
