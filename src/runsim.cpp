@@ -91,7 +91,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		ship.draw(window);
 		
 		if (bound.isActive())
-			bound.render(window);
+			bound.render(window, click_and_drag_handler.get_zoom());
 
 		if (object_info.is_active())
 			object_info.render(*this, window);

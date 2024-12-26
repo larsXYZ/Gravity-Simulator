@@ -711,7 +711,7 @@ public:
 		context.bound.setRad(rad);
 
 		if (context.bound.getRad() > BOUND_MIN_RAD)
-			context.bound.render(context.window);
+			context.bound.render(context.window, context.zoom);
 
 	}
 
