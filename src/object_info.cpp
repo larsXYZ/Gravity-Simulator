@@ -131,6 +131,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 				indicator.setOrigin(planet.getRad() + 5, planet.getRad() + 5);
 				indicator.setFillColor(sf::Color(0, 0, 0, 0));
 				indicator.setOutlineColor(planet.getLife().getCol());
+				indicator.setOutlineThickness(3.*space.click_and_drag_handler.get_zoom());
 				window.draw(indicator);
 			}
 		}
@@ -177,6 +178,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		else text.setString(text.getString() + "\n" + target->getLife().getType() + "\n" + target->getFlavorTextLife());
 	}
 	text.setColor(sf::Color(255, 255, 255));
+	text.setScale(space.click_and_drag_handler.get_zoom() * 0.5f * sf::Vector2f{ 1.f, 1.f });
 
 	window.draw(text);
 }
