@@ -58,7 +58,8 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			.is_mouse_on_widgets = is_mouse_on_widgets(window, gui),
 			.mass_slider = massSlider,
 			.new_object_info = newPlanetInfo,
-			.bound = bound
+			.bound = bound,
+			.zoom = click_and_drag_handler.get_zoom()
 		};
 
 		while(window.pollEvent(event))

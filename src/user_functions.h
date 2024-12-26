@@ -71,6 +71,7 @@ struct FunctionContext
 	tgui::Slider::Ptr mass_slider;
 	tgui::TextArea::Ptr new_object_info;
 	Bound& bound;
+	float zoom;
 };
 void executeFunction(FunctionContext& context);
 void giveFunctionEvent(FunctionContext& context, sf::Event event);

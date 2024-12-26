@@ -194,7 +194,7 @@ public:
 				orbit_visualizer.setOrigin(rad, rad);
 				orbit_visualizer.setFillColor(sf::Color(0, 0, 0, 0));
 				orbit_visualizer.setOutlineColor(sf::Color::Red);
-				orbit_visualizer.setOutlineThickness(1);
+				orbit_visualizer.setOutlineThickness(context.zoom);
 				context.window.draw(orbit_visualizer);
 
 				//DRAWING MASS CENTER
@@ -215,12 +215,13 @@ public:
 				{
 					double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (temp_planet.getRad() + target->getRad());
 
-					sf::CircleShape omr(rocheRad);
-					omr.setPosition(sf::Vector2f(target->getx(), target->gety()));
-					omr.setOrigin(rocheRad, rocheRad);
-					omr.setFillColor(sf::Color(0, 0, 0, 0));
-					omr.setOutlineColor(sf::Color(255, 140, 0));
-					context.window.draw(omr);
+					sf::CircleShape viz(rocheRad);
+					viz.setPosition(sf::Vector2f(target->getx(), target->gety()));
+					viz.setOrigin(rocheRad, rocheRad);
+					viz.setFillColor(sf::Color(0, 0, 0, 0));
+					viz.setOutlineColor(sf::Color(255, 140, 0));
+					viz.setOutlineThickness(context.zoom);
+					context.window.draw(viz);
 
 				}
 
@@ -355,7 +356,7 @@ public:
 				indicator.setOrigin(rad, rad);
 				indicator.setFillColor(sf::Color(0, 0, 0, 0));
 				indicator.setOutlineColor(sf::Color::Red);
-				indicator.setOutlineThickness(1);
+				indicator.setOutlineThickness(context.zoom);
 				context.window.draw(indicator);
 
 				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
@@ -389,7 +390,7 @@ public:
 				indicator.setOrigin(inner_rad, inner_rad);
 				indicator.setFillColor(sf::Color(0, 0, 0, 0));
 				indicator.setOutlineColor(sf::Color::Red);
-				indicator.setOutlineThickness(1);
+				indicator.setOutlineThickness(context.zoom);
 				context.window.draw(indicator);
 
 				indicator.setRadius(rad);
@@ -453,7 +454,7 @@ public:
 			indicator.setOrigin(rad, rad);
 			indicator.setFillColor(sf::Color(0, 0, 0, 0));
 			indicator.setOutlineColor(sf::Color::Red);
-			indicator.setOutlineThickness(1);
+			indicator.setOutlineThickness(context.zoom);
 			indicator.setPointCount(100);
 			context.window.draw(indicator);
 
@@ -618,7 +619,7 @@ public:
 			indicator.setOrigin(indicator.getRadius(), indicator.getRadius());
 			indicator.setFillColor(sf::Color(0, 0, 0, 0));
 			indicator.setOutlineColor(sf::Color::Red);
-			indicator.setOutlineThickness(10);
+			indicator.setOutlineThickness(5*context.zoom);
 			context.window.draw(indicator);
 		}
 
@@ -632,13 +633,13 @@ public:
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{
 				//DRAWING ORBIT
-				sf::CircleShape omr(rad);
-				omr.setPosition(sf::Vector2f(massCenterInfoVector.x, massCenterInfoVector.y));
-				omr.setOrigin(rad, rad);
-				omr.setFillColor(sf::Color(0, 0, 0, 0));
-				omr.setOutlineColor(sf::Color::Red);
-				omr.setOutlineThickness(1);
-				context.window.draw(omr);
+				sf::CircleShape indicator(rad);
+				indicator.setPosition(sf::Vector2f(massCenterInfoVector.x, massCenterInfoVector.y));
+				indicator.setOrigin(rad, rad);
+				indicator.setFillColor(sf::Color(0, 0, 0, 0));
+				indicator.setOutlineColor(sf::Color::Red);
+				indicator.setOutlineThickness(context.zoom);
+				context.window.draw(indicator);
 
 				//DRAWING PLANET
 				Planet temp(context.mass_slider->getValue());
