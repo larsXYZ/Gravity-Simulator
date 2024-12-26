@@ -178,7 +178,13 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		else text.setString(text.getString() + "\n" + target->getLife().getType() + "\n" + target->getFlavorTextLife());
 	}
 	text.setColor(sf::Color(255, 255, 255));
-	text.setScale(space.click_and_drag_handler.get_zoom() * 0.5f * sf::Vector2f{ 1.f, 1.f });
 
+	auto view = window.getView();
+
+	text.setPosition(static_cast<sf::Vector2f>(window.mapCoordsToPixel(text.getPosition())));
+
+	window.setView(window.getDefaultView());
+	text.setScale(0.5f * sf::Vector2f{ 1.f, 1.f });
 	window.draw(text);
+	window.setView(view);
 }
