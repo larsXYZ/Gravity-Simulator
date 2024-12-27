@@ -25,7 +25,12 @@ add_subdirectory(TGUI)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${SFML_INCLUDE_DIR} ${TGUI_INCLUDE_DIR})
 add_executable(Gravity-Simulator ${SOURCE})
-target_link_libraries(Gravity-Simulator sfml-graphics sfml-window sfml-system tgui)
+target_link_libraries(Gravity-Simulator sfml-graphics 
+					sfml-window
+					sfml-system
+					sfml-audio
+					tgui
+					${SFML_DEPENDENCIES})
 
 # Set the output directory for binaries
 set_target_properties(Gravity-Simulator  PROPERTIES
@@ -38,6 +43,8 @@ add_custom_command(TARGET Gravity-Simulator  POST_BUILD
     ${CMAKE_BINARY_DIR}/SFML/lib ${CMAKE_BINARY_DIR}/Debug
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_BINARY_DIR}/TGUI/lib ${CMAKE_BINARY_DIR}/Debug
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_BINARY_DIR}/resources ${CMAKE_BINARY_DIR}/
 )
 
 # Include CPack for installer creation
