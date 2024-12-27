@@ -24,7 +24,7 @@ add_subdirectory(SFML)
 add_subdirectory(TGUI)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${SFML_INCLUDE_DIR} ${TGUI_INCLUDE_DIR})
-add_executable(Gravity-Simulator ${SOURCE})
+add_executable(Gravity-Simulator ${SOURCE} ${CMAKE_SOURCE_DIR}/resources.rc)
 target_link_libraries(Gravity-Simulator sfml-graphics 
 					sfml-window
 					sfml-system
@@ -47,9 +47,12 @@ add_custom_command(TARGET Gravity-Simulator  POST_BUILD
     ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/
 )
 
+install(TARGETS Gravity-Simulator RUNTIME DESTINATION bin)
+install(FILES ${CMAKE_BINARY_DIR}/sansation.ttf DESTINATION bin)
+
 # Include CPack for installer creation
 include(InstallRequiredSystemLibraries)
-set(CPACK_PACKAGE_NAME "Gravity-Simulator")
+set(CPACK_PACKAGE_NAME "Gravity Simulator")
 set(CPACK_PACKAGE_VERSION "1.1.0")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Gravity Simulator")
 set(CPACK_PACKAGE_VENDOR "LarsGames")
@@ -58,8 +61,8 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 # Windows specific options
 if(WIN32)
     set(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} \\ ${CPACK_PACKAGE_NAME}")
-    set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/logo/logo.ico")
-    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/logo/logo.ico")
+    set(CPACK_NSIS_MUI_ICON "${CMAKE_BINARY_DIR}/logo/logo.ico")
+    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_BINARY_DIR}/logo/logo.ico")
 endif()
 
 include(CPack)
