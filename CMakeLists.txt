@@ -63,6 +63,7 @@ if(WIN32)
     set(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} \\ ${CPACK_PACKAGE_NAME}")
     set(CPACK_NSIS_MUI_ICON "${CMAKE_BINARY_DIR}/logo/logo.ico")
     set(CPACK_NSIS_MUI_UNIICON "${CMAKE_BINARY_DIR}/logo/logo.ico")
+	set(CPACK_NSIS_MENU_LINKS "${CPACK_PACKAGE_INSTALL_DIRECTORY}/bin/Gravity-Simulator.exe;Gravity Simulator")
 endif()
 
 include(CPack)
