@@ -1,6 +1,11 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.3)
 
 project(Gravity-Simulator)
+set(Gravity_Simulator_VERSION_MAJOR 1)
+set(Gravity_Simulator_VERSION_MINOR 1)
+set(Gravity_Simulator_VERSION_PATCH 0)
+set(Gravity_Simulator_HOMEPAGE_URL "https://www.youtube.com/@LarsGames_")
+set(Gravity_Simulator_DESCRIPTION "A simple 2D gravity simulator")
 
 set(CMAKE_CXX_STANDARD 20) 
 set(CMAKE_CXX_STANDARD_REQUIRED True) 
@@ -47,23 +52,24 @@ add_custom_command(TARGET Gravity-Simulator  POST_BUILD
     ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/
 )
 
-install(TARGETS Gravity-Simulator RUNTIME DESTINATION bin)
-install(FILES ${CMAKE_BINARY_DIR}/sansation.ttf DESTINATION bin)
+install(FILES ${CMAKE_BINARY_DIR}/sansation.ttf DESTINATION "./bin")
+install(DIRECTORY resources DESTINATION "./bin")
+install(TARGETS Gravity-Simulator)
 
-# Include CPack for installer creation
 include(InstallRequiredSystemLibraries)
-set(CPACK_PACKAGE_NAME "Gravity Simulator")
-set(CPACK_PACKAGE_VERSION "1.1.0")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Gravity Simulator")
-set(CPACK_PACKAGE_VENDOR "LarsGames")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 
-# Windows specific options
-if(WIN32)
-    set(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} \\ ${CPACK_PACKAGE_NAME}")
-    set(CPACK_NSIS_MUI_ICON "${CMAKE_BINARY_DIR}/logo/logo.ico")
-    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_BINARY_DIR}/logo/logo.ico")
-	set(CPACK_NSIS_MENU_LINKS "${CPACK_PACKAGE_INSTALL_DIRECTORY}/bin/Gravity-Simulator.exe;Gravity Simulator")
-endif()
+set(CPACK_WIX_VERSION 4)
+set(CPACK_PACKAGE_NAME "Gravity-Simulator")
+set(CPACK_PACKAGE_EXECUTABLES Gravity-Simulator "Gravity-Simulator")
+set(CPACK_PACKAGE_VENDOR "Lars Games")
+set(CPACK_PACKAGE_ICON  "${CMAKE_BINARY_DIR}/logo/logo.ico")
+set(CPACK_PACKAGE_VERSION_MAJOR ${Gravity_Simulator_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${Gravity_Simulator_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${Gravity_Simulator_VERSION_PATCH})
+set(CPACK_PACKAGE_DESCRIPTION ${Gravity_Simulator_DESCRIPTION})
+set(CPACK_PACKAGE_HOMEPAGE_URL ${Gravity_Simulator_HOMEPAGE_URL})
+set(CPACK_CREATE_DESKTOP_LINKS Gravity-Simulator)
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
+set(CPACK_MONOLITHIC_INSTALL TRUE)
 
 include(CPack)
