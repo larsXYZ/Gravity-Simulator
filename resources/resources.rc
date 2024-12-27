@@ -1,0 +1,2 @@
+// resources.rc
+IDI_ICON1 ICON "logo/logo.ico"

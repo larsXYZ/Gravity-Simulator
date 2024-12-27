@@ -29,7 +29,7 @@ add_subdirectory(SFML)
 add_subdirectory(TGUI)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${SFML_INCLUDE_DIR} ${TGUI_INCLUDE_DIR})
-add_executable(Gravity-Simulator ${SOURCE} ${CMAKE_SOURCE_DIR}/resources.rc)
+add_executable(Gravity-Simulator ${SOURCE} ${CMAKE_SOURCE_DIR}/resources/resources.rc)
 target_link_libraries(Gravity-Simulator sfml-graphics 
 					sfml-window
 					sfml-system
