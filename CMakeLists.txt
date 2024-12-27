@@ -44,7 +44,7 @@ add_custom_command(TARGET Gravity-Simulator  POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_BINARY_DIR}/TGUI/lib ${CMAKE_BINARY_DIR}/Debug
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_BINARY_DIR}/resources ${CMAKE_BINARY_DIR}/
+    ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/
 )
 
 # Include CPack for installer creation
