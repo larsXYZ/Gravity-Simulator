@@ -8,10 +8,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(TGUI_BUILD_GUI_BUILDER False)
 
-set(SFML_BUILD_AUDIO FALSE)
 set(SFML_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SFML/Include)
 set(TGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/TGUI/Include)
 set(SFML_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SFML/)
+
 set(TGUI_BACKEND "SFML_GRAPHICS")
 file(GLOB_RECURSE SOURCE "src/*")
 
@@ -35,9 +35,9 @@ set_target_properties(Gravity-Simulator  PROPERTIES
 # Copy DLLs to output directory
 add_custom_command(TARGET Gravity-Simulator  POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/SFML/lib ${CMAKE_BINARY_DIR}/Debug
+    ${CMAKE_BINARY_DIR}/SFML/lib ${CMAKE_BINARY_DIR}/Debug
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/TGUI/lib ${CMAKE_BINARY_DIR}/Debug
+    ${CMAKE_BINARY_DIR}/TGUI/lib ${CMAKE_BINARY_DIR}/Debug
 )
 
 # Include CPack for installer creation
