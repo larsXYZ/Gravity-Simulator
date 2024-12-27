@@ -297,6 +297,9 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 		case sf::Keyboard::R:
 			full_reset(view, window);
 			break;
+		case sf::Keyboard::F1:
+			show_gui = !show_gui;
+			break;
 		}
 	}
 }
