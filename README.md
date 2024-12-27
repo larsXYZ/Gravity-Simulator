@@ -13,4 +13,6 @@ and the user interface library [TGUI 1.7.0](https://www.tgui.eu/). It uses CMake
 
 Built the solution with:
 
-    cmake .
+    mkdir build
+    cd build
+    cmake ..
