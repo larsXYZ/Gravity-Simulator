@@ -38,7 +38,15 @@ add_subdirectory(SFML)
 add_subdirectory(TGUI)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${SFML_INCLUDE_DIR} ${TGUI_INCLUDE_DIR})
+
+# Add executable with conditional subsystem
 add_executable(Gravity-Simulator ${SOURCE} ${CMAKE_SOURCE_DIR}/resources/resources.rc)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
+else()
+    set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+endif()
+
 target_link_libraries(Gravity-Simulator sfml-graphics 
 					sfml-window
 					sfml-system

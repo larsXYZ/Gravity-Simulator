@@ -11,7 +11,6 @@ int Space::addPlanet(Planet&& p)
 {
 	giveId(p);
 	const auto id = p.getId();
-	p.setTemp((p.fusionEnergy() / (p.getRad()*p.getRad()*SBconst)) + thermalEnergyAtPosition(sf::Vector2f(p.getx(), p.gety()))*tempConstTwo/SBconst);
 	
 	p.setColor();
 
@@ -312,6 +311,7 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 
 	Planet centerP(centermass, pos.x, pos.y);
 
+	set_ambient_temperature(centerP);
 	addPlanet(std::move(centerP));
 
 	for (int i = 0; i < antall; i++, angle += delta_angle)
@@ -328,7 +328,9 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 		double xv = (speedmultRandom*cos(angle + 1.507) + randomelement1);
 		double yv = (speedmultRandom*sin(angle + 1.507) + randomelement2);
 
-		addPlanet(Planet(mass,pos.x+x,pos.y+y, xv, yv));
+		auto new_planet = Planet(mass, pos.x + x, pos.y + y, xv, yv);
+		set_ambient_temperature(new_planet);
+		addPlanet(std::move(new_planet));
 	}
 
 }
@@ -336,6 +338,12 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 bool Space::auto_bound_active() const
 {
 	return autoBound->isChecked();
+}
+
+void Space::set_ambient_temperature(Planet& planet)
+{
+	planet.setTemp((planet.fusionEnergy() / (planet.getRad() * planet.getRad() * SBconst))
+		+ thermalEnergyAtPosition(sf::Vector2f(planet.getx(), planet.gety())) * tempConstTwo / SBconst);
 }
 
 void Space::removePlanet(const int id)
@@ -424,7 +432,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 
 		p.setx(p.getx() + cos(angle_offset) * offset_dist);
 		p.sety(p.gety() + sin(angle_offset) * offset_dist);
-		p.setTemp(uniform_random(1500.,4000.));
+		p.setTemp(uniform_random(3500.,6000.));
 
 		generated_ids.push_back(addPlanet(std::move(p)));
 	}

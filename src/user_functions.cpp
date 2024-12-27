@@ -107,6 +107,7 @@ public:
 			const auto to_now = context.mouse_pos_world - start_pos;
 			const auto speed_multiplier{ 0.002 };
 			Planet R(context.mass_slider->getValue(), start_pos.x, start_pos.y, -speed_multiplier * to_now.x, -speed_multiplier * to_now.y);
+			context.space.set_ambient_temperature(R);
 			context.space.addPlanet(std::move(R));
 		}
 	}
@@ -244,11 +245,14 @@ public:
 					target->setxv(target->getxv() - normalizing_speed * cos(angle + PI / 2.0));
 					target->setyv(target->getyv() - normalizing_speed * sin(angle + PI / 2.0));
 
-					context.space.addPlanet(Planet(context.mass_slider->getValue(), 
-						target->getx() + rad * cos(angle), 
+					Planet new_planet(context.mass_slider->getValue(),
+						target->getx() + rad * cos(angle),
 						target->gety() + rad * sin(angle),
 						target->getxv() + speed * cos(angle + PI / 2.0),
-						target->getyv() + speed * sin(angle + PI / 2.0)));
+						target->getyv() + speed * sin(angle + PI / 2.0));
+
+					context.space.set_ambient_temperature(new_planet);
+					context.space.addPlanet(std::move(new_planet));
 
 					reset();
 				}
@@ -579,11 +583,16 @@ public:
 				const auto angle = atan2(context.mouse_pos_world.y - massCenterInfoVector.y,
 					context.mouse_pos_world.x - massCenterInfoVector.x);
 				const auto adjust_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + massCenterInfoVector.z);
-				context.space.addPlanet(Planet(context.mass_slider->getValue(),
+
+
+				Planet new_planet(context.mass_slider->getValue(),
 					massCenterInfoVector.x + rad * cos(angle),
 					massCenterInfoVector.y + rad * sin(angle),
 					(massCenterVelocity.x + speed * cos(angle + PI / 2.0) - adjust_speed * cos(angle + PI / 2.0)),
-					(massCenterVelocity.y + speed * sin(angle + PI / 2.0) - adjust_speed * sin(angle + PI / 2.0))));
+					(massCenterVelocity.y + speed * sin(angle + PI / 2.0) - adjust_speed * sin(angle + PI / 2.0)));
+
+				context.space.set_ambient_temperature(new_planet);
+				context.space.addPlanet(std::move(new_planet));
 
 				for (const auto id : object_ids)
 				{

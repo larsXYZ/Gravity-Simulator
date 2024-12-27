@@ -91,6 +91,7 @@ public:
 	sf::Vector2f centerOfMassAll();
 	int get_iteration() const;
 	bool auto_bound_active() const;
+	void set_ambient_temperature(Planet& planet);
 	
 	void hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow & window);
 	

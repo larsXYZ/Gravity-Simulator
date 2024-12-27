@@ -188,7 +188,8 @@ void evaluateStartButtonVisibility(tgui::ListBox::Ptr resSetup,
 		startButton->setVisible(false);
 }
 
-int main()
+
+void main2()
 {
 	sf::RenderWindow settingScreen;
 	settingScreen.create(sf::VideoMode(300, 195), "", sf::Style::None);
@@ -232,3 +233,17 @@ int main()
 			start(resSetup, modeSetup, customResX, customResY);
 	}
 }
+
+#ifdef _DEBUG
+int main(int argc, char** argv)
+{
+    main2();
+}
+#else
+#include <windows.h>
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+    main2();
+}
+#endif
