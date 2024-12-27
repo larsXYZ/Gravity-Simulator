@@ -34,15 +34,15 @@ target_link_libraries(Gravity-Simulator sfml-graphics
 
 # Set the output directory for binaries
 set_target_properties(Gravity-Simulator  PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Debug
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
 # Copy DLLs to output directory
 add_custom_command(TARGET Gravity-Simulator  POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_BINARY_DIR}/SFML/lib ${CMAKE_BINARY_DIR}/Debug
+    ${CMAKE_BINARY_DIR}/SFML/lib ${CMAKE_BINARY_DIR}/bin
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_BINARY_DIR}/TGUI/lib ${CMAKE_BINARY_DIR}/Debug
+    ${CMAKE_BINARY_DIR}/TGUI/lib ${CMAKE_BINARY_DIR}/bin
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/
 )
