@@ -16,3 +16,7 @@ Built the solution with:
     mkdir build
     cd build
     cmake ..
+
+To create an installer, run:
+
+    make_installer.bat

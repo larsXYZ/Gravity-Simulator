@@ -20,4 +20,4 @@
 *.out
 *.app
 
-build/*
+build*

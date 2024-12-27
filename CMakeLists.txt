@@ -25,6 +25,15 @@ if(MSVC)
     add_link_options(/INCREMENTAL)
 endif()
 
+# Detect the target architecture
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(ARCHITECTURE "x64")
+else()
+    set(ARCHITECTURE "x86")
+endif()
+
+message(STATUS "Target architecture: ${ARCHITECTURE}")
+
 add_subdirectory(SFML)
 add_subdirectory(TGUI)
 
