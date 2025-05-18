@@ -86,8 +86,8 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		
 		if (target->getType() == SMALLSTAR || target->getType() == STAR || target->getType() == BIGSTAR)
 		{
-			double goldilock_inner_rad = (tempConstTwo * target->getRad() * target->getRad() * target->temp()) / inner_goldi_temp;
-			double goldilock_outer_rad = (tempConstTwo * target->getRad() * target->getRad() * target->temp()) / outer_goldi_temp;
+			double goldilock_inner_rad = (tempConstTwo * target->getRad() * target->getRad() * target->getTemp()) / inner_goldi_temp;
+			double goldilock_outer_rad = (tempConstTwo * target->getRad() * target->getRad() * target->getTemp()) / outer_goldi_temp;
 
 			sf::CircleShape g(goldilock_inner_rad);
 			g.setPointCount(60);

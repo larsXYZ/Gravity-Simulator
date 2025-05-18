@@ -1,0 +1,195 @@
+#include "Life.h"
+
+Life::Life() : 
+    biomass(0),
+    type(NONE),
+    lifeLevel(0),
+    expand(false),
+    description(""),
+    timer(0),
+    lifeColor(sf::Color(modernRandomWithLimits(0, 255), 
+                       modernRandomWithLimits(0, 255), 
+                       modernRandomWithLimits(0, 255)))
+{
+}
+
+Life::Life(int i) :
+    id(i),
+    biomass(100),
+    type(COLONY),
+    lifeLevel(7),
+    expand(false),
+    description(""),
+    timer(0),
+    lifeColor(sf::Color(modernRandomWithLimits(0, 255), 
+                       modernRandomWithLimits(0, 255), 
+                       modernRandomWithLimits(0, 255)))
+{
+}
+
+void Life::giveId(int i) {
+    id = i;
+}
+
+void Life::giveCol(sf::Color c) {
+    lifeColor = c;
+}
+
+void Life::giveDesc(std::string d) {
+    description = d;
+}
+
+void Life::update(double supportedBM, int t, double rad) {
+    expand = false;
+
+    if (lifeLevel < 6) {
+        // GENESIS
+        if (lifeLevel == 0) {
+            if (modernRandomWithLimits(0, 2000000) < supportedBM) lifeLevel = 1;
+            return;
+        }
+
+        // LIFE GROWS/DIMINISHES AS THE SUPPORTED BIOMASS CHANGES
+        if (biomass < supportedBM) {
+            biomass += t * 0.0003 * (supportedBM - biomass);
+        } else if (biomass > supportedBM) {
+            biomass += t * 0.01 * (supportedBM - biomass);
+        }
+
+        // EVOLVE
+        if (modernRandomWithLimits(0, 3500000 * lifeLevel) < (biomass - 900 * lifeLevel) && lifeLevel < 6) {
+            lifeLevel++;
+            if (lifeLevel == 4) genDesc();
+            if (lifeLevel == 6) {
+                expand = true;
+            }
+        }
+
+        // DEVOLVE
+        if (supportedBM < 450 * (lifeLevel - 1)) lifeLevel--;
+        if (supportedBM == 0) {
+            lifeLevel = 0;
+            biomass = 0;
+        }
+    } else if (lifeLevel == 6) {
+        // COUNTING
+        timer += t;
+
+        // CIVILIZATION GROWS ACCORDING TO HOW BIG THE PLANET IS
+        if (biomass < civilization_compact_constant * rad) {
+            double natural_growth = t * 0.0003 * (supportedBM - biomass);
+            if (natural_growth > t * interstellar_growth_rate) {
+                biomass += natural_growth;
+            } else {
+                biomass += t * interstellar_growth_rate * (civilization_compact_constant * rad * rad * rad - biomass);
+            }
+        } else if (biomass > civilization_compact_constant * rad) {
+            biomass += t * interstellar_growth_rate * (civilization_compact_constant * rad - biomass);
+        }
+
+        // COLONIZING
+        if (timer > interstellar_expand_rate) {
+            expand = true;
+            timer = 0;
+        }
+    } else if (lifeLevel == 7) {
+        // COUNTING
+        timer += t;
+
+        // GROWING WITH TIME
+        double natural_growth = t * 0.0003 * (supportedBM - biomass);
+        if (natural_growth > t * colony_growth_rate) {
+            biomass += natural_growth;
+        } else {
+            biomass += t * colony_growth_rate * (civilization_compact_constant * rad - biomass);
+        }
+
+        // COLONIZING
+        if (timer > colony_expand_rate) {
+            expand = true;
+            timer = 0;
+        }
+
+        // GROWS
+        if (biomass > interstellar_min_size) lifeLevel = 6;
+    }
+
+    type = static_cast<lType>(lifeLevel);
+}
+
+void Life::kill() {
+    biomass = 0;
+    type = NONE;
+}
+
+bool Life::willExp() const noexcept {
+    return expand;
+}
+
+void Life::genDesc() {
+    static const std::vector<std::string> startAdj = { 
+        "Flat", "Tall", "Wide", "Slimy", "Scaly", "Small", "Tiny", "Big" 
+    };
+    static const std::vector<std::string> creature = { 
+        "fishes", "amphibians", "reptiles", "birds", "mammals", "insects", "snails", "arachnids" 
+    };
+    static const std::vector<std::string> area = { 
+        "in caves", "deep underground", "floating in organic ballons", "on the seabed", 
+        "in self made structures", "drifting in the oceans", "on the sides of cliffs", 
+        "near active volcanoes"
+    };
+
+    description = startAdj[modernRandomWithLimits(0, startAdj.size() - 1)] + " " +
+                 creature[modernRandomWithLimits(0, creature.size() - 1)] + " " +
+                 area[modernRandomWithLimits(0, area.size() - 1)];
+}
+
+lType Life::getTypeEnum() const {
+    return type;
+}
+
+double Life::getBmass() const {
+    return biomass;
+}
+
+std::string Life::getType() const {
+    switch (type) {
+        case NONE:
+            return "Lifeless";
+        case SINGLECELL:
+            return "Unicellular organisms";
+        case MULTICELL_SIMPLE:
+            return "Multicellular organisms";
+        case MULTICELL_COMPLEX:
+            return "Complex multicellular organisms";
+        case INTELLIGENT_TRIBAL:
+            return "Tribal communities";
+        case INTELLIGENT_GLOBAL:
+            return "Globalized civilization";
+        case INTELLIGENT_INTERPLANETARY:
+            return "Interplanetary civilization";
+        case COLONY:
+            return "Colony";
+        default:
+            return "Kraken";
+    }
+}
+
+int Life::getId() const {
+    return id;
+}
+
+sf::Color Life::getCol() const {
+    return lifeColor;
+}
+
+std::string Life::getDesc() const {
+    return description;
+}
+
+int Life::modernRandomWithLimits(int min, int max) {
+    static std::random_device seeder;
+    static std::default_random_engine generator(seeder());
+    std::uniform_int_distribution<int> uniform(min, max);
+    return uniform(generator);
+} 

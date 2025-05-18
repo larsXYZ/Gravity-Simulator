@@ -19,11 +19,10 @@ private:
 	double radi;
 	double density;
 	pType planetType;
-	double temperature = 0;
 
 	//TEMPERATURE
 	double tCapacity = 1;
-	double tEnergy;
+	double tEnergy = 0;
 
 	//ATMOSPHERE
 	double atmoCur = 0;
@@ -83,8 +82,7 @@ public:
 	[[nodiscard]] sf::Color getStarCol() const noexcept;
 	[[nodiscard]] bool isMarkedForRemoval() const noexcept { return marked_for_removal; }
 	[[nodiscard]] double getStrongestAttractorStrength() const noexcept { return STRENGTH_strongest_attractor; }
-	[[nodiscard]] double temp() const noexcept { return temperature; }
-	[[nodiscard]] double getTemp() const noexcept { return temperature; }
+	[[nodiscard]] double getTemp() const noexcept { return getThermalEnergy() / (getmass() * getTCap()); }
 	[[nodiscard]] double fusionEnergy() const noexcept;
 	[[nodiscard]] double thermalEnergy() const noexcept;
 	[[nodiscard]] double giveThermalEnergy(int t) const noexcept;
@@ -94,6 +92,7 @@ public:
 	[[nodiscard]] const Life& getLife() const noexcept { return life; }
 	[[nodiscard]] double getSupportedBiomass() const noexcept { return supportedBiomass; }
 	[[nodiscard]] GoldilockInfo getGoldilockInfo() const noexcept;
+	[[nodiscard]] double getThermalEnergy() const noexcept { return tEnergy; }
 
 	// Setters
 	void setStrongestAttractorIdRef(int id) noexcept;
@@ -122,7 +121,6 @@ public:
 	void incMass(double m) noexcept;
 	void collision(const Planet& p);
 	void giveID(int i) noexcept;
-	void updateTemp() noexcept;
 	void coolDown(int t) noexcept;
 	void absorbHeat(double e, int t) noexcept;
 	void increaseThermalEnergy(double e) noexcept { tEnergy += e; }

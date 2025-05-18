@@ -10,8 +10,6 @@ Planet::Planet()
 	xv = 0;
 	yv = 0;
 
-	tEnergy = 0;
-
 	randBrightness = modernRandomWithLimits(-30, +30);
 	updateRadiAndType();
 	circle.setPosition(x, y);
@@ -29,8 +27,6 @@ Planet::Planet(double m)
 	y = 0;
 	xv = 0;
 	yv = 0;
-
-	tEnergy = 0;
 
 	randBrightness = modernRandomWithLimits(-30, +30);
 	updateRadiAndType();
@@ -50,8 +46,6 @@ Planet::Planet(double m, double xx, double yy)
 	xv = 0;
 	yv = 0;
 
-	tEnergy = 0;
-
 	randBrightness = modernRandomWithLimits(-30, +30);
 	updateRadiAndType();
 	circle.setPosition(x, y);
@@ -69,8 +63,6 @@ Planet::Planet(double m, double xx, double yy, double xvv, double yvv)
 	y = yy;
 	xv = xvv;
 	yv = yvv;
-
-	tEnergy = 0;
 
 	randBrightness = modernRandomWithLimits(-30, +30);
 	updateRadiAndType();
@@ -244,15 +236,10 @@ public:
 sf::Color Planet::getStarCol() const noexcept
 {
 	const static StarColorInterpolator interpolator;
-	return interpolator.getStarColor(temperature);	
+	return interpolator.getStarColor(getTemp());	
 }
 
 //SIMULATION FUNCTIONS
-
-void Planet::updateTemp() noexcept
-{
-	temperature = temp();
-}
 
 void Planet::setTemp(double t) noexcept
 {
@@ -287,7 +274,11 @@ double Planet::thermalEnergy() const noexcept
 
 void Planet::coolDown(int t) noexcept
 {
-	tEnergy -= t * (SBconst * (radi * radi * temp()) - fusionEnergy());
+	// Thermal radiation loss (Stefan-Boltzmann law)
+	tEnergy -= t * (SBconst * radi * radi * getTemp());
+	
+	// Add energy from fusion
+	tEnergy += t * fusionEnergy();
 }
 
 void Planet::absorbHeat(double e, int t) noexcept
@@ -297,14 +288,13 @@ void Planet::absorbHeat(double e, int t) noexcept
 
 double Planet::giveThermalEnergy(int t) const noexcept
 {
-	return t * (SBconst * (radi * radi * temp()));
+	return t * (SBconst * (radi * radi * getTemp()));
 }
 
 void Planet::update_planet_sim(double timestep) noexcept
 {
 	coolDown(timestep);
 	setColor();
-	updateTemp();
 	updateAtmosphere(timestep);
 	updateLife(timestep);
 }
@@ -352,8 +342,9 @@ bool Planet::isIgnoring(int check_id) const noexcept
 
 void Planet::becomeAbsorbedBy(Planet& absorbing_planet)
 {
-	absorbing_planet.incMass(mass);
 	markForRemoval();
+	absorbing_planet.collision(*this);
+	absorbing_planet.incMass(getmass());
 }
 
 void Planet::updateRadiAndType() noexcept
@@ -432,13 +423,19 @@ void Planet::incMass(double m) noexcept
 
 void Planet::collision(const Planet& p)
 {
+	// Conservation of momentum
 	xv = (mass * xv + p.mass * p.getxv()) / (mass + p.getmass());
 	yv = (mass * yv + p.mass * p.getyv()) / (mass + p.getmass());
 
+	// Calculate kinetic energy converted to heat
 	const auto dXV = xv - p.getxv();
 	const auto dYV = yv - p.getyv();
-
 	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
+
+	// Transfer thermal energy from the colliding planet
+	// We use mass ratio to determine how much thermal energy is transferred
+	const double mass_ratio = p.getmass() / (mass + p.getmass());
+	increaseThermalEnergy(p.thermalEnergy() * mass_ratio);
 }
 
 void Planet::render_shine(sf::RenderWindow& window, const sf::Color& col, double luminosity) const
@@ -521,7 +518,7 @@ void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
 		atmoLine.setOutlineThickness(0);
 
 		//FINDING COLOR
-		auto temp_effect = temperature_effect(temperature);
+		auto temp_effect = temperature_effect(getTemp());
 		double r = atmoCol_r + atmoLinesBrightness[i] + temp_effect.r;
 		double g = atmoCol_g + atmoLinesBrightness[i] + temp_effect.g;
 		double b = atmoCol_b + atmoLinesBrightness[i] + temp_effect.b;
@@ -572,7 +569,7 @@ void Planet::setColor() noexcept
 	case ROCKY:
 	case TERRESTIAL:
 		{
-		auto temp_effect = temperature_effect(temperature);
+		auto temp_effect = temperature_effect(getTemp());
 		const double r = 100.0 + randBrightness + temp_effect.r;
 		const double g = 100.0 + randBrightness + temp_effect.g + getLife().getBmass() / 20.0;
 		const double b = 100.0 + randBrightness + temp_effect.b / 30.0;
@@ -613,7 +610,7 @@ void Planet::updateAtmosphere(int t) noexcept
 		return;
 	}
 
-	if (temperature < 600 && temperature > 200 && atmoCur < atmoPot)
+	if (getTemp() < 600 && getTemp() > 200 && atmoCur < atmoPot)
 	{
 		atmoCur += t * 0.05;
 		if (atmoCur > atmoPot) atmoCur = atmoPot;
@@ -634,7 +631,7 @@ void Planet::updateLife(int t)
 	if (planetType == ROCKY || planetType == TERRESTIAL)
 	{
 		supportedBiomass = 100000 / (1 + (LIFE_PREFERRED_TEMP_MULTIPLIER *
-			pow((temperature - LIFE_PREFERRED_TEMP), 2) + LIFE_PREFERRED_ATMO_MULTIPLIER * pow(
+			pow((getTemp() - LIFE_PREFERRED_TEMP), 2) + LIFE_PREFERRED_ATMO_MULTIPLIER * pow(
 				(atmoCur - LIFE_PREFERRED_ATMO), 2))) - 5000;
 		if (supportedBiomass < 0) supportedBiomass = 0;
 
