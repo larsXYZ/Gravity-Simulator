@@ -144,7 +144,7 @@ public:
 		biomass = 0;
 		type = NONE;
 	}
-	bool willExp()
+	[[nodiscard]] bool willExp() const noexcept
 	{
 		return expand;
 	}
@@ -158,15 +158,15 @@ public:
 	}
 
 	//GET FUNCTIONS
-	lType getTypeEnum()
+	lType getTypeEnum() const
 	{
 		return type;
 	}
-	double getBmass()
+	double getBmass() const
 	{
 		return biomass;
 	}
-	std::string getType()
+	std::string getType() const
 	{
 		switch (type)
 		{
@@ -208,15 +208,15 @@ public:
 		}
 		}
 	}
-	int getId()
+	int getId() const
 	{
 		return id;
 	}
-	sf::Color getCol()
+	sf::Color getCol() const
 	{
 		return lifeColor;
 	}
-	std::string getDesc()
+	std::string getDesc() const
 	{
 		return description;
 	}

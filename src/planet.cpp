@@ -2,103 +2,134 @@
 
 #include <sstream>
 
-//GET FUNCTIONS
-
-double Planet::getx() const
+Planet::Planet()
 {
-	return x;
+	mass = 6;
+	x = 0;
+	y = 0;
+	xv = 0;
+	yv = 0;
+
+	tEnergy = 0;
+
+	randBrightness = modernRandomWithLimits(-30, +30);
+	updateRadiAndType();
+	circle.setPosition(x, y);
+
+	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
+	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
+	for (int i = 0; i < numAtmoLines; i++) atmoLinesBrightness.push_back(
+		modernRandomWithLimits(-brightnessVariance, brightnessVariance));
 }
 
-double Planet::gety() const
+Planet::Planet(double m)
 {
-	return y;
+	mass = m;
+	x = 0;
+	y = 0;
+	xv = 0;
+	yv = 0;
+
+	tEnergy = 0;
+
+	randBrightness = modernRandomWithLimits(-30, +30);
+	updateRadiAndType();
+	circle.setPosition(x, y);
+
+	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
+	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
+	for (int i = 0; i < numAtmoLines; i++) atmoLinesBrightness.push_back(
+		modernRandomWithLimits(-brightnessVariance, brightnessVariance));
 }
 
-double Planet::getxv() const
+Planet::Planet(double m, double xx, double yy)
 {
-	return xv;
+	mass = m;
+	x = xx;
+	y = yy;
+	xv = 0;
+	yv = 0;
+
+	tEnergy = 0;
+
+	randBrightness = modernRandomWithLimits(-30, +30);
+	updateRadiAndType();
+	circle.setPosition(x, y);
+
+	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
+	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
+	for (int i = 0; i < numAtmoLines; i++) atmoLinesBrightness.push_back(
+		modernRandomWithLimits(-brightnessVariance, brightnessVariance));
 }
 
-double Planet::getyv() const
+Planet::Planet(double m, double xx, double yy, double xvv, double yvv)
 {
-	return yv;
+	mass = m;
+	x = xx;
+	y = yy;
+	xv = xvv;
+	yv = yvv;
+
+	tEnergy = 0;
+
+	randBrightness = modernRandomWithLimits(-30, +30);
+	updateRadiAndType();
+	circle.setPosition(x, y);
+
+	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
+	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
+	for (int i = 0; i < numAtmoLines; i++) atmoLinesBrightness.push_back(
+		modernRandomWithLimits(-brightnessVariance, brightnessVariance));
 }
 
-double Planet::getmass() const
-{
-	return mass;
-}
-
-double Planet::getDist(const Planet& forcer) const
+double Planet::getDist(const Planet& forcer) const noexcept
 {
 	return sqrt(
-		(forcer.getx() - getx()) * (forcer.getx() - getx()) + (forcer.gety() - gety()) * (forcer.gety() - gety()));
+		(forcer.getx() - x) * (forcer.getx() - x) + (forcer.gety() - y) * (forcer.gety() - y));
 }
 
-double Planet::getRad() const
-{
-	return radi;
-}
-
-pType Planet::getType() const
-{
-	return planetType;
-}
-
-std::string Planet::getTypeString(pType type)
+std::string Planet::getTypeString(pType type) noexcept
 {
 	switch (type)
 	{
-	case ROCKY: 
-		return "Rocky";
-	case TERRESTIAL:
-		return "Terrestial";
-	case GASGIANT:
-		return "Gas giant";
-	case SMALLSTAR:
-		return "Small star";
-	case STAR:
-		return "Star";
-	case BIGSTAR:
-		return "Big star";
-	case BLACKHOLE:
-		return "Black hole";
+	case ROCKY: return "Rocky";
+	case TERRESTIAL: return "Terrestial";
+	case GASGIANT: return "Gas giant";
+	case SMALLSTAR: return "Small star";
+	case STAR: return "Star";
+	case BIGSTAR: return "Big star";
+	case BLACKHOLE: return "Black hole";
+	default: return "Unknown";
 	}
-	return "Unknown";
 }
 
-int Planet::getId() const
-{
-	return id;
-}
-
-int Planet::getStrongestAttractorId() const
+int Planet::getStrongestAttractorId() const noexcept
 {
 	return ID_strongest_attractor;
 }
 
-int Planet::getStrongestAttractorIdRef() const
+int Planet::getStrongestAttractorIdRef() const noexcept
 {
 	return ID_strongest_attractor;
 }
 
-void Planet::setStrongestAttractorIdRef(int id)
+void Planet::setStrongestAttractorIdRef(int id) noexcept
 {
 	ID_strongest_attractor = id;
 }
 
-std::string Planet::getName() const
+const std::string& Planet::getName() const noexcept
 {
 	return name;
 }
 
-void Planet::giveID(int i)
+void Planet::giveID(int i) noexcept
 {
 	id = i;
 	life.giveId(i);
 }
 
-bool Planet::emitsHeat() const
+bool Planet::emitsHeat() const noexcept
 {
 	switch (getType())
 	{
@@ -107,9 +138,6 @@ bool Planet::emitsHeat() const
 	case BIGSTAR:
 	case BLACKHOLE:
 		return true;
-	case ROCKY:
-	case TERRESTIAL:
-	case GASGIANT:
 	default:
 		return false;
 	}
@@ -117,51 +145,26 @@ bool Planet::emitsHeat() const
 
 std::string Planet::getFlavorTextLife() const
 {
-	switch (static_cast<int>(getLife().getTypeEnum()))
+	switch (static_cast<int>(life.getTypeEnum()))
 	{
-	case (0):
-		{
-			return "Lifeless planet. Either the conditions\nfor life are not met or life has yet to evolve.";
-		}
-	case (1):
-		{
-			return
-				"Organisms that consist of one cell. The first form of life.\nOften lives in fluids in, on or under the surface.";
-		}
-	case (2):
-		{
-			return
-				"Aggregate from either cell division or individuals cells\ncoming togheter. The next step in the evolution of life.";
-		}
-	case (3):
-		{
-			return
-				"Enormous numbers of cells work togheter to\nsupport a sizable lifeform. These can often be found\nroaming the surface of the planet.";
-		}
-	case (4):
-		{
-			return
-				"The organisms have developed intelligence and are banding\ntogheter in groups. Often using simple technology.";
-		}
-	case (5):
-		{
-			return
-				"The organisms are now the dominant species on the planet.\nThey have created advanced technology and culture.";
-		}
-	case (6):
-		{
-			return
-				"The organisms technology has enabled them to spread to other planets.\nOnly a truly devestating event can end their civilization now.";
-		}
-	case (7):
-		{
-			return
-				"An outpost made by the organisms. With time it will\ngrow to a fully capable part of the civilization.";
-		}
+	case 0:
+		return "Lifeless planet. Either the conditions\nfor life are not met or life has yet to evolve.";
+	case 1:
+		return "Organisms that consist of one cell. The first form of life.\nOften lives in fluids in, on or under the surface.";
+	case 2:
+		return "Aggregate from either cell division or individuals cells\ncoming togheter. The next step in the evolution of life.";
+	case 3:
+		return "Enormous numbers of cells work togheter to\nsupport a sizable lifeform. These can often be found\nroaming the surface of the planet.";
+	case 4:
+		return "The organisms have developed intelligence and are banding\ntogheter in groups. Often using simple technology.";
+	case 5:
+		return "The organisms are now the dominant species on the planet.\nThey have created advanced technology and culture.";
+	case 6:
+		return "The organisms technology has enabled them to spread to other planets.\nOnly a truly devestating event can end their civilization now.";
+	case 7:
+		return "An outpost made by the organisms. With time it will\ngrow to a fully capable part of the civilization.";
 	default:
-		{
-			return "Do not look into the void.";
-		}
+		return "Do not look into the void.";
 	}
 }
 
@@ -238,7 +241,7 @@ public:
 	}
 };
 
-sf::Color Planet::getStarCol() const
+sf::Color Planet::getStarCol() const noexcept
 {
 	const static StarColorInterpolator interpolator;
 	return interpolator.getStarColor(temperature);	
@@ -246,27 +249,17 @@ sf::Color Planet::getStarCol() const
 
 //SIMULATION FUNCTIONS
 
-void Planet::updateTemp()
+void Planet::updateTemp() noexcept
 {
 	temperature = temp();
 }
 
-double Planet::temp() const
-{
-	return tEnergy / (mass * tCapacity);
-}
-
-double Planet::getTemp() const
-{
-	return temperature;
-}
-
-void Planet::setTemp(double t)
+void Planet::setTemp(double t) noexcept
 {
 	tEnergy = mass * t * tCapacity;
 }
 
-double Planet::fusionEnergy() const
+double Planet::fusionEnergy() const noexcept
 {
 	switch (planetType)
 	{
@@ -287,32 +280,27 @@ double Planet::fusionEnergy() const
 	}
 }
 
-double Planet::thermalEnergy() const
+double Planet::thermalEnergy() const noexcept
 {
 	return tEnergy;
 }
 
-void Planet::coolDown(int t)
+void Planet::coolDown(int t) noexcept
 {
 	tEnergy -= t * (SBconst * (radi * radi * temp()) - fusionEnergy());
 }
 
-void Planet::absorbHeat(double e, int t)
+void Planet::absorbHeat(double e, int t) noexcept
 {
 	tEnergy += (e * (1 + greenHouseEffectMult * atmoCur));
 }
 
-double Planet::giveThermalEnergy(int t) const
+double Planet::giveThermalEnergy(int t) const noexcept
 {
 	return t * (SBconst * (radi * radi * temp()));
 }
 
-void Planet::increaseThermalEnergy(double e)
-{
-	tEnergy += e;
-}
-
-void Planet::update_planet_sim(double timestep)
+void Planet::update_planet_sim(double timestep) noexcept
 {
 	coolDown(timestep);
 	setColor();
@@ -321,7 +309,7 @@ void Planet::update_planet_sim(double timestep)
 	updateLife(timestep);
 }
 
-bool Planet::canDisintegrate(double curr_time) const
+bool Planet::canDisintegrate(double curr_time) const noexcept
 {
 	if (getType() == BLACKHOLE)
 		return false;
@@ -335,57 +323,40 @@ bool Planet::canDisintegrate(double curr_time) const
 	return true;
 }
 
-void Planet::setDisintegrationGraceTime(double grace_time, double curr_time)
+void Planet::setDisintegrationGraceTime(double grace_time, double curr_time) noexcept
 {
 	disintegrate_grace_end_time = curr_time + grace_time;
 }
 
-bool Planet::disintegrationGraceTimeIsActive(double curr_time) const
+bool Planet::disintegrationGraceTimeIsActive(double curr_time) const noexcept
 {
-	return !disintegrationGraceTimeOver(curr_time);
+	return curr_time < disintegrate_grace_end_time;
 }
 
-bool Planet::disintegrationGraceTimeOver(double curr_time) const
+bool Planet::disintegrationGraceTimeOver(double curr_time) const noexcept
 {
-	return curr_time > disintegrate_grace_end_time;
+	return curr_time >= disintegrate_grace_end_time;
 }
 
-void Planet::registerIgnoredId(int id)
+void Planet::registerIgnoredId(int ignored_id)
 {
-	ignore_ids.push_back(id);
+	if (std::find(ignore_ids.begin(), ignore_ids.end(), ignored_id) == ignore_ids.end()) {
+		ignore_ids.push_back(ignored_id);
+	}
 }
 
-void Planet::clearIgnores()
+bool Planet::isIgnoring(int check_id) const noexcept
 {
-	ignore_ids.clear();
-}
-
-bool Planet::isIgnoring(int id) const
-{
-	if (ignore_ids.empty())
-		return false;
-
-	return std::find(ignore_ids.begin(), ignore_ids.end(), id) != ignore_ids.end();
+	return std::find(ignore_ids.begin(), ignore_ids.end(), check_id) != ignore_ids.end();
 }
 
 void Planet::becomeAbsorbedBy(Planet& absorbing_planet)
 {
+	absorbing_planet.incMass(mass);
 	markForRemoval();
-	absorbing_planet.collision(*this);
-	absorbing_planet.incMass(getmass());
 }
 
-void Planet::setx(double x_)
-{
-	x = x_;
-}
-
-void Planet::sety(double y_)
-{
-	y = y_;
-}
-
-void Planet::updateRadiAndType()
+void Planet::updateRadiAndType() noexcept
 {
 	if (mass < ROCKYLIMIT)
 	{
@@ -453,12 +424,7 @@ void Planet::updateRadiAndType()
 	circle.setOrigin(radi, radi);
 }
 
-void Planet::resetAttractorMeasure()
-{
-	STRENGTH_strongest_attractor = 0;
-}
-
-void Planet::incMass(double m)
+void Planet::incMass(double m) noexcept
 {
 	mass += m;
 	updateRadiAndType();
@@ -475,22 +441,23 @@ void Planet::collision(const Planet& p)
 	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
 }
 
-void Planet::render_shine(sf::RenderWindow& window, sf::Color col, const double luminosity) const
+void Planet::render_shine(sf::RenderWindow& window, const sf::Color& col, double luminosity) const
 {
 	sf::VertexArray vertexArr(sf::TrianglesFan);
-	vertexArr.append(sf::Vertex(sf::Vector2f(getx(), gety()), col));
-	col.a = 0;
+	vertexArr.append(sf::Vertex(sf::Vector2f(x, y), col));
+	sf::Color local_col = col;
+	local_col.a = 0;
 	const auto delta_angle = 2 * PI / static_cast<double>(LIGHT_NUMBER_OF_VERTECES);
 	auto angle = 0.0;
 	auto rad = luminosity;
 	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
 	{
-		sf::Vector2f pos(getx() + cos(angle) * rad, 
-		                 gety() + sin(angle) * rad);
-		vertexArr.append(sf::Vertex(pos, col));
+		sf::Vector2f pos(x + cos(angle) * rad, 
+		                 y + sin(angle) * rad);
+		vertexArr.append(sf::Vertex(pos, local_col));
 		angle += delta_angle;
 	}
-	vertexArr.append(sf::Vertex(sf::Vector2f(getx() + rad, gety()), col));
+	vertexArr.append(sf::Vertex(sf::Vector2f(x + rad, y), local_col));
 	window.draw(vertexArr);
 }
 
@@ -598,7 +565,7 @@ void Planet::draw(sf::RenderWindow& window)
 	}
 }
 
-void Planet::setColor()
+void Planet::setColor() noexcept
 {
 	switch (getType())
 	{
@@ -629,17 +596,12 @@ void Planet::setColor()
 	}
 }
 
-double Planet::getTCap() const
-{
-	return tCapacity;
-}
-
-void Planet::setMass(double m)
+void Planet::setMass(double m) noexcept
 {
 	mass = m;
 }
 
-void Planet::updateAtmosphere(int t)
+void Planet::updateAtmosphere(int t) noexcept
 {
 	if (planetType != TERRESTIAL)
 	{
@@ -667,16 +629,6 @@ void Planet::updateAtmosphere(int t)
 	circle.setOutlineThickness(sqrt(atmoCur) * atmoThicknessMult);
 }
 
-double Planet::getCurrentAtmosphere() const
-{
-	return atmoCur;
-}
-
-double Planet::getAtmospherePotensial() const
-{
-	return atmoPot;
-}
-
 void Planet::updateLife(int t)
 {
 	if (planetType == ROCKY || planetType == TERRESTIAL)
@@ -694,21 +646,11 @@ void Planet::updateLife(int t)
 	}
 }
 
-void Planet::colonize(int i, sf::Color c, std::string d)
+void Planet::colonize(int i, const sf::Color& c, std::string_view d)
 {
 	life = Life(i);
 	life.giveCol(c);
-	life.giveDesc(d);
-}
-
-Life Planet::getLife() const
-{
-	return life;
-}
-
-double Planet::getSupportedBiomass() const
-{
-	return supportedBiomass;
+	life.giveDesc(std::string(d));
 }
 
 int Planet::modernRandomWithLimits(int min, int max) const
@@ -730,7 +672,7 @@ std::string convertDoubleToString(double number)
 	return convert.str();
 }
 
-std::string Planet::generate_name()
+[[nodiscard]] std::string Planet::generate_name()
 {
 	std::vector<std::string> navn_del_en = {
 		"Jup", "Jor", "Ear", "Mar", "Ven", "Cer", "Sat", "Pl", "Nep", "Ur", "Ker", "Mer", "Jov", "Qur", "Deb", "Car",
@@ -755,17 +697,7 @@ std::string Planet::generate_name()
 	return navn;
 }
 
-void Planet::setxv(double v)
-{
-	xv = v;
-}
-
-void Planet::setyv(double v)
-{
-	yv = v;
-}
-
-Planet::GoldilockInfo Planet::getGoldilockInfo() const
+Planet::GoldilockInfo Planet::getGoldilockInfo() const noexcept
 {
 	const auto goldilock_inner_rad = (tempConstTwo * getRad() * getRad() * getTemp()) / inner_goldi_temp;
 	const auto goldilock_outer_rad = (tempConstTwo * getRad() * getRad() * getTemp()) / outer_goldi_temp;

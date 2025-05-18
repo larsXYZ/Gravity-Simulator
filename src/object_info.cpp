@@ -33,7 +33,6 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 	}
 	
 	sf::Vector2f pos(target->getx(), target->gety());
-	std::string planet_type = Planet::getTypeString(target->getType());
 	
 	sf::Vertex l[] =
 	{
@@ -143,7 +142,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 	const auto selected_temp_unit = static_cast<TemperatureUnit>(space.temperatureUnitSelector->getSelectedIndex());
 
 	text.setString(target->getName() + 
-		"\nType: " + target->getTypeString(target->getType())+ 
+		"\nType: " + std::string(target->getTypeString(target->getType())) + 
 		"\nRadius: " + std::to_string(static_cast<int>(target->getRad())) +
 		"\nMass: " + std::to_string(static_cast<int>(target->getmass())) +
 		"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) + 

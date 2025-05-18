@@ -573,9 +573,9 @@ std::string Space::temperature_info_string(double temperature_kelvin, Temperatur
 	case TemperatureUnit::KELVIN:
 		return std::to_string(static_cast<int>(temperature_kelvin)) + "K";
 	case TemperatureUnit::CELSIUS:
-		return std::to_string(static_cast<int>(temperature_kelvin - 273.15)) + "°C";
+		return std::to_string(static_cast<int>(temperature_kelvin - 273.15)) + "ï¿½C";
 	case TemperatureUnit::FAHRENHEIT:
-		return std::to_string(static_cast<int>((temperature_kelvin - 273.15) * 1.8 + 32.0)) + "°F";
+		return std::to_string(static_cast<int>((temperature_kelvin - 273.15) * 1.8 + 32.0)) + "ï¿½F";
 	default:
 		return "-";
 	}
@@ -683,8 +683,8 @@ void Space::initSetup()
 	timeStepSlider->setMaximum(MAX_TIMESTEP);
 
 	temperatureUnitSelector->add("K");
-	temperatureUnitSelector->add("°C");
-	temperatureUnitSelector->add("°F");
+	temperatureUnitSelector->add("ï¿½C");
+	temperatureUnitSelector->add("ï¿½F");
 	temperatureUnitSelector->select("K");
 	temperatureUnitSelector->setTextSize(10);
 	temperatureUnitSelector->setTabHeight(12);
