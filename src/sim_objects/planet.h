@@ -1,11 +1,11 @@
 #pragma once
-#include "CONSTANTS.h"
+#include "../CONSTANTS.h"
 #include "SimObject.h"
 #include <SFML/Graphics.hpp>
 #include <random>
 #include <vector>
 #include <string_view>
-#include "Life.h"
+#include "../Life.h"
 
 class Planet : public SimObject {
 private:

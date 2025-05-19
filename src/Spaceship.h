@@ -1,6 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "planet.h"
+#include "sim_objects/planet.h"
 
 class SpaceShip
 {

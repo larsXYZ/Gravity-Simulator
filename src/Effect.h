@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <random>
-#include "planet.h"
+#include "sim_objects/planet.h"
 #include "CONSTANTS.h"
 
 class Effect
