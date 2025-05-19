@@ -14,10 +14,6 @@ private:
 	//PHYSICAL
 	pType planetType;
 
-	//TEMPERATURE
-	double tCapacity = 1;
-	double tEnergy = 0.0;
-
 	//ATMOSPHERE
 	double atmoCur = 0;
 	double atmoPot = modernRandomWithLimits(0, maxAtmo);
@@ -70,23 +66,19 @@ public:
 	[[nodiscard]] sf::Color getStarCol() const noexcept;
 	[[nodiscard]] bool isMarkedForRemoval() const noexcept { return marked_for_removal; }
 	[[nodiscard]] double getStrongestAttractorStrength() const noexcept { return STRENGTH_strongest_attractor; }
-	[[nodiscard]] double getTemp() const noexcept { return tEnergy / (getMass() * getTCap()); }
 	[[nodiscard]] double fusionEnergy() const noexcept;
 	[[nodiscard]] double thermalEnergy() const noexcept;
 	[[nodiscard]] double giveThermalEnergy(int t) const noexcept;
-	[[nodiscard]] double getTCap() const noexcept { return tCapacity; }
 	[[nodiscard]] double getCurrentAtmosphere() const noexcept { return atmoCur; }
 	[[nodiscard]] double getAtmospherePotensial() const noexcept { return atmoPot; }
 	[[nodiscard]] const Life& getLife() const noexcept { return life; }
 	[[nodiscard]] double getSupportedBiomass() const noexcept { return supportedBiomass; }
 	[[nodiscard]] GoldilockInfo getGoldilockInfo() const noexcept;
-	[[nodiscard]] double getThermalEnergy() const noexcept { return getTemp() * getMass() * getTCap(); }
 
 	// Setters
 	void setStrongestAttractorIdRef(int id) noexcept;
 	void markForRemoval() noexcept { marked_for_removal = true; }
 	void setStrongestAttractorStrength(double strength) noexcept { STRENGTH_strongest_attractor = strength; }
-	void setTemp(double t) noexcept;
 	void setMass(double m) noexcept override { SimObject::setMass(m); }
 
 	// State checks
@@ -107,7 +99,6 @@ public:
 	void giveID(int i) noexcept;
 	void coolDown(int t) noexcept;
 	void absorbHeat(double e, int t) noexcept;
-	void increaseThermalEnergy(double e) noexcept { setTemp(getTemp() + e / (getMass() * getTCap())); }
 	void updateAtmosphere(int t) noexcept;
 	void colonize(int i, const sf::Color& c, std::string_view d);
 

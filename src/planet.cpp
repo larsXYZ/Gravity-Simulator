@@ -228,13 +228,6 @@ sf::Color Planet::getStarCol() const noexcept
 	return interpolator.getStarColor(getTemp());	
 }
 
-//SIMULATION FUNCTIONS
-
-void Planet::setTemp(double t) noexcept
-{
-	tEnergy = getMass() * t * tCapacity;
-}
-
 double Planet::fusionEnergy() const noexcept
 {
 	switch (planetType)
