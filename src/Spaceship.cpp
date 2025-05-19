@@ -191,10 +191,10 @@ bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 {
 	double dist = sqrt((forcer.getx() - ship.getpos().x)*(forcer.getx() - ship.getpos().x) + (forcer.gety() - ship.getpos().y) * (forcer.gety() - ship.getpos().y));
 
-	if (!isLanded && dist < forcer.getRad())
+	if (!isLanded && dist < forcer.getRadius())
 	{
 		double speed = sqrt((forcer.getxv() - ship.getvel().x)*(forcer.getxv() - ship.getvel().x) + (forcer.getyv() - ship.getvel().y) * (forcer.getyv() - ship.getvel().y));
-		if (speed > maxCollisionSpeed || forcer.getmass() > TERRESTIALLIMIT)
+		if (speed > maxCollisionSpeed || forcer.getMass() > TERRESTIALLIMIT)
 		{
 			destroy();
 			return false;
@@ -211,7 +211,7 @@ bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 	else if (isLanded && forcer.getId() == planetID)
 	{
 
-		if (forcer.getmass() >= TERRESTIALLIMIT)
+		if (forcer.getMass() >= TERRESTIALLIMIT)
 		{
 			destroy();
 			return false;
@@ -220,8 +220,8 @@ bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 		posHold.x = forcer.getx();
 		posHold.y = forcer.gety();
 
-		pos.x = posHold.x + (3.8 + forcer.getRad())*cos(angleHold+PI);
-		pos.y = posHold.y + (3.8 + forcer.getRad())*sin(angleHold+ PI);
+		pos.x = posHold.x + (3.8 + forcer.getRadius())*cos(angleHold+PI);
+		pos.y = posHold.y + (3.8 + forcer.getRadius())*sin(angleHold+ PI);
 		ship.angle = 360*angleHold/(2 * PI)+180;
 
 		speed.x = forcer.getxv();
@@ -230,10 +230,10 @@ bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 	else if (!isLanded)
 	{
 		double angle = atan2(forcer.gety() - ship.getpos().y, forcer.getx() - ship.getpos().x);
-		double xf = G * forcer.getmass() / (dist*dist) * cos(angle);
-		double yf = G * forcer.getmass() / (dist*dist)* sin(angle);
+		double xf = G * forcer.getMass() / (dist*dist) * cos(angle);
+		double yf = G * forcer.getMass() / (dist*dist)* sin(angle);
 
-		if (dist > forcer.getRad())
+		if (dist > forcer.getRadius())
 		{
 			speed.x += xf * timeStep / mass;
 			speed.y += yf * timeStep / mass;

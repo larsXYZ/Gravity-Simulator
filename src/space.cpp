@@ -37,9 +37,9 @@ sf::Vector3f Space::centerOfMass(const std::vector<int> & object_ids)
 	{
 		if (Planet* planet = findPlanetPtr(id))
 		{
-			tMass += planet->getmass();
-			xCont += planet->getmass() * planet->getx();
-			yCont += planet->getmass() * planet->gety();
+			tMass += planet->getMass();
+			xCont += planet->getMass() * planet->getPosition().x;
+			yCont += planet->getMass() * planet->getPosition().y;
 		}
 	}
 	return sf::Vector3f(xCont / tMass, yCont / tMass, tMass);
@@ -54,9 +54,9 @@ sf::Vector2f Space::centerOfMassVelocity(const std::vector<int> & object_ids)
 	{
 		if (Planet * planet = findPlanetPtr(id))
 		{
-			tMass += planet->getmass();
-			xCont += planet->getmass()*planet->getxv();
-			yCont += planet->getmass()*planet->getyv();
+			tMass += planet->getMass();
+			xCont += planet->getMass()*planet->getVelocity().x;
+			yCont += planet->getMass()*planet->getVelocity().y;
 		}
 	}
 	return sf::Vector2f(xCont / tMass, yCont / tMass);
@@ -77,13 +77,13 @@ sf::Vector2f Space::centerOfMassAll()
 	{
 
 		Planet p = planets[i];
-		if (p.getmass() != -1)
+		if (p.getMass() != -1)
 		{
-			double pMass = p.getmass();
+			double pMass = p.getMass();
 
 			tMass += pMass;
-			xCont += pMass*p.getx();
-			yCont += pMass*p.gety();
+			xCont += pMass*p.getPosition().x;
+			yCont += pMass*p.getPosition().y;
 		}
 
 	}
@@ -102,24 +102,24 @@ struct DistanceCalculationResult
 DistanceCalculationResult calculateDistance(const Planet & planet, const Planet & other_planet)
 {
 	DistanceCalculationResult result;
-	result.dx = other_planet.getx() - planet.getx();
-	result.dy = other_planet.gety() - planet.gety();
+	result.dx = other_planet.getPosition().x - planet.getPosition().x;
+	result.dy = other_planet.getPosition().y - planet.getPosition().y;
 	result.dist = std::hypot(result.dx, result.dy);
-	result.rad_dist = planet.getRad() + other_planet.getRad();
+	result.rad_dist = planet.getRadius() + other_planet.getRadius();
 	return result;
 }
 
 struct Acceleration2D
 {
-	double x{ 0.0 };
-	double y{ 0.0 };
+	float x{ 0.0 };
+	float y{ 0.0 };
 };
 
 double accumulate_acceleration(const DistanceCalculationResult & distance_info, 
 						Acceleration2D & acceleration,
 						const Planet & other_planet)
 {
-	const auto A = G * other_planet.getmass() / std::max(distance_info.dist * distance_info.dist, 0.01);
+	const auto A = G * other_planet.getMass() / std::max(distance_info.dist * distance_info.dist, 0.01);
 	const auto angle = atan2(distance_info.dy, distance_info.dx);
 
 	acceleration.x += cos(angle) * A;
@@ -172,9 +172,9 @@ void Space::update()
 
 			if (thisPlanet->canDisintegrate(curr_time) &&
 				distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
-				thisPlanet->getmass() / otherPlanet.getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+				thisPlanet->getMass() / otherPlanet.getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 			{
-				const auto rad = thisPlanet->getRad();
+				const auto rad = thisPlanet->getRadius();
 
 				disintegratePlanet(*thisPlanet);
 				thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
@@ -184,14 +184,14 @@ void Space::update()
 
 			if (distance.dist < distance.rad_dist)
 			{
-				if (thisPlanet->getmass() <= otherPlanet.getmass())
+				if (thisPlanet->getMass() <= otherPlanet.getMass())
 				{
 					thisPlanet->becomeAbsorbedBy(otherPlanet);
 
-					addExplosion(sf::Vector2f(thisPlanet->getx(), thisPlanet->gety()), 
-								2 * thisPlanet->getRad(), 
-								sf::Vector2f(thisPlanet->getxv() * 0.5, thisPlanet->getyv() * 0.5), 
-								sqrt(thisPlanet->getmass()) / 2);
+					addExplosion(sf::Vector2f(thisPlanet->getPosition().x, thisPlanet->getPosition().y), 
+								2 * thisPlanet->getRadius(), 
+								sf::Vector2f(thisPlanet->getVelocity().x * 0.5, thisPlanet->getVelocity().y * 0.5), 
+								sqrt(thisPlanet->getMass()) / 2);
 
 					break;
 				}
@@ -199,7 +199,7 @@ void Space::update()
 
 			if (otherPlanet.emitsHeat())
 			{
-				const auto heat = tempConstTwo * thisPlanet->getRad() * thisPlanet->getRad() * otherPlanet.giveThermalEnergy(timestep) / distance.dist;
+				const auto heat = tempConstTwo * thisPlanet->getRadius() * thisPlanet->getRadius() * otherPlanet.giveThermalEnergy(timestep) / distance.dist;
 				thisPlanet->absorbHeat(heat, timestep);
 			}
 
@@ -216,8 +216,8 @@ void Space::update()
 		/* Integrate (first part) (Leapfrog) */
 		/* https://en.wikipedia.org/wiki/Leapfrog_integration */
 
-		thisPlanet->setx(thisPlanet->getx() + thisPlanet->getxv() * timestep + 0.5 * acc_sum_1.x * timestep * timestep);
-		thisPlanet->sety(thisPlanet->gety() + thisPlanet->getyv() * timestep + 0.5 * acc_sum_1.y * timestep * timestep);
+		thisPlanet->setPosition({ thisPlanet->getPosition().x + thisPlanet->getVelocity().x * timestep + 0.5f * acc_sum_1.x * timestep * timestep,
+									thisPlanet->getPosition().y + thisPlanet->getVelocity().y * timestep + 0.5f * acc_sum_1.y * timestep * timestep });
 
 		Acceleration2D acc_sum_2;
 		for (auto& otherPlanet : planets)
@@ -230,8 +230,8 @@ void Space::update()
 		}
 
 		/* Integrate (second part) (Leapfrog) */
-		thisPlanet->setxv(thisPlanet->getxv() + 0.5 * (acc_sum_1.x + acc_sum_2.x) * timestep);
-		thisPlanet->setyv(thisPlanet->getyv() + 0.5 * (acc_sum_1.y + acc_sum_2.y) * timestep);
+		thisPlanet->setVelocity({ thisPlanet->getVelocity().x + 0.5f * (acc_sum_1.x + acc_sum_2.x) * timestep,
+									thisPlanet->getVelocity().y + 0.5f * (acc_sum_1.y + acc_sum_2.y) * timestep });
 	}
 
 	std::erase_if(planets, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
@@ -256,7 +256,7 @@ void Space::update()
 		//PLANETS
 		for (size_t i = 0; i < planets.size(); i++)
 		{
-			if (bound.isOutside(sf::Vector2f(planets[i].getx(), planets[i].gety())))
+			if (bound.isOutside(sf::Vector2f(planets[i].getPosition().x, planets[i].getPosition().y)))
 				removePlanet(planets[i].getId());
 		}
 		
@@ -272,7 +272,7 @@ void Space::update()
 		bound.setRad(START_RADIUS);
 	}
 
-	total_mass = std::accumulate(planets.begin(), planets.end(), 0.0, [](auto v, const auto & p) {return v + p.getmass(); });
+	total_mass = std::accumulate(planets.begin(), planets.end(), 0.0, [](auto v, const auto & p) {return v + p.getMass(); });
 }
 
 void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& window)
@@ -321,8 +321,8 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 	{
 		double mass = uniform_random(0.6*totmass /antall, 1.4*totmass /antall);
 
-		radius = std::max(radius, 2 * centerP.getRad());
-		double radius2 = uniform_random(2*centerP.getRad() , radius);
+		radius = std::max(radius, 2 * centerP.getRadius());
+		double radius2 = uniform_random(2*centerP.getRadius() , radius);
 		double randomelement1 = uniform_random(-speedmultRandom*0.5, speedmultRandom*0.5);
 		double randomelement2 = uniform_random(-speedmultRandom*0.5, speedmultRandom*0.5);
 
@@ -345,8 +345,8 @@ bool Space::auto_bound_active() const
 
 void Space::set_ambient_temperature(Planet& planet)
 {
-	planet.setTemp((planet.fusionEnergy() / (planet.getRad() * planet.getRad() * SBconst))
-		+ thermalEnergyAtPosition(sf::Vector2f(planet.getx(), planet.gety())) * tempConstTwo / SBconst);
+	planet.setTemp((planet.fusionEnergy() / (planet.getRadius() * planet.getRadius() * SBconst))
+		+ thermalEnergyAtPosition(sf::Vector2f(planet.getPosition().x, planet.getPosition().y)) * tempConstTwo / SBconst);
 }
 
 void Space::removePlanet(const int id)
@@ -403,38 +403,38 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 	if (match == planets.end())
 		return {};
 
-	if (match->getmass() < MINIMUMBREAKUPSIZE)
+	if (match->getMass() < MINIMUMBREAKUPSIZE)
 		return {};
 
 	const auto& particles_by_rad = [planet]()
 	{
-		return static_cast<size_t>(50 * planet.getRad());
+		return static_cast<size_t>(50 * planet.getRadius());
 	};
 
 	const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
 		static_cast<size_t>(0), particles_by_rad());
 	for (size_t i = 0; i < n_dust_particles; i++)
 	{
-		const auto scatter_pos = sf::Vector2f(planet.getx(), planet.gety()) + random_vector(planet.getRad());
-		const auto scatter_vel = sf::Vector2f(planet.getxv(), planet.getyv()) + CREATEDUSTSPEEDMULT * random_vector(20.0);
+		const auto scatter_pos = sf::Vector2f(planet.getPosition().x, planet.getPosition().y) + random_vector(planet.getRadius());
+		const auto scatter_vel = sf::Vector2f(planet.getVelocity().x, planet.getVelocity().y) + CREATEDUSTSPEEDMULT * random_vector(20.0);
 		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
 		addSmoke(scatter_pos, scatter_vel, 2, lifespan);
 	}
 
-	const auto n_planets{ std::floor(planet.getmass() / MINIMUMBREAKUPSIZE) };
-	const auto mass_per_planet = planet.getmass() / n_planets;
+	const auto n_planets{ std::floor(planet.getMass() / MINIMUMBREAKUPSIZE) };
+	const auto mass_per_planet = planet.getMass() / n_planets;
 
 	std::vector<int> generated_ids;
 	for (int n = 0; n < n_planets; n++)
 	{
-		Planet p(mass_per_planet, planet.getx(), planet.gety(), 
-			planet.getxv(), planet.getyv());
+		Planet p(mass_per_planet, planet.getPosition().x, planet.getPosition().y, 
+			planet.getVelocity().x, planet.getVelocity().y);
 
-		const auto offset_dist = uniform_random(0.0, planet.getRad() - p.getRad());
-		const auto angle_offset = uniform_random(0.0, 2.0 * PI);
+		const float offset_dist = uniform_random(0.0, planet.getRadius() - p.getRadius());
+		const float angle_offset = uniform_random(0.0, 2.0 * PI);
 
-		p.setx(p.getx() + cos(angle_offset) * offset_dist);
-		p.sety(p.gety() + sin(angle_offset) * offset_dist);
+		p.setPosition({ p.getPosition().x + cos(angle_offset) * offset_dist, 
+						p.getPosition().y + sin(angle_offset) * offset_dist });
 		p.setTemp(uniform_random(3500.,6000.));
 
 		generated_ids.push_back(addPlanet(std::move(p)));
@@ -457,16 +457,16 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 
 void Space::explodePlanet(Planet planet)
 {
-	const float original_mass = planet.getmass();
+	const float original_mass = planet.getMass();
 
-	const sf::Vector2f original_position = { static_cast<float>(planet.getx()),
-										static_cast<float>(planet.gety()) };
+	const sf::Vector2f original_position = { static_cast<float>(planet.getPosition().x),
+										static_cast<float>(planet.getPosition().y) };
 
-	const sf::Vector2f original_velocity = { static_cast<float>(planet.getxv()),
-										static_cast<float>(planet.getyv()) };
+	const sf::Vector2f original_velocity = { static_cast<float>(planet.getVelocity().x),
+										static_cast<float>(planet.getVelocity().y) };
 
-	const auto lifetime = 0.1 * planet.getRad();
-	const auto size = 5.0 * planet.getRad();
+	const auto lifetime = 0.1 * planet.getRadius();
+	const auto size = 5.0 * planet.getRadius();
 
 	addExplosion(original_position, size, original_velocity, lifetime);
 
@@ -475,16 +475,16 @@ void Space::explodePlanet(Planet planet)
 	{
 		if (auto fragment = findPlanetPtr(id))
 		{
-			const sf::Vector2f fragment_pos = { static_cast<float>(fragment->getx()),
-													static_cast<float>(fragment->gety()) };
+			const sf::Vector2f fragment_pos = { static_cast<float>(fragment->getPosition().x),
+													static_cast<float>(fragment->getPosition().y) };
 
 			const sf::Vector2f to_fragment = (fragment_pos - original_position);
 
 			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * sqrt(original_mass) * to_fragment / std::max(std::hypot(to_fragment.x, to_fragment.y), 0.1f) *	
 												static_cast<float>(uniform_random(0.85, 1.15));
 
-			fragment->setxv(fragment->getxv() + escape_speed.x);
-			fragment->setyv(fragment->getyv() + escape_speed.y);
+			fragment->setVelocity({ fragment->getVelocity().x * escape_speed.x,
+									fragment->getVelocity().y * escape_speed.y });
 		}
 	}
 }
@@ -555,10 +555,10 @@ void Space::giveRings(const Planet & planet, int inner, int outer)
 	for (int i = 0; i < particle_count; i++)
 	{
 		const double rad = ((double) uniform_random(inner*1000, outer*1000))/1000;
-		const double speed = sqrt(G*planet.getmass() / rad);
+		const double speed = sqrt(G*planet.getMass() / rad);
 
-		const auto pos = sf::Vector2f(planet.getx() + cos(angle) * rad, planet.gety() + sin(angle) * rad);
-		const auto vel = sf::Vector2f(speed * cos(angle + PI / 2.0) + planet.getxv(), speed * sin(angle + PI / 2.0));
+		const auto pos = sf::Vector2f(planet.getPosition().x + cos(angle) * rad, planet.getPosition().y + sin(angle) * rad);
+		const auto vel = sf::Vector2f(speed * cos(angle + PI / 2.0) + planet.getVelocity().x, speed * sin(angle + PI / 2.0));
 		
 		particles->add_particle(pos, vel, 1, curr_time+2000000);
 
@@ -585,7 +585,7 @@ void Space::update_spaceship()
 {
 	if (ship.getLandedState())
 	{
-		if (findPlanet(ship.getPlanetID()).getmass() == -1)
+		if (findPlanet(ship.getPlanetID()).getMass() == -1)
 			ship.setLandedstate(false);
 	}
 
@@ -746,7 +746,7 @@ void Space::drawPlanets(sf::RenderWindow &window)
 	//DRAWING PLANETS																										
 	for(size_t i = 0; i < planets.size(); i++)
 	{
-		planets[i].draw(window);
+		planets[i].render(window);
 	}
 }
 
@@ -790,9 +790,9 @@ double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 
 	for(size_t i = 0; i < planets.size(); i++)
 	{
-		if (planets[i].getmass() < BIGSTARLIMIT && planets[i].getmass() >= GASGIANTLIMIT)
+		if (planets[i].getMass() < BIGSTARLIMIT && planets[i].getMass() >= GASGIANTLIMIT)
 		{
-			tEnergyFromOutside += planets[i].giveThermalEnergy(1)/ sqrt((planets[i].getx() - pos.x)*(planets[i].getx() - pos.x) + (planets[i].gety() - pos.y) * (planets[i].gety() - pos.y));
+			tEnergyFromOutside += planets[i].giveThermalEnergy(1)/ sqrt((planets[i].getPosition().x - pos.x)*(planets[i].getPosition().x - pos.x) + (planets[i].getPosition().y - pos.y) * (planets[i].getPosition().y - pos.y));
 		}
 	}
 

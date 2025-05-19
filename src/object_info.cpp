@@ -36,7 +36,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 	
 	sf::Vertex l[] =
 	{
-		sf::Vertex(sf::Vector2f(pos.x + 1.5 * target->getRad(), pos.y + 1.5 * target->getRad()),sf::Color::Cyan),
+		sf::Vertex(sf::Vector2f(pos.x + 1.5 * target->getRadius(), pos.y + 1.5 * target->getRadius()),sf::Color::Cyan),
 		sf::Vertex(pos, sf::Color::Cyan)
 	};
 	window.draw(l, 2, sf::Lines);
@@ -61,7 +61,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		};
 		window.draw(g, 2, sf::Lines);
 
-		double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (target_parent->getRad() + target->getRad());
+		double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (target_parent->getRadius() + target->getRadius());
 		sf::CircleShape omr(rocheRad);
 		omr.setPosition(sf::Vector2f(target_parent->getx(), target_parent->gety()));
 		omr.setOrigin(rocheRad, rocheRad);
@@ -77,7 +77,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		double dist = std::hypot(target_parent->getx() - pos.x, 
 									target_parent->gety() - pos.y);
 
-		dist *= (target_parent->getmass()) / (target->getmass() + target_parent->getmass());
+		dist *= (target_parent->getMass()) / (target->getMass() + target_parent->getMass());
 		double angleb = atan2(target_parent->gety() - target->gety(), target_parent->getx() - target->getx());
 
 		middle.setPosition(target->getx() + dist * cos(angleb),
@@ -86,8 +86,8 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		
 		if (target->getType() == SMALLSTAR || target->getType() == STAR || target->getType() == BIGSTAR)
 		{
-			double goldilock_inner_rad = (tempConstTwo * target->getRad() * target->getRad() * target->getTemp()) / inner_goldi_temp;
-			double goldilock_outer_rad = (tempConstTwo * target->getRad() * target->getRad() * target->getTemp()) / outer_goldi_temp;
+			double goldilock_inner_rad = (tempConstTwo * target->getRadius() * target->getRadius() * target->getTemp()) / inner_goldi_temp;
+			double goldilock_outer_rad = (tempConstTwo * target->getRadius() * target->getRadius() * target->getTemp()) / outer_goldi_temp;
 
 			sf::CircleShape g(goldilock_inner_rad);
 			g.setPointCount(60);
@@ -125,9 +125,9 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 				};
 				window.draw(q, 2, sf::Lines);
 
-				sf::CircleShape indicator(planet.getRad() + 5);
+				sf::CircleShape indicator(planet.getRadius() + 5);
 				indicator.setPosition(sf::Vector2f(planet.getx(), planet.gety()));
-				indicator.setOrigin(planet.getRad() + 5, planet.getRad() + 5);
+				indicator.setOrigin(planet.getRadius() + 5, planet.getRadius() + 5);
 				indicator.setFillColor(sf::Color(0, 0, 0, 0));
 				indicator.setOutlineColor(planet.getLife().getCol());
 				indicator.setOutlineThickness(3.*space.click_and_drag_handler.get_zoom());
@@ -136,15 +136,15 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		}
 	}
 	
-	text.setPosition(pos.x + 1.5 * target->getRad(), 
-						pos.y + 1.5 * target->getRad());
+	text.setPosition(pos.x + 1.5 * target->getRadius(), 
+						pos.y + 1.5 * target->getRadius());
 
 	const auto selected_temp_unit = static_cast<TemperatureUnit>(space.temperatureUnitSelector->getSelectedIndex());
 
 	text.setString(target->getName() + 
 		"\nType: " + std::string(target->getTypeString(target->getType())) + 
-		"\nRadius: " + std::to_string(static_cast<int>(target->getRad())) +
-		"\nMass: " + std::to_string(static_cast<int>(target->getmass())) +
+		"\nRadius: " + std::to_string(static_cast<int>(target->getRadius())) +
+		"\nMass: " + std::to_string(static_cast<int>(target->getMass())) +
 		"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) + 
 		"\nTemperature: " + Space::temperature_info_string(target->getTemp(), selected_temp_unit));
 
@@ -157,7 +157,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 	{
 		//FINDING GREENHOUSE EFFECT
 		const auto dTherEnergy = target->thermalEnergy() - target->thermalEnergy() / (1 + greenHouseEffectMult * target->getCurrentAtmosphere());
-		const auto dTemp = dTherEnergy / (target->getmass() * target->getTCap());
+		const auto dTemp = dTherEnergy / (target->getMass() * target->getTCap());
 		std::string dTempString;
 		if (selected_temp_unit == TemperatureUnit::KELVIN)
 			dTempString = Space::temperature_info_string(dTemp, selected_temp_unit);

@@ -85,8 +85,8 @@ public:
 			if (mouseToggle)
 			{
 				Planet R(context.mass_slider->getValue());
-				sf::CircleShape tempCircle(R.getRad());
-				tempCircle.setOrigin(R.getRad(), R.getRad());
+				sf::CircleShape tempCircle(R.getRadius());
+				tempCircle.setOrigin(R.getRadius(), R.getRadius());
 				tempCircle.setPosition(start_pos);
 				tempCircle.setFillColor(sf::Color(255, 0, 0, 100));
 				context.window.draw(tempCircle);
@@ -149,7 +149,7 @@ public:
 				{
 					const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 														planet.gety() - context.mouse_pos_world.y);
-					if (dist < planet.getRad())
+					if (dist < planet.getRadius())
 					{
 						target_planet_id = planet.getId();
 						state = InOrbitFunctionState::PARENT_FOUND;
@@ -204,7 +204,7 @@ public:
 				center_point.setFillColor(sf::Color(255, 0, 0));
 				
 				double dist = std::hypot(context.mouse_pos_world.x - target->getx(), context.mouse_pos_world.y - target->gety());
-				dist = dist * (temp_planet.getmass()) / (temp_planet.getmass() + target->getmass());
+				dist = dist * (temp_planet.getMass()) / (temp_planet.getMass() + target->getMass());
 				double angleb = atan2(context.mouse_pos_world.y - target->gety(), context.mouse_pos_world.x - target->getx());
 
 				center_point.setPosition(target->getx() + dist * cos(angleb), target->gety() + dist * sin(angleb));
@@ -212,9 +212,9 @@ public:
 
 				//DRAWING ROCHE LIMIT
 				if (context.mass_slider->getValue() > MINIMUMBREAKUPSIZE 
-					&& context.mass_slider->getValue() / target->getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+					&& context.mass_slider->getValue() / target->getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 				{
-					double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (temp_planet.getRad() + target->getRad());
+					double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (temp_planet.getRadius() + target->getRadius());
 
 					sf::CircleShape viz(rocheRad);
 					viz.setPosition(sf::Vector2f(target->getx(), target->gety()));
@@ -227,8 +227,8 @@ public:
 				}
 
 				//DRAWING PLANET
-				sf::CircleShape bump(temp_planet.getRad());
-				bump.setOrigin(temp_planet.getRad(), temp_planet.getRad());
+				sf::CircleShape bump(temp_planet.getRadius());
+				bump.setOrigin(temp_planet.getRadius(), temp_planet.getRadius());
 				bump.setFillColor(sf::Color::Red);
 				bump.setPosition(context.mouse_pos_world);
 				context.window.draw(bump);
@@ -236,14 +236,14 @@ public:
 				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
 				{
 
-					const auto speed = sqrt(G * (target->getmass() + context.mass_slider->getValue()) / rad);
+					const auto speed = sqrt(G * (target->getMass() + context.mass_slider->getValue()) / rad);
 					const auto angle = atan2(context.mouse_pos_world.y - target->gety(), context.mouse_pos_world.x - target->getx());
 
 					//To keep total momentum change = 0
-					const auto normalizing_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + target->getmass());
+					const float normalizing_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + target->getMass());
 
-					target->setxv(target->getxv() - normalizing_speed * cos(angle + PI / 2.0));
-					target->setyv(target->getyv() - normalizing_speed * sin(angle + PI / 2.0));
+					target->setVelocity({ target->getxv() - normalizing_speed * cosf(angle + PI / 2.0),
+											target->getyv() - normalizing_speed * sinf(angle + PI / 2.0) });
 
 					Planet new_planet(context.mass_slider->getValue(),
 						target->getx() + rad * cos(angle),
@@ -274,7 +274,7 @@ public:
 		{
 			const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 				planet.gety() - context.mouse_pos_world.y);
-			if (dist < planet.getRad())
+			if (dist < planet.getRadius())
 			{
 				planet.markForRemoval();
 				return;
@@ -326,7 +326,7 @@ public:
 			{
 				const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 					planet.gety() - context.mouse_pos_world.y);
-				if (dist < planet.getRad())
+				if (dist < planet.getRadius())
 				{
 					target_planet_id = planet.getId();
 					state = AddRingsFunctionState::PARENT_FOUND;
@@ -348,7 +348,7 @@ public:
 				const auto rad = std::hypot(context.mouse_pos_world.x - parent->getx(),
 													context.mouse_pos_world.y - parent->gety());
 
-				if (rad < parent->getRad())
+				if (rad < parent->getRadius())
 				{
 					if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
 						reset();
@@ -506,7 +506,7 @@ public:
 			{
 				const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 					planet.gety() - context.mouse_pos_world.y);
-				if (dist >= planet.getRad())
+				if (dist >= planet.getRadius())
 					continue;
 				context.space.object_tracker.activate(planet.getId());
 				return;
@@ -527,7 +527,7 @@ public:
 			{
 				const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 					planet.gety() - context.mouse_pos_world.y);
-				if (dist >= planet.getRad())
+				if (dist >= planet.getRadius())
 					continue;
 				context.space.object_info.activate(planet.getId());
 				return;
@@ -563,7 +563,7 @@ public:
 			for (const auto& planet : context.space.planets)
 			{
 				if (std::hypot(planet.getx() - context.mouse_pos_world.x,
-					planet.gety() - context.mouse_pos_world.y) < planet.getRad())
+					planet.gety() - context.mouse_pos_world.y) < planet.getRadius())
 				{
 					auto match = std::find(object_ids.begin(), object_ids.end(), planet.getId());
 					if (match == object_ids.end())
@@ -582,7 +582,7 @@ public:
 				const auto speed = sqrt(G * (massCenterInfoVector.z + context.mass_slider->getValue()) / rad);
 				const auto angle = atan2(context.mouse_pos_world.y - massCenterInfoVector.y,
 					context.mouse_pos_world.x - massCenterInfoVector.x);
-				const auto adjust_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + massCenterInfoVector.z);
+				const float adjust_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + massCenterInfoVector.z);
 
 
 				Planet new_planet(context.mass_slider->getValue(),
@@ -598,8 +598,8 @@ public:
 				{
 					if (Planet* planet = context.space.findPlanetPtr(id))
 					{
-						planet->setxv(planet->getxv() - adjust_speed * cos(angle + PI / 2.0));
-						planet->setyv(planet->getyv() - adjust_speed * sin(angle + PI / 2.0));
+						planet->setVelocity({ planet->getxv() - adjust_speed * cosf(angle + PI / 2.0), 
+							planet->getyv() - adjust_speed * sinf(angle + PI / 2.0) });
 					}
 				}
 
@@ -623,7 +623,7 @@ public:
 		{
 			Planet* planet = context.space.findPlanetPtr(id);
 			
-			sf::CircleShape indicator(planet->getRad() + 10);
+			sf::CircleShape indicator(planet->getRadius() + 10);
 			indicator.setPosition(planet->getx(), planet->gety());
 			indicator.setOrigin(indicator.getRadius(), indicator.getRadius());
 			indicator.setFillColor(sf::Color(0, 0, 0, 0));
@@ -652,8 +652,8 @@ public:
 
 				//DRAWING PLANET
 				Planet temp(context.mass_slider->getValue());
-				sf::CircleShape bump(temp.getRad());
-				bump.setOrigin(temp.getRad(), temp.getRad());
+				sf::CircleShape bump(temp.getRadius());
+				bump.setOrigin(temp.getRadius(), temp.getRadius());
 				bump.setFillColor(sf::Color::Red);
 				bump.setPosition(context.mouse_pos_world);
 				context.window.draw(bump);
@@ -675,7 +675,7 @@ public:
 			for (const auto planet : context.space.planets)
 			{
 				if (std::hypot(planet.getx() - context.mouse_pos_world.x,
-					planet.gety() - context.mouse_pos_world.y) < planet.getRad())
+					planet.gety() - context.mouse_pos_world.y) < planet.getRadius())
 				{
 					context.space.explodePlanet(planet);
 					return;
@@ -699,7 +699,7 @@ public:
 
 		if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
-			if (has_center && context.bound.getRad() > BOUND_MIN_RAD)
+			if (has_center && context.bound.getRadius() > BOUND_MIN_RAD)
 			{
 				context.bound.setActiveState(true);
 				reset();
@@ -719,7 +719,7 @@ public:
 								context.mouse_pos_world.y - context.bound.getPos().y);
 		context.bound.setRad(rad);
 
-		if (context.bound.getRad() > BOUND_MIN_RAD)
+		if (context.bound.getRadius() > BOUND_MIN_RAD)
 			context.bound.render(context.window, context.zoom);
 
 	}

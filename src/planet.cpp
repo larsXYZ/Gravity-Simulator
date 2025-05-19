@@ -3,16 +3,13 @@
 #include <sstream>
 
 Planet::Planet()
+	: SimObject({0.f, 0.f}, {0.f, 0.f})
 {
-	mass = 6;
-	x = 0;
-	y = 0;
-	xv = 0;
-	yv = 0;
+	setMass(6);
 
 	randBrightness = modernRandomWithLimits(-30, +30);
 	updateRadiAndType();
-	circle.setPosition(x, y);
+	circle.setPosition(position);
 
 	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
 	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
@@ -21,16 +18,13 @@ Planet::Planet()
 }
 
 Planet::Planet(double m)
+	: SimObject({0.f, 0.f}, {0.f, 0.f})
 {
-	mass = m;
-	x = 0;
-	y = 0;
-	xv = 0;
-	yv = 0;
+	setMass(m);
 
 	randBrightness = modernRandomWithLimits(-30, +30);
 	updateRadiAndType();
-	circle.setPosition(x, y);
+	circle.setPosition(position);
 
 	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
 	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
@@ -39,16 +33,13 @@ Planet::Planet(double m)
 }
 
 Planet::Planet(double m, double xx, double yy)
+	: SimObject({static_cast<float>(xx), static_cast<float>(yy)}, {0.f, 0.f})
 {
-	mass = m;
-	x = xx;
-	y = yy;
-	xv = 0;
-	yv = 0;
+	setMass(m);
 
 	randBrightness = modernRandomWithLimits(-30, +30);
 	updateRadiAndType();
-	circle.setPosition(x, y);
+	circle.setPosition(position);
 
 	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
 	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
@@ -57,16 +48,13 @@ Planet::Planet(double m, double xx, double yy)
 }
 
 Planet::Planet(double m, double xx, double yy, double xvv, double yvv)
+	: SimObject({static_cast<float>(xx), static_cast<float>(yy)}, {static_cast<float>(xvv), static_cast<float>(yvv)})
 {
-	mass = m;
-	x = xx;
-	y = yy;
-	xv = xvv;
-	yv = yvv;
+	setMass(m);
 
 	randBrightness = modernRandomWithLimits(-30, +30);
 	updateRadiAndType();
-	circle.setPosition(x, y);
+	circle.setPosition(position);
 
 	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
 	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
@@ -76,8 +64,9 @@ Planet::Planet(double m, double xx, double yy, double xvv, double yvv)
 
 double Planet::getDist(const Planet& forcer) const noexcept
 {
+	const auto& otherPos = forcer.getPosition();
 	return sqrt(
-		(forcer.getx() - x) * (forcer.getx() - x) + (forcer.gety() - y) * (forcer.gety() - y));
+		(otherPos.x - position.x) * (otherPos.x - position.x) + (otherPos.y - position.y) * (otherPos.y - position.y));
 }
 
 std::string Planet::getTypeString(pType type) noexcept
@@ -243,7 +232,7 @@ sf::Color Planet::getStarCol() const noexcept
 
 void Planet::setTemp(double t) noexcept
 {
-	tEnergy = mass * t * tCapacity;
+	tEnergy = getMass() * t * tCapacity;
 }
 
 double Planet::fusionEnergy() const noexcept
@@ -257,11 +246,11 @@ double Planet::fusionEnergy() const noexcept
 	case GASGIANT:
 		return 0;
 	case SMALLSTAR:
-		return HEAT_SMALL_STAR_MULT * mass;
+		return HEAT_SMALL_STAR_MULT * getMass();
 	case STAR:
-		return HEAT_STAR_MULT * mass;
+		return HEAT_STAR_MULT * getMass();
 	case BIGSTAR:
-		return HEAT_BIG_STAR_MULT * mass;
+		return HEAT_BIG_STAR_MULT * getMass();
 	default:
 		return 0;
 	}
@@ -275,7 +264,7 @@ double Planet::thermalEnergy() const noexcept
 void Planet::coolDown(int t) noexcept
 {
 	// Thermal radiation loss (Stefan-Boltzmann law)
-	tEnergy -= t * (SBconst * radi * radi * getTemp());
+	tEnergy -= t * (SBconst * radius * radius * getTemp());
 	
 	// Add energy from fusion
 	tEnergy += t * fusionEnergy();
@@ -288,10 +277,15 @@ void Planet::absorbHeat(double e, int t) noexcept
 
 double Planet::giveThermalEnergy(int t) const noexcept
 {
-	return t * (SBconst * (radi * radi * getTemp()));
+	return t * (SBconst * (radius * radius * getTemp()));
 }
 
-void Planet::update_planet_sim(double timestep) noexcept
+void Planet::update(double timestep)
+{
+	update_planet_sim(timestep);
+}
+
+void Planet::update_planet_sim(double timestep)
 {
 	coolDown(timestep);
 	setColor();
@@ -304,7 +298,7 @@ bool Planet::canDisintegrate(double curr_time) const noexcept
 	if (getType() == BLACKHOLE)
 		return false;
 
-	if (getmass() < MINIMUMBREAKUPSIZE)
+	if (getMass() < MINIMUMBREAKUPSIZE)
 		return false;
 
 	if (!ignore_ids.empty())
@@ -344,31 +338,31 @@ void Planet::becomeAbsorbedBy(Planet& absorbing_planet)
 {
 	markForRemoval();
 	absorbing_planet.collision(*this);
-	absorbing_planet.incMass(getmass());
+	absorbing_planet.incMass(getMass());
 }
 
 void Planet::updateRadiAndType() noexcept
 {
-	if (mass < ROCKYLIMIT)
+	if (getMass() < ROCKYLIMIT)
 	{
 		planetType = ROCKY;
 		density = 0.5;
 		circle.setOutlineThickness(0);
 		circle.setPointCount(30);
 	}
-	else if (mass < TERRESTIALLIMIT)
+	else if (getMass() < TERRESTIALLIMIT)
 	{
 		planetType = TERRESTIAL;
 		density = 0.5;
 		circle.setPointCount(40);
 	}
-	else if (mass < GASGIANTLIMIT)
+	else if (getMass() < GASGIANTLIMIT)
 	{
 		planetType = GASGIANT;
 		density = 0.3;
 		circle.setPointCount(50);
 	}
-	else if (mass < SMALLSTARLIMIT)
+	else if (getMass() < SMALLSTARLIMIT)
 	{
 		planetType = SMALLSTAR;
 		density = 0.2;
@@ -376,14 +370,14 @@ void Planet::updateRadiAndType() noexcept
 		circle.setOutlineThickness(3);
 		circle.setPointCount(90);
 	}
-	else if (mass < STARLIMIT)
+	else if (getMass() < STARLIMIT)
 	{
 		planetType = STAR;
 		density = 0.15;
 		circle.setOutlineThickness(7);
 		circle.setPointCount(90);
 	}
-	else if (mass < BIGSTARLIMIT)
+	else if (getMass() < BIGSTARLIMIT)
 	{
 		planetType = BIGSTAR;
 		density = 0.1;
@@ -404,44 +398,44 @@ void Planet::updateRadiAndType() noexcept
 	if (planetType == BLACKHOLE)
 	{
 		// Schwarzschild radius
-		radi = 2 * mass * G / (SPEED_OF_LIGHT * SPEED_OF_LIGHT);
-		radi *= 3e16;
+		radius = 2 * getMass() * G / (SPEED_OF_LIGHT * SPEED_OF_LIGHT);
+		radius *= 3e16;
 	}
 	else
 	{
-		radi = cbrt(mass) / density;
+		radius = cbrt(getMass()) / density;
 	}
-	circle.setRadius(radi);
-	circle.setOrigin(radi, radi);
+	circle.setRadius(radius);
+	circle.setOrigin(radius, radius);
 }
 
 void Planet::incMass(double m) noexcept
 {
-	mass += m;
+	setMass(getMass() + m);
 	updateRadiAndType();
 }
 
 void Planet::collision(const Planet& p)
 {
 	// Conservation of momentum
-	xv = (mass * xv + p.mass * p.getxv()) / (mass + p.getmass());
-	yv = (mass * yv + p.mass * p.getyv()) / (mass + p.getmass());
+	velocity.x = (getMass() * velocity.x + p.getMass() * p.getVelocity().x) / (getMass() + p.getMass());
+	velocity.y = (getMass() * velocity.y + p.getMass() * p.getVelocity().y) / (getMass() + p.getMass());
 
 	// Calculate kinetic energy converted to heat
-	const auto dXV = xv - p.getxv();
-	const auto dYV = yv - p.getyv();
-	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getmass()));
+	const auto dXV = velocity.x - p.getVelocity().x;
+	const auto dYV = velocity.y - p.getVelocity().y;
+	increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * ((dXV * dXV + dYV * dYV) * p.getMass()));
 
 	// Transfer thermal energy from the colliding planet
 	// We use mass ratio to determine how much thermal energy is transferred
-	const double mass_ratio = p.getmass() / (mass + p.getmass());
+	const double mass_ratio = p.getMass() / (getMass() + p.getMass());
 	increaseThermalEnergy(p.thermalEnergy() * mass_ratio);
 }
 
 void Planet::render_shine(sf::RenderWindow& window, const sf::Color& col, double luminosity) const
 {
 	sf::VertexArray vertexArr(sf::TrianglesFan);
-	vertexArr.append(sf::Vertex(sf::Vector2f(x, y), col));
+	vertexArr.append(sf::Vertex(sf::Vector2f(position.x, position.y), col));
 	sf::Color local_col = col;
 	local_col.a = 0;
 	const auto delta_angle = 2 * PI / static_cast<double>(LIGHT_NUMBER_OF_VERTECES);
@@ -449,12 +443,12 @@ void Planet::render_shine(sf::RenderWindow& window, const sf::Color& col, double
 	auto rad = luminosity;
 	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
 	{
-		sf::Vector2f pos(x + cos(angle) * rad, 
-		                 y + sin(angle) * rad);
+		sf::Vector2f pos(position.x + cos(angle) * rad, 
+		                 position.y + sin(angle) * rad);
 		vertexArr.append(sf::Vertex(pos, local_col));
 		angle += delta_angle;
 	}
-	vertexArr.append(sf::Vertex(sf::Vector2f(x + rad, y), local_col));
+	vertexArr.append(sf::Vertex(sf::Vector2f(position.x + rad, position.y), local_col));
 	window.draw(vertexArr);
 }
 
@@ -469,7 +463,7 @@ void Planet::draw_starshine(sf::RenderWindow& window) const
 
 	//SHORT RANGE LIGHT
 	col.a = 250;
-	const auto short_range_luminosity = 1.5 * getRad();
+	const auto short_range_luminosity = 1.5 * getRadius();
 	render_shine(window, col, short_range_luminosity);
 }
 
@@ -492,7 +486,7 @@ void Planet::draw_planetshine(sf::RenderWindow& window) const
 
 	const auto temp_effect = temp_effect_by_temp();
 	if (temp_effect > 0.1)
-		render_shine(window, col, temp_effect * getRad());
+		render_shine(window, col, temp_effect * getRadius());
 }
 
 sf::Color temperature_effect(double temp)
@@ -532,9 +526,9 @@ void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
 	}
 }
 
-void Planet::draw(sf::RenderWindow& window)
+void Planet::render(sf::RenderWindow& window) const
 {
-	circle.setPosition(x, y);
+	circle.setPosition(position);
 
 	switch (getType())
 	{
@@ -593,11 +587,6 @@ void Planet::setColor() noexcept
 	}
 }
 
-void Planet::setMass(double m) noexcept
-{
-	mass = m;
-}
-
 void Planet::updateAtmosphere(int t) noexcept
 {
 	if (planetType != TERRESTIAL)
@@ -635,7 +624,7 @@ void Planet::updateLife(int t)
 				(atmoCur - LIFE_PREFERRED_ATMO), 2))) - 5000;
 		if (supportedBiomass < 0) supportedBiomass = 0;
 
-		life.update(supportedBiomass, t, radi);
+		life.update(supportedBiomass, t, radius);
 	}
 	else
 	{
@@ -666,7 +655,7 @@ std::string convertDoubleToString(double number)
 
 	convert << number;
 
-	return convert.str();
+	return Result;
 }
 
 [[nodiscard]] std::string Planet::generate_name()
@@ -696,7 +685,7 @@ std::string convertDoubleToString(double number)
 
 Planet::GoldilockInfo Planet::getGoldilockInfo() const noexcept
 {
-	const auto goldilock_inner_rad = (tempConstTwo * getRad() * getRad() * getTemp()) / inner_goldi_temp;
-	const auto goldilock_outer_rad = (tempConstTwo * getRad() * getRad() * getTemp()) / outer_goldi_temp;
+	const auto goldilock_inner_rad = (tempConstTwo * getRadius() * getRadius() * getTemp()) / inner_goldi_temp;
+	const auto goldilock_outer_rad = (tempConstTwo * getRadius() * getRadius() * getTemp()) / outer_goldi_temp;
 	return { goldilock_inner_rad, goldilock_outer_rad };
 }

@@ -61,8 +61,8 @@ const int FLASH_SIZE = 1.2;
 const int UI_SEPERATION_DISTANCE = 5; //SEPERATION OF UI ELEMENTS
 
 //PHYSICS DELTA TIME
-const double TIMESTEP_VALUE_START = 10.0;
-const double MAX_TIMESTEP = 50.0;
+const float TIMESTEP_VALUE_START = 10.0;
+const float MAX_TIMESTEP = 50.0;
 
 //TRAIL
 const double TRAILRAD = 1.2;

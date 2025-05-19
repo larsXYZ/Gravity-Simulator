@@ -16,7 +16,7 @@ public:
 
 	void setRad(double r);
 
-	double getRad() const;
+	double getRadius() const;
 
 	void setActiveState(bool state);
 

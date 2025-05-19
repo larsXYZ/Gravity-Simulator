@@ -30,7 +30,7 @@ void Bound::setRad(double r)
 	indicator.setOrigin(r, r);
 }
 
-double Bound::getRad() const
+double Bound::getRadius() const
 {
 	return indicator.getRadius();
 }

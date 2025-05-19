@@ -1,28 +1,22 @@
 #pragma once
 #include "CONSTANTS.h"
+#include "SimObject.h"
 #include <SFML/Graphics.hpp>
 #include <random>
 #include <vector>
 #include <string_view>
 #include "Life.h"
 
-class Planet {
+class Planet : public SimObject {
 private:
 	std::string name = generate_name();
 
 	//PHYSICAL
-	double mass;
-	double x;
-	double y;
-	double xv;
-	double yv;
-	double radi;
-	double density;
 	pType planetType;
 
 	//TEMPERATURE
 	double tCapacity = 1;
-	double tEnergy = 0;
+	double tEnergy = 0.0;
 
 	//ATMOSPHERE
 	double atmoCur = 0;
@@ -48,7 +42,7 @@ private:
 	std::vector<int> ignore_ids;
 
 	//GRAPHICS
-	sf::CircleShape circle;
+	mutable sf::CircleShape circle;
 	int randBrightness;
 	sf::VertexArray light;
 
@@ -65,15 +59,9 @@ public:
 	Planet(double m, double xx, double yy, double xvv, double yvv);
 
 	// Getters
-	[[nodiscard]] double getx() const noexcept { return x; }
-	[[nodiscard]] double gety() const noexcept { return y; }
-	[[nodiscard]] double getxv() const noexcept { return xv; }
-	[[nodiscard]] double getyv() const noexcept { return yv; }
-	[[nodiscard]] double getmass() const noexcept { return mass; }
-	[[nodiscard]] double getRad() const noexcept { return radi; }
 	[[nodiscard]] pType getType() const noexcept { return planetType; }
 	[[nodiscard]] static std::string getTypeString(pType type) noexcept;
-	[[nodiscard]] int getId() const noexcept { return id; }
+	[[nodiscard]] int getId() const noexcept override { return id; }
 	[[nodiscard]] int getStrongestAttractorId() const noexcept;
 	[[nodiscard]] int getStrongestAttractorIdRef() const noexcept;
 	[[nodiscard]] const std::string& getName() const noexcept;
@@ -82,7 +70,7 @@ public:
 	[[nodiscard]] sf::Color getStarCol() const noexcept;
 	[[nodiscard]] bool isMarkedForRemoval() const noexcept { return marked_for_removal; }
 	[[nodiscard]] double getStrongestAttractorStrength() const noexcept { return STRENGTH_strongest_attractor; }
-	[[nodiscard]] double getTemp() const noexcept { return getThermalEnergy() / (getmass() * getTCap()); }
+	[[nodiscard]] double getTemp() const noexcept { return tEnergy / (getMass() * getTCap()); }
 	[[nodiscard]] double fusionEnergy() const noexcept;
 	[[nodiscard]] double thermalEnergy() const noexcept;
 	[[nodiscard]] double giveThermalEnergy(int t) const noexcept;
@@ -92,18 +80,14 @@ public:
 	[[nodiscard]] const Life& getLife() const noexcept { return life; }
 	[[nodiscard]] double getSupportedBiomass() const noexcept { return supportedBiomass; }
 	[[nodiscard]] GoldilockInfo getGoldilockInfo() const noexcept;
-	[[nodiscard]] double getThermalEnergy() const noexcept { return tEnergy; }
+	[[nodiscard]] double getThermalEnergy() const noexcept { return getTemp() * getMass() * getTCap(); }
 
 	// Setters
 	void setStrongestAttractorIdRef(int id) noexcept;
 	void markForRemoval() noexcept { marked_for_removal = true; }
 	void setStrongestAttractorStrength(double strength) noexcept { STRENGTH_strongest_attractor = strength; }
-	void setx(double new_x) noexcept { x = new_x; }
-	void sety(double new_y) noexcept { y = new_y; }
 	void setTemp(double t) noexcept;
-	void setMass(double m) noexcept;
-	void setxv(double v) noexcept { xv = v; }
-	void setyv(double v) noexcept { yv = v; }
+	void setMass(double m) noexcept override { SimObject::setMass(m); }
 
 	// State checks
 	[[nodiscard]] bool canDisintegrate(double curr_time) const noexcept;
@@ -123,14 +107,15 @@ public:
 	void giveID(int i) noexcept;
 	void coolDown(int t) noexcept;
 	void absorbHeat(double e, int t) noexcept;
-	void increaseThermalEnergy(double e) noexcept { tEnergy += e; }
+	void increaseThermalEnergy(double e) noexcept { setTemp(getTemp() + e / (getMass() * getTCap())); }
 	void updateAtmosphere(int t) noexcept;
 	void colonize(int i, const sf::Color& c, std::string_view d);
 
 	// Simulation and rendering
-	void update_planet_sim(double timestep) noexcept;
+	void update(double timestep) override;
+	void update_planet_sim(double timestep);
 	void updateLife(int t);
-	void draw(sf::RenderWindow& window);
+	void render(sf::RenderWindow& window) const override;
 	[[nodiscard]] double getDist(const Planet& forcer) const noexcept;
 	void render_shine(sf::RenderWindow& window, const sf::Color& col, double luminosity) const;
 	void draw_starshine(sf::RenderWindow& window) const;

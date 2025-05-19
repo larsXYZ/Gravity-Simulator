@@ -54,7 +54,7 @@ public:
 
 			for (const auto& planet : planets)
 			{
-				if (planet.getmass() < DUST_MIN_PHYSICS_SIZE)
+				if (planet.getMass() < DUST_MIN_PHYSICS_SIZE)
 					continue;
 
 				const auto curr_pos = particle.get_position();
@@ -63,7 +63,7 @@ public:
 				const auto dy = planet.gety() - curr_pos.y;
 				const auto distanceSquared = dx * dx + dy * dy;
 				
-				if (distanceSquared <= planet.getRad() * planet.getRad() && 
+				if (distanceSquared <= planet.getRadius() * planet.getRadius() && 
 					!planet.disintegrationGraceTimeIsActive(curr_time))
 				{
 					particle.mark_for_removal();
@@ -71,7 +71,7 @@ public:
 				}
 
 				const auto angle = atan2(planet.gety() - curr_pos.y, planet.getx() - curr_pos.x);
-				const auto A = G * planet.getmass() / distanceSquared;
+				const auto A = G * planet.getMass() / distanceSquared;
 				const auto acceleration = sf::Vector2f(A * cos(angle),
 														A * sin(angle));
 
