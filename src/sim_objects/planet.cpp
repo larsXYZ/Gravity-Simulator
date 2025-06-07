@@ -1,4 +1,4 @@
-#include "planet.h"
+#include "Planet.h"
 
 #include <sstream>
 

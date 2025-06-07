@@ -8,7 +8,7 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
-#include "sim_objects/planet.h"
+#include "sim_objects/Planet.h"
 #include "Spaceship.h"
 #include "Effect.h"
 #include "CONSTANTS.h"
