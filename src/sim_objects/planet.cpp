@@ -353,26 +353,6 @@ void Planet::collision(const Planet& p)
 	increaseThermalEnergy(p.thermalEnergy() * mass_ratio);
 }
 
-void Planet::render_shine(sf::RenderWindow& window, const sf::Color& col, double luminosity) const
-{
-	sf::VertexArray vertexArr(sf::TrianglesFan);
-	vertexArr.append(sf::Vertex(sf::Vector2f(position.x, position.y), col));
-	sf::Color local_col = col;
-	local_col.a = 0;
-	const auto delta_angle = 2 * PI / static_cast<double>(LIGHT_NUMBER_OF_VERTECES);
-	auto angle = 0.0;
-	auto rad = luminosity;
-	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
-	{
-		sf::Vector2f pos(position.x + cos(angle) * rad, 
-		                 position.y + sin(angle) * rad);
-		vertexArr.append(sf::Vertex(pos, local_col));
-		angle += delta_angle;
-	}
-	vertexArr.append(sf::Vertex(sf::Vector2f(position.x + rad, position.y), local_col));
-	window.draw(vertexArr);
-}
-
 void Planet::draw_starshine(sf::RenderWindow& window) const
 {
 	sf::Color col = getStarCol();
@@ -380,12 +360,12 @@ void Planet::draw_starshine(sf::RenderWindow& window) const
 	//LONG RANGE LIGHT
 	col.a = 50;
 	const auto long_range_luminosity = 30 * sqrt(fusionEnergy());
-	render_shine(window, col, long_range_luminosity);
+	render_shine(window, position, col, long_range_luminosity);
 
 	//SHORT RANGE LIGHT
 	col.a = 250;
 	const auto short_range_luminosity = 1.5 * getRadius();
-	render_shine(window, col, short_range_luminosity);
+	render_shine(window, position, col, short_range_luminosity);
 }
 
 void Planet::draw_planetshine(sf::RenderWindow& window) const
@@ -393,21 +373,7 @@ void Planet::draw_planetshine(sf::RenderWindow& window) const
 	/*
 	 *	Caused by very hot temperatures
 	 */
-
-	sf::Color col{ sf::Color::White };
-	col.a = 70;
-
-	const auto temp = getTemp();
-	auto temp_effect_by_temp = [temp]() {
-		if (temp < 500.0)
-			return 0.0;
-		else
-			return sqrt((temp - 500.0)) / 30.0;
-	};
-
-	const auto temp_effect = temp_effect_by_temp();
-	if (temp_effect > 0.1)
-		render_shine(window, col, temp_effect * getRadius());
+	draw_heat_glow(window, position, getTemp(), radius);
 }
 
 void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window) const

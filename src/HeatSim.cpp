@@ -18,6 +18,43 @@ double calculate_heating(double radius, double source_emitted_energy, double dis
 	return tempConstTwo * radius * radius * source_emitted_energy / distance;
 }
 
+void render_shine(sf::RenderWindow& window, sf::Vector2f position, const sf::Color& col, double luminosity)
+{
+	sf::VertexArray vertexArr(sf::TrianglesFan);
+	vertexArr.append(sf::Vertex(sf::Vector2f(position.x, position.y), col));
+	sf::Color local_col = col;
+	local_col.a = 0;
+	const auto delta_angle = 2 * PI / static_cast<double>(LIGHT_NUMBER_OF_VERTECES);
+	auto angle = 0.0;
+	auto rad = luminosity;
+	for (size_t nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
+	{
+		sf::Vector2f pos(position.x + cos(angle) * rad, 
+		                 position.y + sin(angle) * rad);
+		vertexArr.append(sf::Vertex(pos, local_col));
+		angle += delta_angle;
+	}
+	vertexArr.append(sf::Vertex(sf::Vector2f(position.x + rad, position.y), local_col));
+	window.draw(vertexArr);
+}
+
+void draw_heat_glow(sf::RenderWindow& window, sf::Vector2f position, double temp, double radius)
+{
+	sf::Color col{ sf::Color::White };
+	col.a = 70;
+
+	auto temp_effect_by_temp = [temp]() {
+		if (temp < 500.0)
+			return 0.0;
+		else
+			return std::sqrt((temp - 500.0)) / 30.0;
+	};
+
+	const auto temp_effect = temp_effect_by_temp();
+	if (temp_effect > 0.1)
+		render_shine(window, position, col, temp_effect * radius);
+}
+
 StarColorInterpolator::StarColorInterpolator()
 {
 	temperatures_and_colors.push_back({ 1600.0, sf::Color(255, 118, 0) });

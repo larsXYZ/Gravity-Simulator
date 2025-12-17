@@ -23,6 +23,7 @@ public:
 
 	void render(sf::RenderWindow& window) const override
 	{
+		draw_heat_glow(window, indicator.getPosition(), temp, radius);
 		window.draw(indicator);
 	}
 

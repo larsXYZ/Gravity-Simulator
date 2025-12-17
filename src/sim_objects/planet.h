@@ -108,7 +108,6 @@ public:
 	void updateLife(int t);
 	void render(sf::RenderWindow& window) const override;
 	[[nodiscard]] double getDist(const Planet& forcer) const noexcept;
-	void render_shine(sf::RenderWindow& window, const sf::Color& col, double luminosity) const;
 	void draw_starshine(sf::RenderWindow& window) const;
 	void draw_planetshine(sf::RenderWindow& window) const;
 	void draw_gas_planet_atmosphere(sf::RenderWindow& window) const;
