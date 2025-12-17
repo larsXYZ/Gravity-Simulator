@@ -82,6 +82,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		window.setView(mainView);
 		
 		executeFunction(context);
+		flushPlanets();
 
 		if (object_tracker.is_active())
 			object_tracker.update(*this, mainView);

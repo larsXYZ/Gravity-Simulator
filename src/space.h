@@ -38,6 +38,7 @@ class Space
 	
 	SpaceShip ship;
 	std::vector<Planet> planets;
+	std::vector<Planet> pending_planets;
 	std::unique_ptr<IParticleContainer> particles;
 	std::vector<Explosion> explosions;
 	std::vector<Trail> trail;
@@ -60,6 +61,7 @@ public:
 	explicit Space();
 	
 	int addPlanet(Planet&& p);
+	void flushPlanets();
 	void removePlanet(const int id);
 	void removeExplosion(int ind);
 	void removeSmoke(int ind);

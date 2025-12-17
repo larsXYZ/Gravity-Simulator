@@ -14,8 +14,19 @@ int Space::addPlanet(Planet&& p)
 	
 	p.setColor();
 
-	planets.push_back(std::move(p));
+	pending_planets.push_back(std::move(p));
 	return id;
+}
+
+void Space::flushPlanets()
+{
+	if (pending_planets.empty())
+		return;
+
+	for (auto& p : pending_planets)
+		planets.push_back(std::move(p));
+
+	pending_planets.clear();
 }
 
 void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
@@ -137,6 +148,7 @@ bool isIgnoringOtherPlanet(const Planet & thisPlanet, const Planet & otherPlanet
 
 void Space::update()
 {
+	flushPlanets();
 	curr_time += timestep;
 
 	//SETUP & OTHER
@@ -272,6 +284,7 @@ void Space::update()
 		bound.setRad(START_RADIUS);
 	}
 
+	flushPlanets();
 	total_mass = std::accumulate(planets.begin(), planets.end(), 0.0, [](auto v, const auto & p) {return v + p.getMass(); });
 }
 
@@ -382,6 +395,7 @@ void Space::removeSmoke(int ind)
 void Space::full_reset(sf::View& view, const sf::RenderWindow& window)
 {
 	planets.clear();
+	pending_planets.clear();
 	explosions.clear();
 	particles->clear();
 	trail.clear();
@@ -497,12 +511,15 @@ void Space::giveId(Planet &p)
 
 Planet Space::findPlanet(int id)
 {
-	for(size_t i = 0; i < planets.size(); i++)
+	for (auto& planet : planets)
 	{
-		if (planets[i].getId() == id)
-		{
-			return planets[i];
-		}
+		if (planet.getId() == id)
+			return planet;
+	}
+	for (auto& planet : pending_planets)
+	{
+		if (planet.getId() == id)
+			return planet;
 	}
 	return Planet(-1);
 }
@@ -510,6 +527,11 @@ Planet Space::findPlanet(int id)
 Planet* Space::findPlanetPtr(int id)
 {
 	for (auto & planet : planets)
+	{
+		if (planet.getId() == id)
+			return &planet;
+	}
+	for (auto& planet : pending_planets)
 	{
 		if (planet.getId() == id)
 			return &planet;
