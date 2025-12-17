@@ -34,9 +34,9 @@ void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
 	explosions.push_back(Explosion(p, s, 0, v, l));
 }
 
-void Space::addSmoke(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan)
+void Space::addSmoke(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan, double initial_temp)
 {
-	particles->add_particle(p, v, s, curr_time+lifespan);
+	particles->add_particle(p, v, s, curr_time+lifespan, initial_temp);
 }
 
 sf::Vector3f Space::centerOfMass(const std::vector<int> & object_ids)
@@ -432,7 +432,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 		const auto scatter_pos = sf::Vector2f(planet.getPosition().x, planet.getPosition().y) + random_vector(planet.getRadius());
 		const auto scatter_vel = sf::Vector2f(planet.getVelocity().x, planet.getVelocity().y) + CREATEDUSTSPEEDMULT * random_vector(20.0);
 		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
-		addSmoke(scatter_pos, scatter_vel, 2, lifespan);
+		addSmoke(scatter_pos, scatter_vel, 2, lifespan, planet.getTemp());
 	}
 
 	const auto n_planets{ std::floor(planet.getMass() / MINIMUMBREAKUPSIZE) };
@@ -582,7 +582,7 @@ void Space::giveRings(const Planet & planet, int inner, int outer)
 		const auto pos = sf::Vector2f(planet.getPosition().x + cos(angle) * rad, planet.getPosition().y + sin(angle) * rad);
 		const auto vel = sf::Vector2f(speed * cos(angle + PI / 2.0) + planet.getVelocity().x, speed * sin(angle + PI / 2.0));
 		
-		particles->add_particle(pos, vel, 1, curr_time+2000000);
+		particles->add_particle(pos, vel, 1, curr_time+2000000, 500.0);
 
 		angle += delta_angle;
 	}

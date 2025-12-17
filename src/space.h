@@ -73,7 +73,7 @@ public:
 
 	void randomPlanets(int totmass, int antall, double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
-	void addSmoke(sf::Vector2f p, sf::Vector2f v, double s, double lifespan);
+	void addSmoke(sf::Vector2f p, sf::Vector2f v, double s, double lifespan, double initial_temp = 2000.0);
 	void addTrail(sf::Vector2f p, int l);
 	void giveRings(const Planet & planet, int inner, int outer);
 	

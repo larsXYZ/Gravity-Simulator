@@ -9,7 +9,7 @@ public:
 	~IParticleContainer() = default;
 	virtual void update(const std::vector<Planet> & planets, const Bound &bound, double timestep, double curr_time) = 0;
 	virtual void render_all(sf::RenderWindow &w) = 0;
-	virtual void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time) = 0;
+	virtual void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp) = 0;
 	virtual void clear() = 0;
 	virtual size_t size() = 0;
 };
@@ -70,6 +70,14 @@ public:
 					break;
 				}
 
+				if (planet.emitsHeat())
+				{
+					double dist = std::sqrt(distanceSquared);
+					double emitted = planet.giveThermalEnergy(timestep * decimation_factor);
+					double heat = calculate_heating(particle.get_radius(), emitted, dist);
+					particle.absorb_heat(heat);
+				}
+
 				const auto angle = atan2(planet.gety() - curr_pos.y, planet.getx() - curr_pos.x);
 				const auto A = G * planet.getMass() / distanceSquared;
 				const auto acceleration = sf::Vector2f(A * cos(angle),
@@ -78,6 +86,8 @@ public:
 				const auto dv = static_cast<float>(timestep) * static_cast<float>(decimation_factor) * acceleration;
 				particle.set_velocity(particle.get_velocity() + dv);
 			}
+
+			particle.cool_down(timestep * decimation_factor);
 		}
 
 		std::erase_if(particles[current_dec_simulation_target],
@@ -100,7 +110,7 @@ public:
 				particle.render(window);
 	}
 
-	void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time) override
+	void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp) override
 	{
 		auto smallest_vector = std::min_element(particles.begin(),
 			particles.end(), [](const auto& vec1, const auto& vec2) {return vec1.size() < vec2.size(); });
@@ -109,7 +119,8 @@ public:
 			position,
 			velocity,
 			size,
-			removal_time
+			removal_time,
+			initial_temp
 		));
 	}
 
