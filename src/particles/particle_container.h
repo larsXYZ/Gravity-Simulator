@@ -46,12 +46,6 @@ public:
 
 		for (auto& particle : particles[current_dec_simulation_target])
 		{
-			if (bound.isActive() && bound.isOutside(particle.get_position()))
-			{
-				particle.mark_for_removal();
-				continue;
-			}
-
 			for (const auto& planet : planets)
 			{
 				if (planet.getMass() < DUST_MIN_PHYSICS_SIZE)
@@ -62,13 +56,6 @@ public:
 				const auto dx = planet.getx() - curr_pos.x;
 				const auto dy = planet.gety() - curr_pos.y;
 				const auto distanceSquared = dx * dx + dy * dy;
-				
-				if (distanceSquared <= planet.getRadius() * planet.getRadius() && 
-					!planet.disintegrationGraceTimeIsActive(curr_time))
-				{
-					particle.mark_for_removal();
-					break;
-				}
 
 				if (planet.emitsHeat())
 				{
@@ -90,16 +77,33 @@ public:
 			particle.cool_down(timestep * decimation_factor);
 		}
 
-		std::erase_if(particles[current_dec_simulation_target],
-			[curr_time](const auto& p)
-			{
-				return p.to_be_removed(curr_time);
-			});
-
 		for (auto& particle_vector : particles)
 		{
-			for (auto& particle : particle_vector)
+			std::erase_if(particle_vector, [&](auto& particle) {
+				if (particle.to_be_removed(curr_time)) return true;
+
 				particle.move(timestep);
+
+				if (bound.isActive() && bound.isOutside(particle.get_position()))
+					return true;
+
+				for (const auto& planet : planets)
+				{
+					if (planet.getMass() < DUST_MIN_PHYSICS_SIZE)
+						continue;
+
+					const float dx = planet.getx() - particle.get_position().x;
+					const float dy = planet.gety() - particle.get_position().y;
+					const float distanceSquared = dx * dx + dy * dy;
+
+					if (distanceSquared <= planet.getRadius() * planet.getRadius() &&
+						!planet.disintegrationGraceTimeIsActive(curr_time))
+					{
+						return true;
+					}
+				}
+				return false;
+			});
 		}
 	}
 

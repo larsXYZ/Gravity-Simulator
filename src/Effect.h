@@ -55,13 +55,10 @@ public:
 
 	void render(sf::RenderWindow &w)
 	{
-
-
-		//LIGHT
-		if (getAge(0) == 1 || getAge(0) == 2)
+		//LIGHT - Flash
+		if (getAge(0) <= 2)
 		{
-
-			sf::Color col = sf::Color(255, 255, 150);
+			sf::Color col = sf::Color(255, 255, 200);
 			col.a = EXPLOSION_LIGHT_START_STRENGTH;
 			sf::VertexArray vertexArr(sf::TrianglesFan);
 			vertexArr.append(sf::Vertex(getpos(), col));
@@ -71,10 +68,8 @@ public:
 			double ang = 0;
 			double rad = getsize()*getsize()*EXPLOSION_FLASH_SIZE;
 
-			//REDUCES SIZE IF SECOND FRAME
 			if (getAge(0) == 2) rad /= 2;
 
-			//DRAWS VERTEXES
 			for (int nr = 1; nr < LIGHT_NUMBER_OF_VERTECES; nr++)
 			{
 				sf::Vector2f pos(getpos().x + cos(ang) * rad, getpos().y + sin(ang) * rad);
@@ -85,15 +80,32 @@ public:
 			w.draw(vertexArr);
 		}
 
+        float life_ratio = (float)getAge(0) / levetidmax();
+        float expansion = getsize() * life_ratio;
 
-		double rad = getsize() * getAge(0) / levetidmax();
-		sf::CircleShape eksplosjon(rad);
+		// Main Body - Layered
+        // Inner (White/Hot)
+		sf::CircleShape core(expansion * 0.5f);
+		core.setFillColor(sf::Color(255, 255, 220, static_cast<sf::Uint8>(255 * (1.0f - life_ratio))));
+		core.setPosition(getpos());
+		core.setOrigin(expansion * 0.5f, expansion * 0.5f);
+		w.draw(core);
 
-		eksplosjon.setFillColor(getcol());
-		eksplosjon.setPosition(getpos());
-		eksplosjon.setOrigin(rad, rad);
+        // Middle (Yellow/Orange)
+		sf::CircleShape mid(expansion * 0.8f);
+		mid.setFillColor(sf::Color(255, 150, 0, static_cast<sf::Uint8>(150 * (1.0f - life_ratio))));
+		mid.setPosition(getpos());
+		mid.setOrigin(expansion * 0.8f, expansion * 0.8f);
+		w.draw(mid);
 
-		w.draw(eksplosjon);
+        // Shockwave Ring
+        sf::CircleShape shockwave(expansion * 1.2f);
+        shockwave.setFillColor(sf::Color::Transparent);
+        shockwave.setOutlineColor(sf::Color(200, 200, 255, static_cast<sf::Uint8>(100 * (1.0f - life_ratio))));
+        shockwave.setOutlineThickness(2.0f);
+        shockwave.setPosition(getpos());
+        shockwave.setOrigin(expansion * 1.2f, expansion * 1.2f);
+        w.draw(shockwave);
 	}
 };
 

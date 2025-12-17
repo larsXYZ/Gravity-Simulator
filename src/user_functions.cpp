@@ -737,6 +737,19 @@ public:
 
 		if (event.mouseButton.button == sf::Mouse::Left && !context.is_mouse_on_widgets)
 		{
+            // Check spaceship
+            if (context.space.ship.isExist())
+            {
+                 sf::Vector2f ship_pos = context.space.ship.getpos();
+                 float dist = std::hypot(ship_pos.x - context.mouse_pos_world.x, ship_pos.y - context.mouse_pos_world.y);
+                 // Simple hit box for ship (approx 10 units radius)
+                 if (dist < 10.0f)
+                 {
+                     context.space.object_tracker.activate_for_spaceship();
+                     return;
+                 }
+            }
+
 			for (const auto& planet : context.space.planets)
 			{
 				const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,

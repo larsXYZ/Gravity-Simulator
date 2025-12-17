@@ -46,6 +46,16 @@ const double atmoAlphaMult = 0.3;           //ALPHA OF ATMOSPHERE MULTIPLIER
 
 // SHIP
 const double SHIP_GAS_EJECT_SPEED = 0.06;
+const double PROJECTILE_SPEED = 1.5;
+const int PROJECTILE_LIFESPAN = 5000;
+const int PROJECTILE_COOLDOWN = 40;
+const double PROJECTILE_DAMAGE_MASS_LIMIT = 60.0;
+const double PROJECTILE_MAX_CHARGE = 200.0;
+const double PROJECTILE_CHARGE_SPEED = 0.05;
+const double TUG_RANGE = 400.0;
+const double TUG_STRENGTH = 0.0005;
+const double TUG_MASS_LIMIT = 200.0;
+const double TUG_PREFERRED_DISTANCE = 80.0;
 
 //DUST
 const double DUST_LIFESPAN_MIN = 40000.0;

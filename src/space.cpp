@@ -623,12 +623,12 @@ void Space::update_spaceship()
 
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), 400);
+		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
 
 		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), 200);
+		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(150.0, 250.0));
 	}
 	else if (mode == -1)
 	{
@@ -641,12 +641,12 @@ void Space::update_spaceship()
 
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), 400);
+		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
 
 		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), 200);
+		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(150.0, 250.0));
 	}
 
 	for (const auto & planet : planets)
@@ -654,6 +654,38 @@ void Space::update_spaceship()
 		if (ship.isExist() && !ship.pullofGravity(planet, ship, timestep))
 			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
 	}
+
+    // NEW FEATURES
+    if (ship.isExist())
+    {
+        // Shoot with charge
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+        {
+            ship.startCharge();
+            ship.updateCharge(timestep);
+        }
+        else
+        {
+            ship.shoot(*this); // Fires only if was charging
+        }
+
+        // Tug
+        static bool t_pressed = false;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::T))
+        {
+            if (!t_pressed)
+            {
+                ship.toggleTug(*this);
+                t_pressed = true;
+            }
+        }
+        else
+            t_pressed = false;
+
+        ship.updateProjectiles(timestep, *this);
+        ship.checkProjectileCollisions(*this, timestep);
+        ship.updateTug(*this, timestep);
+    }
 }
 
 void Space::updateInfoBox()
@@ -803,6 +835,13 @@ void Space::drawEffects(sf::RenderWindow &window)
 			removeTrail(i);
 		}
 	}
+
+    if (ship.isExist())
+    {
+        ship.renderProjectiles(window);
+        ship.renderTug(window, *this);
+        ship.renderCharge(window);
+    }
 
 }
 

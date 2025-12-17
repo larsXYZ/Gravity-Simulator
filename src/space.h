@@ -115,4 +115,6 @@ public:
 	friend class ShowObjectInfoFunction;
 	friend class AdvancedInOrbitFunction;
 	friend class ExplodeObjectFunction;
+	friend class SpaceShip;
+	friend class ObjectTracker;
 };
