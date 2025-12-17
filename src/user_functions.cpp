@@ -42,6 +42,173 @@ void fillTextBox(tgui::TextArea::Ptr textbox, double mass)
 							+ "\nType:      " + Planet::getTypeString(temp.getType()));
 }
 
+namespace PredictionConfig
+{
+	constexpr int PREDICTION_LENGTH = 1000;
+	constexpr float PREDICTION_STEP_SIZE = 10.0f;
+}
+
+namespace {
+struct DistanceCalculationResult
+{
+	double dx{ 0.0 };
+	double dy{ 0.0 };
+	double dist{ 0.0 };
+	double rad_dist{ 0.0 };
+};
+
+DistanceCalculationResult calculateDistance(const Planet & planet, const Planet & other_planet)
+{
+	DistanceCalculationResult result;
+	result.dx = other_planet.getPosition().x - planet.getPosition().x;
+	result.dy = other_planet.getPosition().y - planet.getPosition().y;
+	result.dist = std::hypot(result.dx, result.dy);
+	result.rad_dist = planet.getRadius() + other_planet.getRadius();
+	return result;
+}
+
+struct Acceleration2D
+{
+	float x{ 0.0 };
+	float y{ 0.0 };
+};
+
+double accumulate_acceleration(const DistanceCalculationResult & distance_info, 
+						Acceleration2D & acceleration,
+						const Planet & other_planet)
+{
+	const auto A = G * other_planet.getMass() / std::max(distance_info.dist * distance_info.dist, 0.01);
+	const auto angle = atan2(distance_info.dy, distance_info.dx);
+
+	acceleration.x += cos(angle) * A;
+	acceleration.y += sin(angle) * A;
+
+	return A;
+}
+
+enum class PredictionEndReason { MaxSteps, Collision, Disintegration };
+
+struct PredictionResult {
+	std::vector<sf::Vertex> path;
+	PredictionEndReason reason{ PredictionEndReason::MaxSteps };
+	sf::Vector2f endPoint;
+	sf::Vector2f endVelocity;
+};
+
+}
+
+PredictionResult predict_trajectory(std::vector<Planet> planets, Planet subject)
+{
+	planets.push_back(subject);
+	const size_t subject_index = planets.size() - 1;
+	PredictionResult result;
+	result.path.reserve(PredictionConfig::PREDICTION_LENGTH);
+
+	const float dt = PredictionConfig::PREDICTION_STEP_SIZE;
+
+	for (int i = 0; i < PredictionConfig::PREDICTION_LENGTH; i++)
+	{
+		std::vector<Acceleration2D> acc_1(planets.size());
+
+		// 1. Calculate first acceleration
+		for (size_t j = 0; j < planets.size(); j++)
+		{
+			for (size_t k = 0; k < planets.size(); k++)
+			{
+				if (j == k) continue;
+				auto dist = calculateDistance(planets[j], planets[k]);
+				accumulate_acceleration(dist, acc_1[j], planets[k]);
+			}
+		}
+
+		// 2. First integration step (Position)
+		for (size_t j = 0; j < planets.size(); j++)
+		{
+			planets[j].setPosition({
+				planets[j].getPosition().x + planets[j].getVelocity().x * dt + 0.5f * acc_1[j].x * dt * dt,
+				planets[j].getPosition().y + planets[j].getVelocity().y * dt + 0.5f * acc_1[j].y * dt * dt
+			});
+		}
+
+		// CHECK COLLISIONS / ROCHE HERE (using new positions)
+		// Only need to check 'planets.back()' (the subject) against others.
+		Planet& pSub = planets.back();
+		bool collision = false;
+		bool disintegration = false;
+
+		for (size_t k = 0; k < planets.size() - 1; ++k) // Check against all others
+		{
+			auto distRes = calculateDistance(pSub, planets[k]); // Use existing helper
+
+			// Roche
+			if (pSub.getMass() >= MINIMUMBREAKUPSIZE &&
+				distRes.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distRes.rad_dist &&
+				pSub.getMass() / planets[k].getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+			{
+				disintegration = true;
+				break;
+			}
+
+			// Collision
+			if (distRes.dist < distRes.rad_dist)
+			{
+				collision = true;
+				break;
+			}
+		}
+
+		result.path.emplace_back(pSub.getPosition(), sf::Color::Red);
+
+		if (collision) {
+			result.reason = PredictionEndReason::Collision;
+			result.endPoint = pSub.getPosition();
+			break;
+		}
+		if (disintegration) {
+			result.reason = PredictionEndReason::Disintegration;
+			result.endPoint = pSub.getPosition();
+			result.endVelocity = pSub.getVelocity();
+			break;
+		}
+
+
+		std::vector<Acceleration2D> acc_2(planets.size());
+
+		// 3. Calculate second acceleration (at new position)
+		for (size_t j = 0; j < planets.size(); j++)
+		{
+			for (size_t k = 0; k < planets.size(); k++)
+			{
+				if (j == k) continue;
+				auto dist = calculateDistance(planets[j], planets[k]);
+				accumulate_acceleration(dist, acc_2[j], planets[k]);
+			}
+		}
+
+		// 4. Second integration step (Velocity)
+		for (size_t j = 0; j < planets.size(); j++)
+		{
+			planets[j].setVelocity({
+				planets[j].getVelocity().x + 0.5f * (acc_1[j].x + acc_2[j].x) * dt,
+				planets[j].getVelocity().y + 0.5f * (acc_1[j].y + acc_2[j].y) * dt
+			});
+		}
+	}
+	
+	if (result.reason == PredictionEndReason::MaxSteps && !result.path.empty())
+	{
+		int fadeLen = std::min((int)result.path.size(), 200); 
+		for (int k = 0; k < fadeLen; ++k) {
+			int idx = result.path.size() - 1 - k;
+			sf::Color c = result.path[idx].color;
+			c.a = static_cast<sf::Uint8>(255.0f * ((float)k / fadeLen));
+			result.path[idx].color = c;
+		}
+	}
+	
+	return result;
+}
+
 class IUserFunction
 {
 	virtual void reset() {}
@@ -92,13 +259,48 @@ public:
 				context.window.draw(tempCircle);
 				
 				const auto to_now = context.mouse_pos_world - start_pos;
-				sf::Vertex line[] =
+				
+				// TRAJECTORY PREDICTION
+				const auto speed_multiplier{ 0.002 };
+				R.setPosition(start_pos);
+				R.setVelocity({
+					static_cast<float>(-speed_multiplier * to_now.x),
+					static_cast<float>(-speed_multiplier * to_now.y)
+				});
+				
+				auto result = predict_trajectory(context.space.planets, R);
+				if (!result.path.empty())
 				{
-					sf::Vertex(start_pos,sf::Color::Red),
-					sf::Vertex(start_pos - to_now, sf::Color::Red)
-				};
-
-				context.window.draw(line, 2, sf::Lines);
+					context.window.draw(&result.path[0], result.path.size(), sf::PrimitiveType::LineStrip);
+					
+					if (result.reason == PredictionEndReason::Collision)
+					{
+						float size = 10.0f * context.zoom;
+						sf::Vertex xLines[] = {
+							sf::Vertex(result.endPoint + sf::Vector2f(-size, -size), sf::Color::Red),
+							sf::Vertex(result.endPoint + sf::Vector2f(size, size), sf::Color::Red),
+							sf::Vertex(result.endPoint + sf::Vector2f(-size, size), sf::Color::Red),
+							sf::Vertex(result.endPoint + sf::Vector2f(size, -size), sf::Color::Red)
+						};
+						context.window.draw(xLines, 4, sf::PrimitiveType::Lines);
+					}
+					else if (result.reason == PredictionEndReason::Disintegration)
+					{
+						 float size = 15.0f * context.zoom;
+						 
+						 float vLen = std::hypot(result.endVelocity.x, result.endVelocity.y);
+						 sf::Vector2f dir = (vLen > 0) ? result.endVelocity / vLen : sf::Vector2f(1, 0);
+						 sf::Vector2f perp(-dir.y, dir.x);
+						 
+						 sf::Vertex coneLines[] = {
+							sf::Vertex(result.endPoint, sf::Color::Red),
+							sf::Vertex(result.endPoint + dir * size + perp * (size * 0.5f), sf::Color::Red),
+							sf::Vertex(result.endPoint, sf::Color::Red),
+							sf::Vertex(result.endPoint + dir * size - perp * (size * 0.5f), sf::Color::Red)
+						 };
+						 context.window.draw(coneLines, 4, sf::PrimitiveType::Lines);
+					}
+				}
 			}
 		}
 		else if (mouseToggle)
@@ -635,6 +837,7 @@ public:
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
 		{
 			const auto massCenterInfoVector(context.space.centerOfMass(object_ids));
+			const auto massCenterVelocity = context.space.centerOfMassVelocity(object_ids);
 			const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x,
 				context.mouse_pos_world.y - massCenterInfoVector.y);
 

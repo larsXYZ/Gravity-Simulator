@@ -107,6 +107,7 @@ public:
 	static std::string temperature_info_string(double temperature_kelvin, TemperatureUnit unit);
 
 	friend class ObjectInfo;
+	friend class NewObjectFunction;
 	friend class NewObjectInOrbitFunction;
 	friend class RemoveObjectFunction;
 	friend class AddRingsFunction;
