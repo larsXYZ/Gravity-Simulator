@@ -7,42 +7,23 @@
 SpaceShip::SpaceShip(sf::Vector2f p)
 {
 	pos = p;
-	speed.x = 0;
-	speed.y = 0;
+	speed = {0,0};
 	angle = 0;
+    angular_velocity = 0;
 	acc = 0;
 	isFiring = false;
 	exist = true;
-	timeAtGround = 0;
-
-	isLanded = false;
-	planetID = -1;
-
-	ship.setOrigin(4,0);
-	ship.setSize(sf::Vector2f(7,1));
-	ship.setFillColor(sf::Color(200, 200, 200));
-	ship.setRotation(angle);
 }
 
 SpaceShip::SpaceShip()
 {
-	pos.x = 0;
-	pos.y = 0;
-	speed.x = 0;
-	speed.y = 0;
+	pos = {0,0};
+	speed = {0,0};
 	angle = 0;
+    angular_velocity = 0;
 	acc = 0;
 	isFiring = false;
 	exist = true;
-	timeAtGround = 0;
-
-	isLanded = false;
-	planetID = -1;
-
-	ship.setOrigin(4,1);
-	ship.setSize(sf::Vector2f(7,2));
-	ship.setFillColor(sf::Color(200, 200, 200));
-	ship.setRotation(angle);
 }
 
 int SpaceShip::move(int timeStep)
@@ -52,32 +33,15 @@ int SpaceShip::move(int timeStep)
 
 	if (exist)
 	{
-		if (isLanded) timeAtGround += 1;
-		else timeAtGround = 0;
-
+		// Thrust
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 		{
-			if (isLanded && timeAtGround > 60)
-			{
-				acc = 0.2;
-				isLanded = false;
-				isFiring = 1;
-			}
-			else if (!isLanded)
-			{
-				acc = 0.005;
-				isFiring = 1;
-			}
-			else
-			{
-				isFiring = 0;
-			}
-
-
+			acc = 0.005;
+			isFiring = 1;
 		}
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !isLanded)
+		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
-			acc = -0.005;
+			acc = -0.002; // Weaker reverse thrust
 			isFiring = -1;
 		}
 		else
@@ -86,8 +50,22 @@ int SpaceShip::move(int timeStep)
 			isFiring = 0;
 		}
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !isLanded) angle -= 0.25 * timeStep;
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !isLanded) angle += 0.25* timeStep;
+		// Turning Physics
+        const float turn_acc = 0.002f;
+        const float max_turn_speed = 0.3f;
+        const float damping = 0.55f;
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) 
+            angular_velocity -= turn_acc * timeStep;
+		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) 
+            angular_velocity += turn_acc * timeStep;
+        else
+            angular_velocity *= damping; // Dampen when not turning
+
+        if (angular_velocity > max_turn_speed) angular_velocity = max_turn_speed;
+        if (angular_velocity < -max_turn_speed) angular_velocity = -max_turn_speed;
+
+        angle += angular_velocity * timeStep;
 
 		speed.x += acc * cos(2 * PI*angle / 360);
 		speed.y += acc * sin(2 * PI*angle / 360);
@@ -103,66 +81,63 @@ void SpaceShip::draw(sf::RenderWindow &w)
 {
 	if (exist)
 	{
-		sf::RectangleShape box(sf::Vector2f(3, 4));
-		box.setFillColor(sf::Color(160, 160, 160));
-		box.setOrigin(2, 2);
-		box.setRotation(angle);
-		box.setPosition(pos.x - 2 * cos(2 * PI*angle / 360), pos.y - 2 * sin(2 * PI*angle / 360));
-		w.draw(box);
+        // Define Ship Shape
+        sf::Transform transform;
+        transform.translate(pos);
+        transform.rotate(angle);
 
+        sf::VertexArray chassis(sf::Triangles, 3);
+        
+        // Main Body (Sleek Triangle)
+        chassis[0].position = {10.f, 0.f}; // Nose
+        chassis[0].color = sf::Color(200, 200, 200);
+        chassis[1].position = {-7.f, -6.f}; // Rear Left
+        chassis[1].color = sf::Color(100, 100, 100);
+        chassis[2].position = {-7.f, 6.f}; // Rear Right
+        chassis[2].color = sf::Color(100, 100, 100);
 
-		ship.setPosition(pos);
-		ship.setRotation(angle);
+        // Cockpit
+        sf::VertexArray cockpit(sf::Triangles, 3);
+        cockpit[0].position = {2.f, 0.f};
+        cockpit[0].color = sf::Color(100, 200, 255);
+        cockpit[1].position = {-2.f, -2.f};
+        cockpit[1].color = sf::Color(0, 50, 100);
+        cockpit[2].position = {-2.f, 2.f};
+        cockpit[2].color = sf::Color(0, 50, 100);
 
-		if (isFiring == 1)
-		{
-			sf::CircleShape flamme(2);
-			flamme.setFillColor(sf::Color::Yellow);
-			flamme.setOrigin(4, 2);
-			flamme.setRotation(angle);
-            // Fixed position to match engine nozzle
-			flamme.setPosition(pos.x - 5 * cos(2 * PI*angle / 360), pos.y - 5 * sin(2 * PI*angle / 360));
-			w.draw(flamme);
+        // Wings/Details
+        sf::VertexArray wings(sf::Lines);
+        wings.append(sf::Vertex({-7.f, -6.f}, sf::Color::Red));
+        wings.append(sf::Vertex({-7.f, 6.f}, sf::Color::Red));
 
-			sf::CircleShape flamme3(1.5);
-			flamme3.setFillColor(sf::Color::Yellow);
-			flamme3.setOrigin(4.5, 1.5);
-			flamme3.setRotation(angle);
-			flamme3.setPosition(pos.x - 5 * cos(2 * PI*angle / 360), pos.y - 5 * sin(2 * PI*angle / 360));
-			w.draw(flamme3);
+        // Engine Burn
+        if (isFiring == 1)
+        {
+            float flicker = (rand() % 10) / 10.0f + 0.5f;
+            sf::VertexArray flame(sf::Triangles, 3);
+            flame[0].position = {-7.f, 0.f};
+            flame[0].color = sf::Color::Yellow;
+            flame[1].position = {-7.f - 10.f * flicker, -3.f};
+            flame[1].color = sf::Color::Transparent;
+            flame[2].position = {-7.f - 10.f * flicker, 3.f};
+            flame[2].color = sf::Color::Transparent;
+            
+            w.draw(flame, transform);
+        }
+        else if (isFiring == -1)
+        {
+            // Reverse thrusters (front side)
+            sf::VertexArray rev(sf::Lines);
+            rev.append(sf::Vertex({5.f, 2.f}, sf::Color::Yellow));
+            rev.append(sf::Vertex({8.f, 4.f}, sf::Color::Transparent));
+            rev.append(sf::Vertex({5.f, -2.f}, sf::Color::Yellow));
+            rev.append(sf::Vertex({8.f, -4.f}, sf::Color::Transparent));
+            w.draw(rev, transform);
+        }
 
-			sf::CircleShape flamme2(1);
-			flamme2.setFillColor(sf::Color::Red);
-			flamme2.setOrigin(1, 1);
-			flamme2.setPosition(pos.x - 6 * cos(2 * PI*angle / 360), pos.y - 6 * sin(2 * PI*angle / 360));
-			w.draw(flamme2);
-		}
-		if (isFiring == -1)
-		{
-            // Reverse thrust effects
-			sf::CircleShape flamme(2);
-			flamme.setFillColor(sf::Color::Yellow);
-			flamme.setOrigin(4, 2);
-			flamme.setRotation(180 + angle);
-			flamme.setPosition(pos.x + 5 * cos(2 * PI*angle / 360), pos.y + 5 * sin(2 * PI*angle / 360));
-			w.draw(flamme);
-
-			sf::CircleShape flamme3(1.5);
-			flamme3.setFillColor(sf::Color::Yellow);
-			flamme3.setOrigin(4.5, 1.5);
-			flamme3.setRotation(180 + angle);
-			flamme3.setPosition(pos.x + 5 * cos(2 * PI*angle / 360), pos.y + 5 * sin(2 * PI*angle / 360));
-			w.draw(flamme3);
-
-			sf::CircleShape flamme2(1);
-			flamme2.setFillColor(sf::Color::Red);
-			flamme2.setOrigin(1, 1);
-			flamme2.setRotation(180 + angle);
-			flamme2.setPosition(pos.x + 6 * cos(2 * PI*angle / 360), pos.y + 6 * sin(2 * PI*angle / 360));
-			w.draw(flamme2);
-		}
-
-		w.draw(ship);
+        w.draw(chassis, transform);
+        w.draw(cockpit, transform);
+        w.draw(wings, transform);
 	}
 }
 
@@ -181,72 +156,24 @@ float SpaceShip::getAngle()
 	return angle;
 }
 
-int SpaceShip::getPlanetID()
-{
-	return planetID;
-}
-
-bool SpaceShip::getLandedState()
-{
-	return isLanded;
-}
-
-void SpaceShip::setLandedstate(bool state)
-{
-	isLanded = state;
-}
-
 bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 {
 	double dist = sqrt((forcer.getx() - ship.getpos().x)*(forcer.getx() - ship.getpos().x) + (forcer.gety() - ship.getpos().y) * (forcer.gety() - ship.getpos().y));
 
-	if (!isLanded && dist < forcer.getRadius())
+    // Simple gravity + destruction check
+	if (dist < forcer.getRadius())
 	{
-		double speed = sqrt((forcer.getxv() - ship.getvel().x)*(forcer.getxv() - ship.getvel().x) + (forcer.getyv() - ship.getvel().y) * (forcer.getyv() - ship.getvel().y));
-		if (speed > maxCollisionSpeed || forcer.getMass() > TERRESTIALLIMIT)
-		{
-			destroy();
-			return false;
-		}
-		else
-		{
-			planetID = forcer.getId();
-			isLanded = true;
-			posHold.x = forcer.getx();
-			posHold.y = forcer.gety();
-			angleHold = atan2(forcer.gety() - ship.getpos().y, forcer.getx() - ship.getpos().x);
-		}
+		destroy();
+		return false;
 	}
-	else if (isLanded && forcer.getId() == planetID)
-	{
-
-		if (forcer.getMass() >= TERRESTIALLIMIT)
-		{
-			destroy();
-			return false;
-		}
-
-		posHold.x = forcer.getx();
-		posHold.y = forcer.gety();
-
-		pos.x = posHold.x + (3.8 + forcer.getRadius())*cos(angleHold+PI);
-		pos.y = posHold.y + (3.8 + forcer.getRadius())*sin(angleHold+ PI);
-		ship.angle = 360*angleHold/(2 * PI)+180;
-
-		speed.x = forcer.getxv();
-		speed.y = forcer.getyv();
-	}
-	else if (!isLanded)
+	else
 	{
 		double angle = atan2(forcer.gety() - ship.getpos().y, forcer.getx() - ship.getpos().x);
 		double xf = G * forcer.getMass() / (dist*dist) * cos(angle);
 		double yf = G * forcer.getMass() / (dist*dist)* sin(angle);
 
-		if (dist > forcer.getRadius())
-		{
-			speed.x += xf * timeStep / mass;
-			speed.y += yf * timeStep / mass;
-		}
+		speed.x += xf * timeStep / mass;
+		speed.y += yf * timeStep / mass;
 	}
 
 	return true;
@@ -255,11 +182,9 @@ bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 void SpaceShip::reset(sf::Vector2f p)
 {
 	pos = p;
-
-	speed.x = 0;
-	speed.y = 0;
-
-	isLanded = false;
+	speed = {0,0};
+    angle = 0;
+    angular_velocity = 0;
 	exist = true;
     projectiles.clear();
     tug_active = false;
@@ -521,10 +446,10 @@ void SpaceShip::checkProjectileCollisions(Space& space, double dt)
                 // Damage based on power
                 if (planet.getMass() < PROJECTILE_DAMAGE_MASS_LIMIT * it->power)
                 {
-                    // Destroy object
-                    space.removePlanet(planet.getId());
+                    // Explode object
+                    space.explodePlanet(planet);
                     // Visual pop
-                    space.addExplosion(intersection, planet.getRadius()*2 * it->power, planet.getVelocity(), 20);
+                    space.addExplosion(intersection, planet.getRadius() * 2 * it->power, planet.getVelocity(), 20);
                 }
                 
                 hit = true;

@@ -19,17 +19,13 @@ class SpaceShip
 	sf::Vector2f speed;
 	double acc;
 	float angle;
+    float angular_velocity{ 0.0f };
 	double mass = 1;
 	int isFiring;
-	bool isLanded;
-	int planetID;
-	double angleHold;
-	sf::Vector2f posHold;
 	bool exist;
-	int timeAtGround;
 	double maxCollisionSpeed = 0.5;
 
-	sf::RectangleShape ship;
+	sf::RectangleShape ship; // Will be replaced by custom drawing
 
     // Gun
     std::vector<Projectile> projectiles;
@@ -51,9 +47,7 @@ public:
 	sf::Vector2f getpos();
 	sf::Vector2f getvel();
 	void reset(sf::Vector2f p);
-	int getPlanetID();
-	bool getLandedState();
-	void setLandedstate(bool state);
+    // Removed landing getters/setters
 	void destroy();
 	double getMaxCollisionSpeed();
 	bool isExist();

@@ -494,11 +494,10 @@ void Space::explodePlanet(Planet planet)
 
 			const sf::Vector2f to_fragment = (fragment_pos - original_position);
 
-			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * sqrt(original_mass) * to_fragment / std::max(std::hypot(to_fragment.x, to_fragment.y), 0.1f) *	
+			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * pow(original_mass, 0.3) * to_fragment / std::max(std::hypot(to_fragment.x, to_fragment.y), 0.1f) *	
 												static_cast<float>(uniform_random(0.85, 1.15));
 
-			fragment->setVelocity({ fragment->getVelocity().x * escape_speed.x,
-									fragment->getVelocity().y * escape_speed.y });
+			fragment->setVelocity(fragment->getVelocity() + escape_speed);
 		}
 	}
 }
@@ -605,26 +604,27 @@ std::string Space::temperature_info_string(double temperature_kelvin, Temperatur
 
 void Space::update_spaceship()
 {
-	if (ship.getLandedState())
-	{
-		if (findPlanet(ship.getPlanetID()).getMass() == -1)
-			ship.setLandedstate(false);
-	}
-
 	int mode = ship.move(timestep);
 	if (mode == 1)
 	{
+        // ... (Smoke generation logic handled in move or here?) 
+        // Wait, move() returns mode but doesn't spawn smoke. 
+        // The original code spawned smoke here based on mode.
+        // I need to keep the smoke spawning but update it to match new ship if needed.
+        // For now, just removing the isLanded check.
+        
 		sf::Vector2f v;
 		double angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 
 		sf::Vector2f p;
-		p.x = ship.getpos().x - 2 * cos(angl);
-		p.y = ship.getpos().y - 2 * sin(angl);
+		p.x = ship.getpos().x - 7 * cos(angl); // Adjusted for new ship length
+		p.y = ship.getpos().y - 7 * sin(angl);
 
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
 		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
 
+        // Extra smoke
 		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
@@ -632,21 +632,17 @@ void Space::update_spaceship()
 	}
 	else if (mode == -1)
 	{
+        // Reverse thrust smoke
 		sf::Vector2f v;
 		double angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 
 		sf::Vector2f p;
-		p.x = ship.getpos().x - 2 * cos(angl);
-		p.y = ship.getpos().y - 2 * sin(angl);
+		p.x = ship.getpos().x + 5 * cos(angl);
+		p.y = ship.getpos().y + 5 * sin(angl);
 
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
 		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
-
-		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
-		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
-		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(150.0, 250.0));
 	}
 
 	for (const auto & planet : planets)
