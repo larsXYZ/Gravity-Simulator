@@ -44,8 +44,8 @@ void fillTextBox(tgui::TextArea::Ptr textbox, double mass)
 
 namespace PredictionConfig
 {
-	constexpr int PREDICTION_LENGTH = 1000;
-	constexpr float PREDICTION_STEP_SIZE = 10.0f;
+	constexpr int PREDICTION_LENGTH = 200;
+	constexpr float PREDICTION_STEP_SIZE = 50.0f;
 }
 
 namespace {
@@ -95,20 +95,59 @@ struct PredictionResult {
 	sf::Vector2f endVelocity;
 };
 
+struct PhysicsBody
+{
+	sf::Vector2f position;
+	sf::Vector2f velocity;
+	double mass;
+	double radius;
+};
+
+DistanceCalculationResult calculateDistance(const PhysicsBody& planet, const PhysicsBody& other_planet)
+{
+	DistanceCalculationResult result;
+	result.dx = other_planet.position.x - planet.position.x;
+	result.dy = other_planet.position.y - planet.position.y;
+	result.dist = std::hypot(result.dx, result.dy);
+	result.rad_dist = planet.radius + other_planet.radius;
+	return result;
 }
 
-PredictionResult predict_trajectory(std::vector<Planet> planets, Planet subject)
+double accumulate_acceleration(const DistanceCalculationResult& distance_info,
+	Acceleration2D& acceleration,
+	const PhysicsBody& other_planet)
 {
-	planets.push_back(subject);
+	const auto A = G * other_planet.mass / std::max(distance_info.dist * distance_info.dist, 0.01);
+	const auto angle = atan2(distance_info.dy, distance_info.dx);
+
+	acceleration.x += cos(angle) * A;
+	acceleration.y += sin(angle) * A;
+
+	return A;
+}
+
+}
+
+PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, const Planet& subject)
+{
+	std::vector<PhysicsBody> planets;
+	planets.reserve(planets_orig.size() + 1);
+	for (const auto& p : planets_orig)
+		planets.push_back({ p.getPosition(), p.getVelocity(), p.getMass(), p.getRadius() });
+	planets.push_back({ subject.getPosition(), subject.getVelocity(), subject.getMass(), subject.getRadius() });
+
 	const size_t subject_index = planets.size() - 1;
 	PredictionResult result;
 	result.path.reserve(PredictionConfig::PREDICTION_LENGTH);
 
 	const float dt = PredictionConfig::PREDICTION_STEP_SIZE;
 
+	std::vector<Acceleration2D> acc_1(planets.size());
+	std::vector<Acceleration2D> acc_2(planets.size());
+
 	for (int i = 0; i < PredictionConfig::PREDICTION_LENGTH; i++)
 	{
-		std::vector<Acceleration2D> acc_1(planets.size());
+		std::fill(acc_1.begin(), acc_1.end(), Acceleration2D{ 0,0 });
 
 		// 1. Calculate first acceleration
 		for (size_t j = 0; j < planets.size(); j++)
@@ -124,26 +163,23 @@ PredictionResult predict_trajectory(std::vector<Planet> planets, Planet subject)
 		// 2. First integration step (Position)
 		for (size_t j = 0; j < planets.size(); j++)
 		{
-			planets[j].setPosition({
-				planets[j].getPosition().x + planets[j].getVelocity().x * dt + 0.5f * acc_1[j].x * dt * dt,
-				planets[j].getPosition().y + planets[j].getVelocity().y * dt + 0.5f * acc_1[j].y * dt * dt
-			});
+			planets[j].position.x += planets[j].velocity.x * dt + 0.5f * acc_1[j].x * dt * dt;
+			planets[j].position.y += planets[j].velocity.y * dt + 0.5f * acc_1[j].y * dt * dt;
 		}
 
 		// CHECK COLLISIONS / ROCHE HERE (using new positions)
-		// Only need to check 'planets.back()' (the subject) against others.
-		Planet& pSub = planets.back();
+		PhysicsBody& pSub = planets.back();
 		bool collision = false;
 		bool disintegration = false;
 
 		for (size_t k = 0; k < planets.size() - 1; ++k) // Check against all others
 		{
-			auto distRes = calculateDistance(pSub, planets[k]); // Use existing helper
+			auto distRes = calculateDistance(pSub, planets[k]); 
 
 			// Roche
-			if (pSub.getMass() >= MINIMUMBREAKUPSIZE &&
+			if (pSub.mass >= MINIMUMBREAKUPSIZE &&
 				distRes.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distRes.rad_dist &&
-				pSub.getMass() / planets[k].getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+				pSub.mass / planets[k].mass < ROCHE_LIMIT_SIZE_DIFFERENCE)
 			{
 				disintegration = true;
 				break;
@@ -157,22 +193,21 @@ PredictionResult predict_trajectory(std::vector<Planet> planets, Planet subject)
 			}
 		}
 
-		result.path.emplace_back(pSub.getPosition(), sf::Color::Red);
+		result.path.emplace_back(pSub.position, sf::Color::Red);
 
 		if (collision) {
 			result.reason = PredictionEndReason::Collision;
-			result.endPoint = pSub.getPosition();
+			result.endPoint = pSub.position;
 			break;
 		}
 		if (disintegration) {
 			result.reason = PredictionEndReason::Disintegration;
-			result.endPoint = pSub.getPosition();
-			result.endVelocity = pSub.getVelocity();
+			result.endPoint = pSub.position;
+			result.endVelocity = pSub.velocity;
 			break;
 		}
 
-
-		std::vector<Acceleration2D> acc_2(planets.size());
+		std::fill(acc_2.begin(), acc_2.end(), Acceleration2D{ 0,0 });
 
 		// 3. Calculate second acceleration (at new position)
 		for (size_t j = 0; j < planets.size(); j++)
@@ -188,10 +223,8 @@ PredictionResult predict_trajectory(std::vector<Planet> planets, Planet subject)
 		// 4. Second integration step (Velocity)
 		for (size_t j = 0; j < planets.size(); j++)
 		{
-			planets[j].setVelocity({
-				planets[j].getVelocity().x + 0.5f * (acc_1[j].x + acc_2[j].x) * dt,
-				planets[j].getVelocity().y + 0.5f * (acc_1[j].y + acc_2[j].y) * dt
-			});
+			planets[j].velocity.x += 0.5f * (acc_1[j].x + acc_2[j].x) * dt;
+			planets[j].velocity.y += 0.5f * (acc_1[j].y + acc_2[j].y) * dt;
 		}
 	}
 	
