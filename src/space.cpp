@@ -159,7 +159,7 @@ void Space::update()
 
 	update_spaceship();
 
-	particles->update(planets, bound, timestep, curr_time);
+	particles->update(planets, bound, timestep, curr_time, gravity_enabled);
 
 	for (int i = 0; i < planets.size(); i++)
 	{
@@ -174,51 +174,54 @@ void Space::update()
 		thisPlanet->resetAttractorMeasure();
 
 		Acceleration2D acc_sum_1;
-		for (auto & otherPlanet : planets)
+		if (gravity_enabled)
 		{
-			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
-				continue;
-
-			DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
-			const auto acceleration_magnitude = accumulate_acceleration(distance, acc_sum_1, otherPlanet);
-
-			if (thisPlanet->canDisintegrate(curr_time) &&
-				distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
-				thisPlanet->getMass() / otherPlanet.getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+			for (auto & otherPlanet : planets)
 			{
-				const auto rad = thisPlanet->getRadius();
+				if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
+					continue;
 
-				disintegratePlanet(*thisPlanet);
-				thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
+				DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
+				const auto acceleration_magnitude = accumulate_acceleration(distance, acc_sum_1, otherPlanet);
 
-				break;
-			}
-
-			if (distance.dist < distance.rad_dist)
-			{
-				if (thisPlanet->getMass() <= otherPlanet.getMass())
+				if (thisPlanet->canDisintegrate(curr_time) &&
+					distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
+					thisPlanet->getMass() / otherPlanet.getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 				{
-					thisPlanet->becomeAbsorbedBy(otherPlanet);
+					const auto rad = thisPlanet->getRadius();
 
-					addExplosion(sf::Vector2f(thisPlanet->getPosition().x, thisPlanet->getPosition().y), 
-								2 * thisPlanet->getRadius(), 
-								sf::Vector2f(thisPlanet->getVelocity().x * 0.5, thisPlanet->getVelocity().y * 0.5), 
-								sqrt(thisPlanet->getMass()) / 2);
+					disintegratePlanet(*thisPlanet);
+					thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
 
 					break;
 				}
-			}
 
-			if (otherPlanet.emitsHeat())
-			{
-				const auto heat = tempConstTwo * thisPlanet->getRadius() * thisPlanet->getRadius() * otherPlanet.giveThermalEnergy(timestep) / distance.dist;
-				thisPlanet->absorbHeat(heat, timestep);
-			}
+				if (distance.dist < distance.rad_dist)
+				{
+					if (thisPlanet->getMass() <= otherPlanet.getMass())
+					{
+						thisPlanet->becomeAbsorbedBy(otherPlanet);
 
-			if (acceleration_magnitude > thisPlanet->getStrongestAttractorStrength())
-			{
-				thisPlanet->setStrongestAttractorStrength(acceleration_magnitude);
-				thisPlanet->setStrongestAttractorIdRef(otherPlanet.getId());
+						addExplosion(sf::Vector2f(thisPlanet->getPosition().x, thisPlanet->getPosition().y), 
+									2 * thisPlanet->getRadius(), 
+									sf::Vector2f(thisPlanet->getVelocity().x * 0.5, thisPlanet->getVelocity().y * 0.5), 
+									sqrt(thisPlanet->getMass()) / 2);
+
+						break;
+					}
+				}
+
+				if (otherPlanet.emitsHeat())
+				{
+					const auto heat = tempConstTwo * thisPlanet->getRadius() * thisPlanet->getRadius() * otherPlanet.giveThermalEnergy(timestep) / distance.dist;
+					thisPlanet->absorbHeat(heat, timestep);
+				}
+
+				if (acceleration_magnitude > thisPlanet->getStrongestAttractorStrength())
+				{
+					thisPlanet->setStrongestAttractorStrength(acceleration_magnitude);
+					thisPlanet->setStrongestAttractorIdRef(otherPlanet.getId());
+				}
 			}
 		}
 
@@ -232,13 +235,16 @@ void Space::update()
 									thisPlanet->getPosition().y + thisPlanet->getVelocity().y * timestep + 0.5f * acc_sum_1.y * timestep * timestep });
 
 		Acceleration2D acc_sum_2;
-		for (auto& otherPlanet : planets)
+		if (gravity_enabled)
 		{
-			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
-				continue;
+			for (auto& otherPlanet : planets)
+			{
+				if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
+					continue;
 
-			DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
-			accumulate_acceleration(distance, acc_sum_2, otherPlanet);
+				DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
+				accumulate_acceleration(distance, acc_sum_2, otherPlanet);
+			}
 		}
 
 		/* Integrate (second part) (Leapfrog) */
@@ -304,6 +310,9 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 		{
 		case sf::Keyboard::P:
 			paused = !paused;
+			break;
+		case sf::Keyboard::G:
+			gravity_enabled = !gravity_enabled;
 			break;
 		case sf::Keyboard::Escape:
 			exit(0);
@@ -430,7 +439,9 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 	for (size_t i = 0; i < n_dust_particles; i++)
 	{
 		const auto scatter_pos = sf::Vector2f(planet.getPosition().x, planet.getPosition().y) + random_vector(planet.getRadius());
-		const auto scatter_vel = sf::Vector2f(planet.getVelocity().x, planet.getVelocity().y) + CREATEDUSTSPEEDMULT * random_vector(20.0);
+		sf::Vector2f rnd_vel = random_vector(20.0);
+		rnd_vel *= static_cast<float>(CREATEDUSTSPEEDMULT);
+		const auto scatter_vel = sf::Vector2f(planet.getVelocity().x, planet.getVelocity().y) + rnd_vel;
 		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
 		addSmoke(scatter_pos, scatter_vel, 2, lifespan, planet.getTemp());
 	}
@@ -494,7 +505,7 @@ void Space::explodePlanet(Planet planet)
 
 			const sf::Vector2f to_fragment = (fragment_pos - original_position);
 
-			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * pow(original_mass, 0.3) * to_fragment / std::max(std::hypot(to_fragment.x, to_fragment.y), 0.1f) *	
+			const sf::Vector2f escape_speed = EXPLODE_PLANET_SPEEDMULT_OTHER * static_cast<float>(pow(original_mass, 0.3)) * to_fragment / std::max(std::hypot(to_fragment.x, to_fragment.y), 0.1f) *	
 												static_cast<float>(uniform_random(0.85, 1.15));
 
 			fragment->setVelocity(fragment->getVelocity() + escape_speed);
@@ -647,7 +658,7 @@ void Space::update_spaceship()
 
 	for (const auto & planet : planets)
 	{
-		if (ship.isExist() && !ship.pullofGravity(planet, ship, timestep))
+		if (ship.isExist() && !ship.pullofGravity(planet, ship, timestep, gravity_enabled))
 			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
 	}
 

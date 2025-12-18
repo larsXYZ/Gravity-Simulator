@@ -7,7 +7,7 @@ class IParticleContainer
 {
 public:
 	~IParticleContainer() = default;
-	virtual void update(const std::vector<Planet> & planets, const Bound &bound, double timestep, double curr_time) = 0;
+	virtual void update(const std::vector<Planet> & planets, const Bound &bound, double timestep, double curr_time, bool gravity_enabled) = 0;
 	virtual void render_all(sf::RenderWindow &w) = 0;
 	virtual void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp) = 0;
 	virtual void clear() = 0;
@@ -40,7 +40,7 @@ class DecimatedLegacyParticleContainer : public IParticleContainer
 
 public:
 
-	void update(const std::vector<Planet>& planets, const Bound& bound, double timestep, double curr_time) override
+	void update(const std::vector<Planet>& planets, const Bound& bound, double timestep, double curr_time, bool gravity_enabled) override
 	{
 		next_dec_simulation_target();
 
@@ -65,13 +65,16 @@ public:
 					particle.absorb_heat(heat);
 				}
 
-				const auto angle = atan2(planet.gety() - curr_pos.y, planet.getx() - curr_pos.x);
-				const auto A = G * planet.getMass() / distanceSquared;
-				const auto acceleration = sf::Vector2f(A * cos(angle),
-														A * sin(angle));
+				if (gravity_enabled)
+				{
+					const auto angle = atan2(planet.gety() - curr_pos.y, planet.getx() - curr_pos.x);
+					const auto A = G * planet.getMass() / distanceSquared;
+					const auto acceleration = sf::Vector2f(A * cos(angle),
+						A * sin(angle));
 
-				const auto dv = static_cast<float>(timestep) * static_cast<float>(decimation_factor) * acceleration;
-				particle.set_velocity(particle.get_velocity() + dv);
+					const auto dv = static_cast<float>(timestep) * static_cast<float>(decimation_factor) * acceleration;
+					particle.set_velocity(particle.get_velocity() + dv);
+				}
 			}
 
 			particle.cool_down(timestep * decimation_factor);

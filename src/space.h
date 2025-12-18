@@ -30,6 +30,7 @@ class Space
 	double total_mass{0.0};
 	int next_id{0};
 	bool paused{ false };
+	bool gravity_enabled{ true };
 	float timestep{ TIMESTEP_VALUE_START };
 	double curr_time{ 0.0 };
 	int iteration{0};

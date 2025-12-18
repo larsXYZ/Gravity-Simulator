@@ -156,7 +156,7 @@ float SpaceShip::getAngle()
 	return angle;
 }
 
-bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
+bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep, bool gravity_enabled)
 {
 	double dist = sqrt((forcer.getx() - ship.getpos().x)*(forcer.getx() - ship.getpos().x) + (forcer.gety() - ship.getpos().y) * (forcer.gety() - ship.getpos().y));
 
@@ -166,7 +166,7 @@ bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep)
 		destroy();
 		return false;
 	}
-	else
+	else if (gravity_enabled)
 	{
 		double angle = atan2(forcer.gety() - ship.getpos().y, forcer.getx() - ship.getpos().x);
 		double xf = G * forcer.getMass() / (dist*dist) * cos(angle);
