@@ -81,6 +81,24 @@ void SpaceShip::draw(sf::RenderWindow &w)
 {
 	if (exist)
 	{
+        // Shield Visualization
+        if (shield_active_timer > 0)
+        {
+            sf::CircleShape shield(shield_radius);
+            shield.setOrigin(shield_radius, shield_radius);
+            shield.setPosition(pos);
+            
+            float ratio = std::clamp(shield_active_timer / 250.0f, 0.0f, 1.0f);
+            
+            sf::Color shieldCol(0, 100, 255, static_cast<sf::Uint8>(100 * ratio));
+            shield.setFillColor(shieldCol);
+            
+            shield.setOutlineColor(sf::Color(100, 200, 255, static_cast<sf::Uint8>(200 * ratio)));
+            shield.setOutlineThickness(2.0f);
+
+            w.draw(shield);
+        }
+
         // Define Ship Shape
         sf::Transform transform;
         transform.translate(pos);
@@ -500,6 +518,10 @@ void SpaceShip::toggleTug(Space& space)
 
 void SpaceShip::updateTug(Space& space, double dt)
 {
+    // Decay activity score
+    tug_activity_score -= 0.01f * dt;
+    if (tug_activity_score < 0.0f) tug_activity_score = 0.0f;
+
     if (!tug_active) return;
     
     Planet* target = space.findPlanetPtr(tug_target_id);
@@ -535,6 +557,13 @@ void SpaceShip::updateTug(Space& space, double dt)
 
     // Force: Spring + Damping
     double total_force = k * (dist - tug_rest_length) + c * closing_speed;
+
+    // Update activity score based on force
+    // Normalizing factor: what constitutes "max force"? 
+    // total_force can be e.g. 0.05 * 100 = 5.
+    float force_impact = abs((float)total_force) * 3.0f; 
+    tug_activity_score += force_impact * dt;
+    if (tug_activity_score > 1.0f) tug_activity_score = 1.0f;
     
     // Pull planet towards ship (or push if compressed)
     sf::Vector2f p_vel = target->getVelocity();
@@ -564,11 +593,56 @@ void SpaceShip::renderTug(sf::RenderWindow& window, Space& space)
      Planet* target = space.findPlanetPtr(tug_target_id);
     if (!target) return;
 
-    sf::Vertex line[] =
-    {
-        sf::Vertex(pos, sf::Color(100, 255, 100)),
-        sf::Vertex(target->getPosition(), sf::Color(100, 255, 100))
-    };
+    // Visual intensity based on score
+    sf::Uint8 alpha = static_cast<sf::Uint8>(std::min(255.f,50 + 205 * sqrt(tug_activity_score)));
+    float thickness = 1.0f + 2.0f * tug_activity_score;
 
-    window.draw(line, 2, sf::PrimitiveType::Lines);
+    // Draw main line
+    sf::VertexArray line(sf::Lines, 2);
+    line[0].position = pos;
+    line[0].color = sf::Color(100, 255, 100, alpha);
+    line[1].position = target->getPosition();
+    line[1].color = sf::Color(100, 255, 100, alpha);
+    window.draw(line);
+
+    // Draw Glow (thick line) if active
+    if (tug_activity_score > 0.1f)
+    {
+        sf::RectangleShape glowLine;
+        sf::Vector2f diff = target->getPosition() - pos;
+        float len = std::hypot(diff.x, diff.y);
+        glowLine.setSize({len, thickness});
+        glowLine.setOrigin(0, thickness / 2.0f);
+        glowLine.setPosition(pos);
+        glowLine.setRotation(atan2(diff.y, diff.x) * 180.0f / PI);
+        glowLine.setFillColor(sf::Color(50, 255, 50, static_cast<sf::Uint8>(100 * tug_activity_score)));
+        window.draw(glowLine, sf::BlendAdd);
+    }
+}
+
+void SpaceShip::checkShield(Space& space, double dt)
+{
+    if (shield_active_timer > 0)
+        shield_active_timer -= dt;
+
+    if (!exist) return;
+
+    for (auto& planet : space.planets)
+    {
+        if (planet.isMarkedForRemoval()) continue;
+        if (planet.getMass() >= TERRESTIALLIMIT) continue; // Too big
+
+        double dx = planet.getx() - pos.x;
+        double dy = planet.gety() - pos.y;
+        double distSq = dx*dx + dy*dy;
+        double minDist = shield_radius + planet.getRadius();
+
+        if (distSq < minDist * minDist)
+        {
+            // Destroy!
+            space.addExplosion(sf::Vector2f(planet.getx(), planet.gety()), planet.getRadius()*2, planet.getVelocity(), 20);
+            space.removePlanet(planet.getId());
+            shield_active_timer = 250.0f; // Glow for 250ms
+        }
+    }
 }

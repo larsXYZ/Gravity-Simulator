@@ -90,8 +90,9 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		updateInfoBox();
 
 		drawPlanets(window);
-		drawEffects(window);
 		ship.draw(window);
+		drawDust(window);
+		drawEffects(window);
 		
 		if (bound.isActive())
 			bound.render(window, click_and_drag_handler.get_zoom());

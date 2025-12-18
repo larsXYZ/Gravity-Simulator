@@ -37,6 +37,11 @@ class SpaceShip
     bool tug_active{ false };
     int tug_target_id{ -1 };
     double tug_rest_length{ 0.0 };
+    float tug_activity_score{ 0.0f };
+
+    // Shield
+    float shield_active_timer{ 0.0f };
+    const float shield_radius{ 25.0f };
 
 public:
 
@@ -44,6 +49,7 @@ public:
 	SpaceShip(sf::Vector2f p);
 
 	int move(int timeStep);
+    void checkShield(Space& space, double dt);
 	bool pullofGravity(Planet forcer, SpaceShip &ship, int timeStep, bool gravity_enabled);
 	sf::Vector2f getpos();
 	sf::Vector2f getvel();

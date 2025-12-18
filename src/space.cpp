@@ -692,6 +692,7 @@ void Space::update_spaceship()
         ship.updateProjectiles(timestep, *this);
         ship.checkProjectileCollisions(*this, timestep);
         ship.updateTug(*this, timestep);
+        ship.checkShield(*this, timestep);
     }
 }
 
@@ -829,8 +830,8 @@ void Space::drawEffects(sf::RenderWindow &window)
 		}
 	}
 	
-	//DUST
-	particles->render_all(window);
+	//DUST (Moved to drawDust)
+	//particles->render_all(window);
 
 	//TRAILS
 	for(size_t i = 0; i < trail.size(); i++)
@@ -850,6 +851,11 @@ void Space::drawEffects(sf::RenderWindow &window)
         ship.renderCharge(window);
     }
 
+}
+
+void Space::drawDust(sf::RenderWindow &window)
+{
+    particles->render_all(window);
 }
 
 double Space::thermalEnergyAtPosition(sf::Vector2f pos)
