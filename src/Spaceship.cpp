@@ -479,8 +479,6 @@ void SpaceShip::toggleTug(Space& space)
 
     for (const auto& planet : space.planets)
     {
-        if (planet.getMass() > TUG_MASS_LIMIT) continue;
-
         double dx = planet.getx() - pos.x;
         double dy = planet.gety() - pos.y;
         double dist = std::hypot(dx, dy);
@@ -496,6 +494,7 @@ void SpaceShip::toggleTug(Space& space)
     {
         tug_active = true;
         tug_target_id = best_id;
+        tug_rest_length = best_dist;
     }
 }
 
@@ -521,19 +520,42 @@ void SpaceShip::updateTug(Space& space, double dt)
     }
 
     // Apply force
-    // Force direction: from planet to ship (pull)
-    double force = TUG_STRENGTH * (dist - TUG_PREFERRED_DISTANCE);
+    double angle = atan2(dy, dx);
+    double dir_x = cos(angle);
+    double dir_y = sin(angle);
+
+    // Spring-Damper Physics
+    double k = 0.05; // Strong spring
+    double c = 0.8;  // Heavy damping
+
+    // Relative velocity (Planet - Ship) along the string
+    double rel_vel_x = target->getVelocity().x - speed.x;
+    double rel_vel_y = target->getVelocity().y - speed.y;
+    double closing_speed = rel_vel_x * dir_x + rel_vel_y * dir_y;
+
+    // Force: Spring + Damping
+    double total_force = k * (dist - tug_rest_length) + c * closing_speed;
     
-    double angle = atan2(dy, dx); // Angle from ship to planet
-    
-    // Pull planet towards ship
+    // Pull planet towards ship (or push if compressed)
     sf::Vector2f p_vel = target->getVelocity();
-    p_vel.x -= cos(angle) * force * dt / target->getMass();
-    p_vel.y -= sin(angle) * force * dt / target->getMass();
+    p_vel.x -= dir_x * total_force * dt / target->getMass();
+    p_vel.y -= dir_y * total_force * dt / target->getMass();
+
+    // Drift Correction:
+    // The spring acts strongly on the planet to balance gravity on the ship (which is weak).
+    // This pushes the planet away. We apply "extra gravity" to the planet to counter this drift.
+    double reaction_scale = 0.05;
+    double grav_force = G * target->getMass() * mass / std::max(dist*dist, 1.0);
+    double extra_grav = grav_force * (1.0 / reaction_scale - 1.0);
+
+    p_vel.x -= dir_x * extra_grav * dt / target->getMass();
+    p_vel.y -= dir_y * extra_grav * dt / target->getMass();
+
     target->setVelocity(p_vel);
     
-    // Note: Not applying reaction force to ship for "fun factor" (easier control), 
-    // unless user wants realistic physics. "Tug feature" implies towing.
+    // Pull ship towards planet (Reaction force, scaled down for playability)
+    speed.x += dir_x * total_force * reaction_scale * dt / mass;
+    speed.y += dir_y * total_force * reaction_scale * dt / mass;
 }
 
 void SpaceShip::renderTug(sf::RenderWindow& window, Space& space)

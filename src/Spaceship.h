@@ -36,6 +36,7 @@ class SpaceShip
     // Tug
     bool tug_active{ false };
     int tug_target_id{ -1 };
+    double tug_rest_length{ 0.0 };
 
 public:
 
