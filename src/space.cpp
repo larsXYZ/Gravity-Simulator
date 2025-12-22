@@ -826,7 +826,6 @@ void Space::update_spaceship()
 			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
 	}
 
-    // NEW FEATURES
     if (ship.isExist())
     {
         ship.handleInput(*this, timestep);
@@ -848,8 +847,7 @@ void Space::updateInfoBox()
 		"\nTotal mass: " + std::to_string(static_cast<int>(total_mass)) +
 		"\nObjects: " + std::to_string(planets.size()) +
 		"\nParticles: " + std::to_string(particles->size()) +
-		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()) +
-		(ship.isExist() ? ("\nShield: " + std::to_string(static_cast<int>(ship.getShieldEnergy())) + "%") : ""));
+		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()));
 
 	if (ship.isExist())
 	{
@@ -1151,7 +1149,6 @@ void Space::drawLifeVisuals(sf::RenderWindow& window, const Planet& p)
 	float zoom = click_and_drag_handler.get_zoom();
 
 	float indicatorRad = p.getRadius() + 5.0f;
-	if (lt < 4) indicatorRad = p.getRadius() + 2.0f;
 
 	sf::CircleShape indicator(indicatorRad);
 	indicator.setPosition(pos);

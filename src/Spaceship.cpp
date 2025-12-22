@@ -270,16 +270,21 @@ void SpaceShip::shoot(Space& space)
     p_pos.x += cos(rad_angle) * 10;
     p_pos.y += sin(rad_angle) * 10;
 
-    double power = 1.0 + (charge_level / PROJECTILE_MAX_CHARGE) * 4.0; // 1x to 5x power
+    double power = chargeLevelToPower(charge_level);
 
     // Recoil
     double recoil_force = 0.001 * power;
     speed.x -= cos(rad_angle) * recoil_force;
     speed.y -= sin(rad_angle) * recoil_force;
 
-    projectiles.push_back({ p_pos, p_vel, PROJECTILE_LIFESPAN, power });
+    projectiles.push_back({ p_pos, p_vel, PROJECTILE_LIFESPAN, power, 0.0 });
     shoot_cooldown = PROJECTILE_COOLDOWN;
     charge_level = 0.0;
+}
+
+double SpaceShip::chargeLevelToPower(double charge_level)
+{
+    return 1.0 + (charge_level / PROJECTILE_MAX_CHARGE) * 4.0;
 }
 
 void SpaceShip::updateProjectiles(double dt, Space& space)
@@ -289,6 +294,7 @@ void SpaceShip::updateProjectiles(double dt, Space& space)
         p.pos.x += p.vel.x * dt;
         p.pos.y += p.vel.y * dt;
         p.life -= dt;
+        p.age += dt;
 
         // Trail logic
         if (p.power > 2.0)
@@ -398,7 +404,7 @@ void SpaceShip::renderCharge(sf::RenderWindow& window)
 
     // Draw Charge Indicator (Growing sphere at nose)
     float charge_ratio = charge_level / PROJECTILE_MAX_CHARGE;
-    float size = 2.0f + charge_ratio * 4.0f;
+    float size = Projectile::getRadByPower(chargeLevelToPower(charge_level));
     
     sf::CircleShape charge_ball(size);
     charge_ball.setOrigin(size, size);
@@ -422,7 +428,7 @@ void SpaceShip::renderProjectiles(sf::RenderWindow& window)
 {
     for (const auto& p : projectiles)
     {
-        float size = 1.5f * p.power;
+        float size = p.getRad(p.power, p.age);
         sf::CircleShape shape(size);
         shape.setOrigin(size, size);
         
@@ -526,11 +532,12 @@ void SpaceShip::checkProjectileCollisions(Space& space, double dt)
             float dx = planet.getx() - start.x;
             float dy = planet.gety() - start.y;
             float distSq = dx*dx + dy*dy;
-            float maxReach = planet.getRadius() + std::hypot(movement.x, movement.y);
+            float p_radius = it->getRad(it->power, it->age);
+            float maxReach = planet.getRadius() + p_radius + std::hypot(movement.x, movement.y);
             
             if (distSq > maxReach * maxReach) continue;
 
-            if (segmentIntersectsCircle(start, end, planetPos, planet.getRadius(), intersection))
+            if (segmentIntersectsCircle(start, end, planetPos, planet.getRadius() + p_radius, intersection))
             {
                 // Hit! Scale explosion by power
                 space.addExplosion(intersection, 12 * it->power, {0,0}, 15 * it->power);
@@ -550,7 +557,7 @@ void SpaceShip::checkProjectileCollisions(Space& space, double dt)
                 }
 
                 // Damage based on power
-                if (planet.getMass() < PROJECTILE_DAMAGE_MASS_LIMIT * it->power)
+                if (planet.getMass() < PROJECTILE_DAMAGE_MASS_LIMIT * pow((it->power),2.0))
                 {
                     // Explode object
                     space.explodePlanet(planet);

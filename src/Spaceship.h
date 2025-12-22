@@ -11,7 +11,11 @@ struct Projectile {
     sf::Vector2f vel;
     int life;
     double power;
+    double age;
     std::deque<sf::Vector2f> trail;
+
+    static double getRad(double power, double age) { return getRadByPower(power) + 0.01 * age * power;}
+    static double getRadByPower(double power) { return 2.f * power; }
 };
 
 class SpaceShip
@@ -93,7 +97,8 @@ public:
     // New Features
     void startCharge();
     void updateCharge(double dt);
-    void shoot(Space& space);
+    void shoot(Space &space);
+    double chargeLevelToPower(double charge_level);
     void updateProjectiles(double dt, Space& space);
     void renderProjectiles(sf::RenderWindow& window);
     void renderCharge(sf::RenderWindow& window);
