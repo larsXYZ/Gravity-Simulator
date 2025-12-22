@@ -60,6 +60,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.add(simInfo);
 	gui.add(toolInfo);
 	gui.add(functions);
+	gui.add(editObjectCheckBox);
 	gui.add(newPlanetInfo);
 	gui.add(objectTypeSelector);
 	gui.add(massSlider);

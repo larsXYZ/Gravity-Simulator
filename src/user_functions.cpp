@@ -278,7 +278,7 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 void updateGuiSize(tgui::TextArea::Ptr textbox, int lines)
 {
     float lineHeight = textbox->getTextSize() * 1.2f;
-    textbox->setSize(textbox->getSize().x, std::max(45.0f, lines * lineHeight + 10.0f));
+    textbox->setSize(textbox->getSize().x, std::max(32.0f, lines * lineHeight + 12.0f));
 }
 
 class IUserFunction
@@ -310,6 +310,7 @@ class NewObjectFunction : public IUserFunction
 public:
 	void on_selection(FunctionContext& context) override
 	{
+		IUserFunction::on_selection(context);
 		context.mass_slider->setVisible(true);
 		context.object_type_selector->setVisible(true);
 		context.new_object_info->setVisible(true);
@@ -320,7 +321,7 @@ public:
 	void execute(FunctionContext& context) override
 	{
 		fillTextBox(context.new_object_info, context.mass_slider->getValue());
-        updateGuiSize(context.new_object_info, 3);
+        updateGuiSize(context.new_object_info, 1);
 
 
 
@@ -416,6 +417,7 @@ class NewObjectInOrbitFunction : public IUserFunction
 public:
 	void on_selection(FunctionContext& context) override
 	{
+		IUserFunction::on_selection(context);
 		context.mass_slider->setVisible(true);
 		context.object_type_selector->setVisible(true);
 		context.new_object_info->setVisible(true);
@@ -426,7 +428,7 @@ public:
 	void execute(FunctionContext& context) override
 	{
 		fillTextBox(context.new_object_info, context.mass_slider->getValue());
-        updateGuiSize(context.new_object_info, 3);
+        updateGuiSize(context.new_object_info, 1);
 
 		switch (state)
 		{
@@ -863,8 +865,17 @@ public:
         updateGuiSize(context.new_object_info, 1);
 	}
 
+    void on_deselection(FunctionContext& context) override
+    {
+        IUserFunction::on_deselection(context);
+        context.space.object_info.set_visible(false);
+        context.space.object_info.deactivate();
+    }
+
 	void execute(FunctionContext& context) override
 	{
+		context.space.object_info.set_visible(context.space.editObjectCheckBox->isChecked());
+
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 		{
 			for (const auto& planet : context.space.planets)
@@ -873,6 +884,7 @@ public:
 					planet.gety() - context.mouse_pos_world.y);
 				if (dist >= planet.getRadius())
 					continue;
+				
 				context.space.object_info.activate(planet.getId());
 				return;
 			}
@@ -914,10 +926,10 @@ public:
 				}
 
 				context.new_object_info->setText(info);
-                
-                // Count lines for scaling
-                int lines = std::count(info.begin(), info.end(), '\n') + 1;
-                updateGuiSize(context.new_object_info, lines);
+				
+				// Count lines for scaling
+				int lines = std::count(info.begin(), info.end(), '\n') + 1;
+				updateGuiSize(context.new_object_info, lines);
 			}
 		}
 	}
@@ -930,6 +942,7 @@ public:
 
 	void on_selection(FunctionContext& context) override
 	{
+		IUserFunction::on_selection(context);
 		context.mass_slider->setVisible(true);
 		context.new_object_info->setVisible(true);
         context.new_object_info->setText("Select objects, then Ctrl-Click to place in orbit.");

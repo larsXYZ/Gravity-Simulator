@@ -32,8 +32,12 @@ void ObjectInfo::deactivate()
 void ObjectInfo::activate(int new_target_id)
 {
 	target_id = new_target_id;
+}
+
+void ObjectInfo::set_visible(bool visible)
+{
 	if (panel)
-		panel->setVisible(true);
+		panel->setVisible(visible && target_id != -1);
 }
 
 void ObjectInfo::setup(Space& space, tgui::Gui& gui)
@@ -41,28 +45,31 @@ void ObjectInfo::setup(Space& space, tgui::Gui& gui)
 	m_space = &space;
 
 	panel = tgui::Panel::create();
-	panel->setSize(300, 360);
-	panel->setPosition("100% - 310", 100);
+	panel->setSize(220, 260);
+	panel->setPosition("100% - 230", 100);
 	panel->setVisible(false);
-	panel->getRenderer()->setBackgroundColor(sf::Color(30, 30, 30, 220));
+	panel->getRenderer()->setBackgroundColor(sf::Color(255, 255, 255, 200));
+	panel->getRenderer()->setBorderColor(sf::Color::Black);
+	panel->getRenderer()->setBorders(1);
 	gui.add(panel);
 
-	float y = 10;
-	float labelWidth = 80;
-	float boxX = 100;
-	float boxWidth = 180;
-	float rowHeight = 35;
-
-	auto addRow = [&](const std::string& labelText, tgui::EditBox::Ptr& box, bool numeric = true) {
-		auto label = tgui::Label::create(labelText);
-		label->setPosition(10, y + 4); // +4 to center vertically roughly
-		label->setSize(labelWidth, 25);
-		label->getRenderer()->setTextColor(sf::Color::White);
-		panel->add(label);
-
-		box = tgui::EditBox::create();
-		box->setPosition(boxX, y);
-		box->setSize(boxWidth, 25);
+		float y = 5;
+		float labelWidth = 75;
+		float boxX = 80;
+		float boxWidth = 130;
+		float rowHeight = 30;
+	
+		auto addRow = [&](const std::string& labelText, tgui::EditBox::Ptr& box, bool numeric = true) {
+			auto label = tgui::Label::create(labelText);
+			label->setPosition(5, y + 4); 
+			label->setSize(labelWidth, 22);
+			label->getRenderer()->setTextColor(sf::Color::Black);
+			label->setTextSize(13);
+			panel->add(label);
+	
+			box = tgui::EditBox::create();
+			box->setPosition(boxX, y);
+			box->setSize(boxWidth, 24);		box->setTextSize(13);
 		if (numeric)
 			box->setInputValidator(tgui::EditBox::Validator::Float);
 		panel->add(box);
@@ -153,11 +160,29 @@ void ObjectInfo::setup(Space& space, tgui::Gui& gui)
 		}
 	});
 
-	closeBtn = tgui::Button::create("Close");
-	closeBtn->setPosition(10, y);
-	closeBtn->setSize(270, 30);
-	closeBtn->onClick([this] { deactivate(); });
-	panel->add(closeBtn);
+	addRow("Atmo:", atmoBox);
+	atmoBox->onReturnKeyPress([this](const tgui::String& val) {
+		if (m_space && target_id != -1) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				try {
+					p->setAtmosphere(std::stod(val.toStdString()));
+				} catch (...) {}
+			}
+		}
+	});
+
+	addRow("Atmo Pot:", atmoPotBox);
+	atmoPotBox->onReturnKeyPress([this](const tgui::String& val) {
+		if (m_space && target_id != -1) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				try {
+					p->setAtmospherePotensial(std::stod(val.toStdString()));
+				} catch (...) {}
+			}
+		}
+	});
+
+	panel->setSize(220, y + 5);
 }
 
 bool ObjectInfo::is_focused() const
@@ -171,6 +196,8 @@ bool ObjectInfo::is_focused() const
 	if (yBox && yBox->isFocused()) return true;
 	if (vxBox && vxBox->isFocused()) return true;
 	if (vyBox && vyBox->isFocused()) return true;
+	if (atmoBox && atmoBox->isFocused()) return true;
+	if (atmoPotBox && atmoPotBox->isFocused()) return true;
 	
 	return false;
 }
@@ -192,6 +219,8 @@ void ObjectInfo::update_ui_values(Space& space)
 	if (!yBox->isFocused()) yBox->setText(d2s(target->gety()));
 	if (!vxBox->isFocused()) vxBox->setText(d2s(target->getxv(), 4));
 	if (!vyBox->isFocused()) vyBox->setText(d2s(target->getyv(), 4));
+	if (!atmoBox->isFocused()) atmoBox->setText(d2s(target->getCurrentAtmosphere()));
+	if (!atmoPotBox->isFocused()) atmoPotBox->setText(d2s(target->getAtmospherePotensial()));
 }
 
 void ObjectInfo::render(Space& space, sf::RenderWindow& window)
@@ -234,8 +263,8 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 	{
 		sf::Vertex g[] =
 		{
-			sf::Vertex(sf::Vector2f(target_parent->getx(), target_parent->gety()),sf::Color::Yellow),
-			sf::Vertex(sf::Vector2f(pos.x, pos.y), sf::Color::Yellow)
+			sf::Vertex(sf::Vector2f(target_parent->getx(), target_parent->gety()),sf::Color(255, 255, 0, 80)),
+			sf::Vertex(sf::Vector2f(pos.x, pos.y), sf::Color(255, 255, 0, 80))
 		};
 		window.draw(g, 2, sf::Lines);
 
@@ -244,13 +273,13 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		omr.setPosition(sf::Vector2f(target_parent->getx(), target_parent->gety()));
 		omr.setOrigin(rocheRad, rocheRad);
 		omr.setFillColor(sf::Color(0, 0, 0, 0));
-		omr.setOutlineColor(sf::Color(255, 140, 0));
+		omr.setOutlineColor(sf::Color(255, 140, 0, 80));
 		window.draw(omr);
 
 		//CENTER OF MASS
 		sf::CircleShape middle(2);
 		middle.setOrigin(2, 2);
-		middle.setFillColor(sf::Color::Yellow);
+		middle.setFillColor(sf::Color(255, 255, 0, 150));
 
 		double dist = std::hypot(target_parent->getx() - pos.x, 
 									target_parent->gety() - pos.y);

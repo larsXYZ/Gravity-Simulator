@@ -104,6 +104,8 @@ public:
 	bool auto_bound_active() const;
 	void set_ambient_temperature(Planet& planet);
 	
+	tgui::CheckBox::Ptr editObjectCheckBox = std::make_shared<tgui::CheckBox>();
+
 	void hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow & window);
 	
 	void initSetup();

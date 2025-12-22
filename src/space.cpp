@@ -174,85 +174,88 @@ void Space::update()
 		thisPlanet->resetAttractorMeasure();
 
 		Acceleration2D acc_sum_1;
-		if (gravity_enabled)
+		for (auto & otherPlanet : planets)
 		{
-			for (auto & otherPlanet : planets)
+			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
+				continue;
+
+			DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
+			const auto acceleration_magnitude = accumulate_acceleration(distance, acc_sum_1, otherPlanet);
+
+			if (thisPlanet->canDisintegrate(curr_time) &&
+				distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
+				thisPlanet->getMass() / otherPlanet.getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 			{
-				if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
-					continue;
+				const auto rad = thisPlanet->getRadius();
 
-				DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
-				const auto acceleration_magnitude = accumulate_acceleration(distance, acc_sum_1, otherPlanet);
+				disintegratePlanet(*thisPlanet);
+				thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
 
-				if (thisPlanet->canDisintegrate(curr_time) &&
-					distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
-					thisPlanet->getMass() / otherPlanet.getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+				break;
+			}
+
+			if (distance.dist < distance.rad_dist)
+			{
+				if (thisPlanet->getMass() <= otherPlanet.getMass())
 				{
-					const auto rad = thisPlanet->getRadius();
+					const auto collision_pos = sf::Vector2f(thisPlanet->getPosition().x, thisPlanet->getPosition().y);
+					const auto collision_vel = sf::Vector2f(thisPlanet->getVelocity().x, thisPlanet->getVelocity().y);
+					const auto collision_radius = thisPlanet->getRadius();
+					const auto collision_temp = thisPlanet->getTemp();
 
-					disintegratePlanet(*thisPlanet);
-					thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
+					thisPlanet->becomeAbsorbedBy(otherPlanet);
+
+					addExplosion(collision_pos, 
+								4 * collision_radius, 
+								sf::Vector2f(collision_vel.x * 0.5, collision_vel.y * 0.5), 
+								sqrt(otherPlanet.getMass()));
+
+					// Particle generation
+					// Non-linear relationship: fewer particles for small bodies
+					const size_t n_particles_to_add = static_cast<size_t>(20 * collision_radius * std::sqrt(collision_radius));
+					const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
+						static_cast<size_t>(0), n_particles_to_add);
+
+					for (size_t k = 0; k < n_dust_particles; k++)
+					{
+						const auto scatter_pos = collision_pos + random_vector(collision_radius);
+						sf::Vector2f rnd_vel = random_vector(30.0);
+						rnd_vel *= static_cast<float>(CREATEDUSTSPEEDMULT);
+						const auto scatter_vel = collision_vel + rnd_vel;
+						const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
+						
+						double p_temp = collision_temp;
+						if (uniform_random(0, 100) < 15) p_temp *= 2.5; // 15% of particles are much hotter/glowing
+
+						addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+					}
 
 					break;
 				}
+			}
 
-				if (distance.dist < distance.rad_dist)
-				{
-					if (thisPlanet->getMass() <= otherPlanet.getMass())
-					{
-						const auto collision_pos = sf::Vector2f(thisPlanet->getPosition().x, thisPlanet->getPosition().y);
-						const auto collision_vel = sf::Vector2f(thisPlanet->getVelocity().x, thisPlanet->getVelocity().y);
-						const auto collision_radius = thisPlanet->getRadius();
-						const auto collision_temp = thisPlanet->getTemp();
+			if (otherPlanet.emitsHeat())
+			{
+				const auto heat = tempConstTwo * thisPlanet->getRadius() * thisPlanet->getRadius() * otherPlanet.giveThermalEnergy(timestep) / std::max(distance.dist, 1.0);
+				thisPlanet->absorbHeat(heat, timestep);
+			}
 
-						thisPlanet->becomeAbsorbedBy(otherPlanet);
-
-						addExplosion(collision_pos, 
-									4 * collision_radius, 
-									sf::Vector2f(collision_vel.x * 0.5, collision_vel.y * 0.5), 
-									sqrt(otherPlanet.getMass()));
-
-						// Particle generation
-						// Non-linear relationship: fewer particles for small bodies
-						const size_t n_particles_to_add = static_cast<size_t>(20 * collision_radius * std::sqrt(collision_radius));
-						const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
-							static_cast<size_t>(0), n_particles_to_add);
-
-						for (size_t k = 0; k < n_dust_particles; k++)
-						{
-							const auto scatter_pos = collision_pos + random_vector(collision_radius);
-							sf::Vector2f rnd_vel = random_vector(30.0);
-							rnd_vel *= static_cast<float>(CREATEDUSTSPEEDMULT);
-							const auto scatter_vel = collision_vel + rnd_vel;
-							const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
-							
-							double p_temp = collision_temp;
-							if (uniform_random(0, 100) < 15) p_temp *= 2.5; // 15% of particles are much hotter/glowing
-
-							addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
-						}
-
-						break;
-					}
-				}
-
-				if (otherPlanet.emitsHeat())
-				{
-					const auto heat = tempConstTwo * thisPlanet->getRadius() * thisPlanet->getRadius() * otherPlanet.giveThermalEnergy(timestep) / std::max(distance.dist, 1.0);
-					thisPlanet->absorbHeat(heat, timestep);
-				}
-
-				if (acceleration_magnitude > thisPlanet->getStrongestAttractorStrength())
-				{
-					thisPlanet->setStrongestAttractorStrength(acceleration_magnitude);
-					thisPlanet->setStrongestAttractorIdRef(otherPlanet.getId());
-				}
+			if (acceleration_magnitude > thisPlanet->getStrongestAttractorStrength())
+			{
+				thisPlanet->setStrongestAttractorStrength(acceleration_magnitude);
+				thisPlanet->setStrongestAttractorIdRef(otherPlanet.getId());
 			}
 		}
 
 		if (thisPlanet->isMarkedForRemoval())
 			continue;
 		
+		if (!gravity_enabled)
+		{
+			acc_sum_1.x = 0.f;
+			acc_sum_1.y = 0.f;
+		}
+
 		/* Integrate (first part) (Leapfrog) */
 		/* https://en.wikipedia.org/wiki/Leapfrog_integration */
 
@@ -260,16 +263,19 @@ void Space::update()
 									thisPlanet->getPosition().y + thisPlanet->getVelocity().y * timestep + 0.5f * acc_sum_1.y * timestep * timestep });
 
 		Acceleration2D acc_sum_2;
-		if (gravity_enabled)
+		for (auto& otherPlanet : planets)
 		{
-			for (auto& otherPlanet : planets)
-			{
-				if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
-					continue;
+			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
+				continue;
 
-				DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
-				accumulate_acceleration(distance, acc_sum_2, otherPlanet);
-			}
+			DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
+			accumulate_acceleration(distance, acc_sum_2, otherPlanet);
+		}
+
+		if (!gravity_enabled)
+		{
+			acc_sum_2.x = 0.f;
+			acc_sum_2.y = 0.f;
 		}
 
 		/* Integrate (second part) (Leapfrog) */
@@ -745,7 +751,7 @@ void Space::updateInfoBox()
 void Space::initSetup()
 {
 	simInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
-	simInfo->setSize(160, 110);
+	simInfo->setSize(180, 110);
 	simInfo->setPosition(5, 5);
 	simInfo->setTextSize(14);
 
@@ -761,10 +767,15 @@ void Space::initSetup()
 
 	fillFunctionGUIDropdown(functions);
 	
-	functions->setSize(160, functions->getItemCount()*functions->getItemHeight()+5);
+	functions->setSize(180, functions->getItemCount()*functions->getItemHeight()+5);
+
+	editObjectCheckBox->setText("");
+	editObjectCheckBox->setPosition(190, 112 - 29 + functions->getItemCount() * functions->getItemHeight());
+	editObjectCheckBox->setSize(14, 14);
+	editObjectCheckBox->setVisible(true);
 
 	newPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
-	newPlanetInfo->setSize(160, 200);
+	newPlanetInfo->setSize(180, 32);
 	newPlanetInfo->setPosition(5, tgui::bindBottom(functions) + 2 * UI_SEPERATION_DISTANCE);
 	newPlanetInfo->setTextSize(14);
 
@@ -776,8 +787,8 @@ void Space::initSetup()
 	objectTypeSelector->addItem("Big Star");
 	objectTypeSelector->addItem("Black Hole");
 	objectTypeSelector->setSelectedItem("Rocky");
-	objectTypeSelector->setPosition(5, tgui::bindBottom(newPlanetInfo) + 2 * UI_SEPERATION_DISTANCE);
-	objectTypeSelector->setSize(160, 20);
+	objectTypeSelector->setPosition(5, tgui::bindBottom(newPlanetInfo) + UI_SEPERATION_DISTANCE);
+	objectTypeSelector->setSize(180, 20);
 	objectTypeSelector->setVisible(true);
 
 	objectTypeSelector->onItemSelect([this](const tgui::String& item) {
@@ -812,12 +823,12 @@ void Space::initSetup()
 		massSlider->setValue(massSlider->getMinimum());
 	});
 
-	autoBound->setPosition(170, 112 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
+	autoBound->setPosition(190, 112 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
 	autoBound->setSize(14, 14);
 	autoBound->setChecked(true);
 
 	massSlider->setPosition(5, tgui::bindBottom(objectTypeSelector) + UI_SEPERATION_DISTANCE);
-	massSlider->setSize(160, 10);
+	massSlider->setSize(180, 10);
 	massSlider->setValue(1);
 	massSlider->setMinimum(1);
 	massSlider->setMaximum(ROCKYLIMIT - 1);

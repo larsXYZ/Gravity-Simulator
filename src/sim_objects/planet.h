@@ -81,6 +81,8 @@ public:
 	void markForRemoval() noexcept { marked_for_removal = true; }
 	void setStrongestAttractorStrength(double strength) noexcept { STRENGTH_strongest_attractor = strength; }
 	void setMass(double m) noexcept override { SimObject::setMass(m); }
+	void setAtmosphere(double a) noexcept { atmoCur = a; }
+	void setAtmospherePotensial(double a) noexcept { atmoPot = a; }
 
 	// State checks
 	[[nodiscard]] bool canDisintegrate(double curr_time) const noexcept;
