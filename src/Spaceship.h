@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "sim_objects/planet.h"
+#include "user_functions.h"
 #include <deque>
 
 class Space;
@@ -49,8 +50,12 @@ class SpaceShip
     float shield_active_timer{ 0.0f };
     const float shield_radius{ 30.0f };
 
+    // Trajectory
+    bool trajectory_active{ false };
+    PredictionResult last_prediction;
+
 public:
-    enum class Tool { ENERGY_CANNON, GRAPPLE };
+    enum class Tool { ENERGY_CANNON, GRAPPLE, TRAJECTORY };
 
 private:
     Tool current_tool{ Tool::ENERGY_CANNON };
@@ -93,4 +98,7 @@ public:
     void updateGrapple(double dt, Space& space);
     void updateTug(Space& space, double dt);
     void renderTug(sf::RenderWindow& window, Space& space);
+
+    void updateTrajectory(Space& space);
+    void renderTrajectory(sf::RenderWindow& window, float zoom);
 };

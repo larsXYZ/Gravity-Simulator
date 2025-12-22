@@ -803,16 +803,27 @@ void SpaceShip::handleInput(Space& space, double dt)
             }
         }
     }
+    else if (current_tool == Tool::TRAJECTORY)
+    {
+        if (space_pressed && !space_key_prev)
+        {
+            trajectory_active = !trajectory_active;
+        }
+    }
 
     space_key_prev = space_pressed;
 }
 
 void SpaceShip::switchTool(Space& space)
 {
-    if (current_tool == Tool::ENERGY_CANNON)
+    if (current_tool == Tool::ENERGY_CANNON) 
     {
         if (is_charging) shoot(space);
         current_tool = Tool::GRAPPLE;
+    }
+    else if (current_tool == Tool::GRAPPLE)
+    {
+        current_tool = Tool::TRAJECTORY;
     }
     else
     {
@@ -823,5 +834,47 @@ void SpaceShip::switchTool(Space& space)
 std::string SpaceShip::getToolName() const
 {
     if (current_tool == Tool::ENERGY_CANNON) return "Energy cannon";
-    else return "Grapple Hook";
+    else if (current_tool == Tool::GRAPPLE) return "Grapple Hook";
+    else return "Trajectory Prediction";
+}
+
+void SpaceShip::updateTrajectory(Space& space)
+{
+    if (!trajectory_active || !exist) return;
+
+    // Use a temporary planet to represent the ship for trajectory prediction
+    Planet ship_proxy(mass);
+    ship_proxy.setPosition(pos);
+    ship_proxy.setVelocity(speed);
+
+    // Ship's trajectory length is half of the new object's (200 / 2 = 100)
+    last_prediction = predict_trajectory(space.planets, ship_proxy, 100);
+
+    // Make it blue
+    for (auto& v : last_prediction.path)
+    {
+        sf::Uint8 alpha = v.color.a;
+        v.color = sf::Color(100, 150, 255, alpha);
+    }
+}
+
+void SpaceShip::renderTrajectory(sf::RenderWindow& window, float zoom)
+{
+    if (!trajectory_active || !exist || last_prediction.path.empty()) return;
+
+    window.draw(&last_prediction.path[0], last_prediction.path.size(), sf::PrimitiveType::LineStrip);
+
+    // Render collision markers in blue-ish
+    for (const auto& marker : last_prediction.collisionMarkers)
+    {
+        float size = marker.size * zoom;
+        sf::Color col(100, 150, 255);
+        sf::Vertex xLines[] = {
+            sf::Vertex(marker.position + sf::Vector2f(-size, -size), col),
+            sf::Vertex(marker.position + sf::Vector2f(size, size), col),
+            sf::Vertex(marker.position + sf::Vector2f(-size, size), col),
+            sf::Vertex(marker.position + sf::Vector2f(size, -size), col)
+        };
+        window.draw(xLines, 4, sf::PrimitiveType::Lines);
+    }
 }

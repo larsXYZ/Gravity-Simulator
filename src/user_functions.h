@@ -74,5 +74,22 @@ struct FunctionContext
 	Bound& bound;
 	float zoom;
 };
+
+enum class PredictionEndReason { MaxSteps, Collision, Disintegration };
+
+struct PredictionResult {
+	std::vector<sf::Vertex> path;
+	PredictionEndReason reason{ PredictionEndReason::MaxSteps };
+	sf::Vector2f endPoint;
+	sf::Vector2f endVelocity;
+	struct CollisionMarker {
+		sf::Vector2f position;
+		float size;
+	};
+	std::vector<CollisionMarker> collisionMarkers;
+};
+
+PredictionResult predict_trajectory(const std::vector<class Planet>& planets_orig, const class Planet& subject, int steps = 200);
+
 void executeFunction(FunctionContext& context);
 void giveFunctionEvent(FunctionContext& context, sf::Event event);

@@ -442,7 +442,7 @@ void Space::full_reset(sf::View& view, const sf::RenderWindow& window)
 
 	view.setCenter(0, 0);
 	view.setSize(window.getSize().x, window.getSize().y);
-	ship.reset(sf::Vector2f(0, 0));
+	ship.destroy();
 	iteration = 0;
 	curr_time = 0.0;
 	click_and_drag_handler.reset();
@@ -709,6 +709,7 @@ void Space::update_spaceship()
         ship.updateGrapple(timestep, *this);
         ship.updateTug(*this, timestep);
         ship.checkShield(*this, timestep);
+        ship.updateTrajectory(*this);
     }
 }
 
@@ -939,6 +940,7 @@ void Space::drawEffects(sf::RenderWindow &window)
         ship.renderProjectiles(window);
         ship.renderTug(window, *this);
         ship.renderCharge(window);
+        ship.renderTrajectory(window, click_and_drag_handler.get_zoom());
     }
 
 }

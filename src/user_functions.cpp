@@ -87,20 +87,6 @@ double accumulate_acceleration(const DistanceCalculationResult & distance_info,
 	return A;
 }
 
-enum class PredictionEndReason { MaxSteps, Collision, Disintegration };
-
-struct PredictionResult {
-	std::vector<sf::Vertex> path;
-	PredictionEndReason reason{ PredictionEndReason::MaxSteps };
-	sf::Vector2f endPoint;
-	sf::Vector2f endVelocity;
-	struct CollisionMarker {
-		sf::Vector2f position;
-		float size;
-	};
-	std::vector<CollisionMarker> collisionMarkers;
-};
-
 struct PhysicsBody
 {
 	sf::Vector2f position;
@@ -134,7 +120,7 @@ double accumulate_acceleration(const DistanceCalculationResult& distance_info,
 
 }
 
-PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, const Planet& subject)
+PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, const Planet& subject, int steps)
 {
 	const double opt_strength = std::min(1.0, static_cast<double>(planets_orig.size()) / 30.0);
 	const double mass_threshold = opt_strength * 5.0;
@@ -149,14 +135,14 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 	const size_t subject_index = planets.size() - 1;
 	const double subject_mass = subject.getMass();
 	PredictionResult result;
-	result.path.reserve(PredictionConfig::PREDICTION_LENGTH);
+	result.path.reserve(steps);
 
 	const float dt = PredictionConfig::PREDICTION_STEP_SIZE;
 
 	std::vector<Acceleration2D> acc_1(planets.size());
 	std::vector<Acceleration2D> acc_2(planets.size());
 
-	for (int i = 0; i < PredictionConfig::PREDICTION_LENGTH; i++)
+	for (int i = 0; i < steps; i++)
 	{
 		std::fill(acc_1.begin(), acc_1.end(), Acceleration2D{ 0,0 });
 
@@ -275,7 +261,7 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 	
 	if (result.reason == PredictionEndReason::MaxSteps && !result.path.empty())
 	{
-		int fadeLen = std::min((int)result.path.size(), 200); 
+		int fadeLen = std::min((int)result.path.size(), steps); 
 		for (int k = 0; k < fadeLen; ++k) {
 			int idx = result.path.size() - 1 - k;
 			sf::Color c = result.path[idx].color;
