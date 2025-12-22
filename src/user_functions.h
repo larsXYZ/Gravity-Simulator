@@ -69,6 +69,7 @@ struct FunctionContext
 	const sf::Vector2f & mouse_pos_world;
 	const bool is_mouse_on_widgets;
 	tgui::Slider::Ptr mass_slider;
+	tgui::ComboBox::Ptr object_type_selector;
 	tgui::TextArea::Ptr new_object_info;
 	Bound& bound;
 	float zoom;

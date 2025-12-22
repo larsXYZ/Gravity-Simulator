@@ -50,6 +50,7 @@ class Space
 	tgui::TextArea::Ptr newPlanetInfo = std::make_shared<tgui::TextArea>();
 	tgui::ListBox::Ptr functions = std::make_shared<tgui::ListBox>();
 	tgui::Tabs::Ptr temperatureUnitSelector = std::make_shared<tgui::Tabs>();
+	tgui::ComboBox::Ptr objectTypeSelector = std::make_shared<tgui::ComboBox>();
 	tgui::Slider::Ptr massSlider = std::make_shared<tgui::Slider>();
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
 	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();

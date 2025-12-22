@@ -1,6 +1,7 @@
 #include "user_functions.h"
 
 #include "space.h"
+#include <algorithm>
 
 
 FunctionType getSelectedFunction(tgui::ListBox::Ptr listbox)
@@ -242,6 +243,12 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 	return result;
 }
 
+void updateGuiSize(tgui::TextArea::Ptr textbox, int lines)
+{
+    float lineHeight = textbox->getTextSize() * 1.2f;
+    textbox->setSize(textbox->getSize().x, std::max(45.0f, lines * lineHeight + 10.0f));
+}
+
 class IUserFunction
 {
 	virtual void reset() {}
@@ -250,12 +257,16 @@ public:
 	virtual void on_selection(FunctionContext& context)
 	{
 		context.mass_slider->setVisible(false);
-		context.new_object_info->setVisible(false);
+		context.object_type_selector->setVisible(false);
+		context.new_object_info->setVisible(true); // Always show for instructions
 	};
 	virtual void execute(FunctionContext& context) {}
 	virtual void handle_event(FunctionContext& context, sf::Event event) {}
 	virtual void on_deselection(FunctionContext& context)
 	{
+        context.new_object_info->setVisible(false);
+        context.mass_slider->setVisible(false);
+        context.object_type_selector->setVisible(false);
 		reset();
 	};
 };
@@ -268,12 +279,18 @@ public:
 	void on_selection(FunctionContext& context) override
 	{
 		context.mass_slider->setVisible(true);
+		context.object_type_selector->setVisible(true);
 		context.new_object_info->setVisible(true);
+        context.new_object_info->setText("Select type/mass, then click and drag to launch.");
+        updateGuiSize(context.new_object_info, 1);
 	}
 
 	void execute(FunctionContext& context) override
 	{
 		fillTextBox(context.new_object_info, context.mass_slider->getValue());
+        updateGuiSize(context.new_object_info, 3);
+
+
 
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 		{
@@ -366,12 +383,16 @@ public:
 	void on_selection(FunctionContext& context) override
 	{
 		context.mass_slider->setVisible(true);
+		context.object_type_selector->setVisible(true);
 		context.new_object_info->setVisible(true);
+        context.new_object_info->setText("Select type/mass, click parent, then click orbit.");
+        updateGuiSize(context.new_object_info, 1);
 	}
 
 	void execute(FunctionContext& context) override
 	{
 		fillTextBox(context.new_object_info, context.mass_slider->getValue());
+        updateGuiSize(context.new_object_info, 3);
 
 		switch (state)
 		{
@@ -500,6 +521,13 @@ public:
 class RemoveObjectFunction : public IUserFunction
 {
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click on an object to remove it.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) || context.is_mouse_on_widgets)
@@ -521,6 +549,13 @@ public:
 class SpawnShipFunction : public IUserFunction
 {
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click anywhere to spawn the spaceship.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
@@ -548,6 +583,13 @@ class AddRingsFunction : public IUserFunction
 	}
 
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click an object to start adding rings.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		switch (state)
@@ -670,6 +712,13 @@ public:
 		font.loadFromFile("sansation.ttf");
 	}
 
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click and drag to spawn a random solar system.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		switch (state)
@@ -729,6 +778,12 @@ public:
 class TrackObjectFunction : public IUserFunction
 {
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click on an object to follow it.");
+        updateGuiSize(context.new_object_info, 1);
+    }
 
 	void handle_event(FunctionContext& context, sf::Event event) override
 	{
@@ -767,6 +822,13 @@ public:
 class ShowObjectInfoFunction : public IUserFunction
 {
 public:
+	void on_selection(FunctionContext& context) override
+	{
+        IUserFunction::on_selection(context);
+		context.new_object_info->setText("Click on an object to see information.");
+        updateGuiSize(context.new_object_info, 1);
+	}
+
 	void execute(FunctionContext& context) override
 	{
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
@@ -781,6 +843,48 @@ public:
 				return;
 			}
 			context.space.object_info.deactivate();
+			context.new_object_info->setText("Click on an object to see information.");
+            updateGuiSize(context.new_object_info, 1);
+		}
+
+		if (context.space.object_info.is_active())
+		{
+			Planet* target = context.space.findPlanetPtr(context.space.object_info.get_target_id());
+			if (target)
+			{
+				const auto selected_temp_unit = static_cast<TemperatureUnit>(context.space.temperatureUnitSelector->getSelectedIndex());
+
+				std::string info = target->getName() +
+					"\nType: " + std::string(target->getTypeString(target->getType())) +
+					"\nRadius: " + std::to_string(static_cast<int>(target->getRadius())) +
+					"\nMass: " + std::to_string(static_cast<int>(target->getMass())) +
+					"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) +
+					"\nTemperature: " + Space::temperature_info_string(target->getTemp(), selected_temp_unit);
+
+				Planet* target_parent = context.space.findPlanetPtr(target->getStrongestAttractorId());
+				if (target_parent)
+					info += "\nDistance: " + std::to_string(static_cast<int>(std::hypot(target->getx() - target_parent->getx(),
+						target->gety() - target_parent->gety())));
+
+				if (target->getType() == TERRESTIAL)
+				{
+					info += "\n\nAtmo: " + std::to_string((int)target->getCurrentAtmosphere()) + " / " + std::to_string((int)target->getAtmospherePotensial()) + "kPa";
+					if (target->getLife().getTypeEnum() == 0)
+						info += "\n\n" + target->getFlavorTextLife();
+				}
+
+				if (target->getLife().getTypeEnum() != 0)
+				{
+					info += "\n\nBiomass: " + std::to_string((int)target->getLife().getBmass()) + "MT";
+					info += "\n" + target->getLife().getType() + "\n" + target->getFlavorTextLife();
+				}
+
+				context.new_object_info->setText(info);
+                
+                // Count lines for scaling
+                int lines = std::count(info.begin(), info.end(), '\n') + 1;
+                updateGuiSize(context.new_object_info, lines);
+			}
 		}
 	}
 };
@@ -794,6 +898,8 @@ public:
 	{
 		context.mass_slider->setVisible(true);
 		context.new_object_info->setVisible(true);
+        context.new_object_info->setText("Select objects, then Ctrl-Click to place in orbit.");
+        updateGuiSize(context.new_object_info, 1);
 	}
 
 	void reset() override
@@ -914,6 +1020,13 @@ public:
 class ExplodeObjectFunction : public IUserFunction
 {
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click on an object to explode it.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void handle_event(FunctionContext& context, sf::Event event) override
 	{
 		if (event.type != sf::Event::EventType::MouseButtonReleased)
@@ -938,6 +1051,13 @@ class BoundControlFunction : public IUserFunction
 {
 	bool has_center{ false };
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click and drag to set the simulation boundary.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		if (context.space.auto_bound_active())

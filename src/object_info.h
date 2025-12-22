@@ -14,6 +14,7 @@ public:
 	ObjectInfo();
 
 	bool is_active() const;
+	int get_target_id() const { return target_id; }
 	void deactivate();
 	void activate(int new_target_id);
 	void render(Space& space, sf::RenderWindow & window);

@@ -35,6 +35,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.add(toolInfo);
 	gui.add(functions);
 	gui.add(newPlanetInfo);
+	gui.add(objectTypeSelector);
 	gui.add(massSlider);
 	gui.add(timeStepSlider);
 	gui.add(temperatureUnitSelector);
@@ -60,6 +61,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView),
 			.is_mouse_on_widgets = is_mouse_on_widgets(window, gui),
 			.mass_slider = massSlider,
+			.object_type_selector = objectTypeSelector,
 			.new_object_info = newPlanetInfo,
 			.bound = bound,
 			.zoom = click_and_drag_handler.get_zoom()

@@ -706,26 +706,70 @@ void Space::initSetup()
 	functions->setItemHeight(14);
 	functions->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
 	functions->setTextSize(13);
-	functions->setPosition(5, simInfo->getFullSize().y + 2*UI_SEPERATION_DISTANCE);
+	functions->setPosition(5, tgui::bindBottom(simInfo) + 2 * UI_SEPERATION_DISTANCE);
 
 	fillFunctionGUIDropdown(functions);
 	
 	functions->setSize(160, functions->getItemCount()*functions->getItemHeight()+5);
 
+	newPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
+	newPlanetInfo->setSize(160, 200);
+	newPlanetInfo->setPosition(5, tgui::bindBottom(functions) + 2 * UI_SEPERATION_DISTANCE);
+	newPlanetInfo->setTextSize(14);
+
+	objectTypeSelector->addItem("Rocky");
+	objectTypeSelector->addItem("Terrestial");
+	objectTypeSelector->addItem("Gas Giant");
+	objectTypeSelector->addItem("Small Star");
+	objectTypeSelector->addItem("Star");
+	objectTypeSelector->addItem("Big Star");
+	objectTypeSelector->addItem("Black Hole");
+	objectTypeSelector->setSelectedItem("Rocky");
+	objectTypeSelector->setPosition(5, tgui::bindBottom(newPlanetInfo) + 2 * UI_SEPERATION_DISTANCE);
+	objectTypeSelector->setSize(160, 20);
+	objectTypeSelector->setVisible(false);
+
+	objectTypeSelector->onItemSelect([this](const tgui::String& item) {
+		if (item == "Rocky") {
+			massSlider->setMinimum(1);
+			massSlider->setMaximum(ROCKYLIMIT);
+		}
+		else if (item == "Terrestial") {
+			massSlider->setMinimum(ROCKYLIMIT);
+			massSlider->setMaximum(TERRESTIALLIMIT);
+		}
+		else if (item == "Gas Giant") {
+			massSlider->setMinimum(TERRESTIALLIMIT);
+			massSlider->setMaximum(GASGIANTLIMIT);
+		}
+		else if (item == "Small Star") {
+			massSlider->setMinimum(GASGIANTLIMIT);
+			massSlider->setMaximum(SMALLSTARLIMIT);
+		}
+		else if (item == "Star") {
+			massSlider->setMinimum(SMALLSTARLIMIT);
+			massSlider->setMaximum(STARLIMIT);
+		}
+		else if (item == "Big Star") {
+			massSlider->setMinimum(STARLIMIT);
+			massSlider->setMaximum(BIGSTARLIMIT);
+		}
+		else if (item == "Black Hole") {
+			massSlider->setMinimum(BIGSTARLIMIT);
+			massSlider->setMaximum(40000); // 10x Big Star
+		}
+		massSlider->setValue(massSlider->getMinimum());
+	});
+
 	autoBound->setPosition(170, 105 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
 	autoBound->setSize(14, 14);
 	autoBound->setChecked(true);
 
-	newPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
-	newPlanetInfo->setSize(160, 45);
-	newPlanetInfo->setPosition(5, 5 + simInfo->getFullSize().y + functions->getItemCount()*functions->getItemHeight() + UI_SEPERATION_DISTANCE * 4);
-	newPlanetInfo->setTextSize(14);
-
-	massSlider->setPosition(5, 57 + simInfo->getFullSize().y + functions->getItemCount()*functions->getItemHeight() + UI_SEPERATION_DISTANCE * 5);
-	massSlider->setSize(300, 10);
+	massSlider->setPosition(5, tgui::bindBottom(objectTypeSelector) + UI_SEPERATION_DISTANCE);
+	massSlider->setSize(160, 10);
 	massSlider->setValue(1);
-	massSlider->setMinimum(MASS_SLIDER_MIN_VALUE);
-	massSlider->setMaximum(MASS_SLIDER_MAX_VALUE);
+	massSlider->setMinimum(1);
+	massSlider->setMaximum(ROCKYLIMIT);
 
 	timeStepSlider->setPosition(165, 40);
 	timeStepSlider->setSize(160, 5);

@@ -34,12 +34,15 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 	
 	sf::Vector2f pos(target->getx(), target->gety());
 	
-	sf::Vertex l[] =
-	{
-		sf::Vertex(sf::Vector2f(pos.x + 1.5 * target->getRadius(), pos.y + 1.5 * target->getRadius()),sf::Color::Cyan),
-		sf::Vertex(pos, sf::Color::Cyan)
-	};
-	window.draw(l, 2, sf::Lines);
+    // Draw indicator square
+    float rectSize = target->getRadius() * 2.2f;
+    sf::RectangleShape indicator(sf::Vector2f(rectSize, rectSize));
+    indicator.setOrigin(rectSize / 2.0f, rectSize / 2.0f);
+    indicator.setPosition(pos);
+    indicator.setFillColor(sf::Color::Transparent);
+    indicator.setOutlineColor(sf::Color(0, 255, 255, 100)); // Faint Cyan
+    indicator.setOutlineThickness(1.0f);
+    window.draw(indicator);
 	
 	sf::Vertex v[] =
 	{
@@ -136,54 +139,9 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		}
 	}
 	
+	/*
 	text.setPosition(pos.x + 1.5 * target->getRadius(), 
 						pos.y + 1.5 * target->getRadius());
-
-	const auto selected_temp_unit = static_cast<TemperatureUnit>(space.temperatureUnitSelector->getSelectedIndex());
-
-	text.setString(target->getName() + 
-		"\nType: " + std::string(target->getTypeString(target->getType())) + 
-		"\nRadius: " + std::to_string(static_cast<int>(target->getRadius())) +
-		"\nMass: " + std::to_string(static_cast<int>(target->getMass())) +
-		"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) + 
-		"\nTemperature: " + Space::temperature_info_string(target->getTemp(), selected_temp_unit));
-
-	if (target_parent)
-		text.setString(text.getString() +
-			"\nDistance: " + std::to_string(static_cast<int>(std::hypot(target->getx() - target_parent->getx(),
-																			target->gety() - target_parent->gety()))));
-
-	if (target->getType() == TERRESTIAL)
-	{
-		//FINDING GREENHOUSE EFFECT
-		const auto dTherEnergy = target->thermalEnergy() - target->thermalEnergy() / (1 + greenHouseEffectMult * target->getCurrentAtmosphere());
-		const auto dTemp = dTherEnergy / (target->getMass() * target->getTCap());
-		std::string dTempString;
-		if (selected_temp_unit == TemperatureUnit::KELVIN)
-			dTempString = Space::temperature_info_string(dTemp, selected_temp_unit);
-		else
-			dTempString = Space::temperature_info_string(dTemp + 273.15, selected_temp_unit);
-
-		text.setString(text.getString() + 
-			"\n\nAtmo: " + std::to_string((int)target->getCurrentAtmosphere()) + " / " + std::to_string((int)target->getAtmospherePotensial()) + "kPa \nGreenhouse Effect: " + dTempString);
-		if (target->getLife().getTypeEnum() == 0) 
-			text.setString(text.getString() + "\n\n" + target->getFlavorTextLife());
-	}
-
-	if (target->getLife().getTypeEnum() != 0)
-	{
-		text.setString(text.getString() + "\n\nBiomass: " + std::to_string((int)target->getLife().getBmass()) + "MT");
-		if (target->getLife().getTypeEnum() > 3) text.setString(text.getString() + "\n" + target->getLife().getDesc() + " (" + target->getLife().getType() + ")\n" + target->getFlavorTextLife());
-		else text.setString(text.getString() + "\n" + target->getLife().getType() + "\n" + target->getFlavorTextLife());
-	}
-	text.setColor(sf::Color(255, 255, 255));
-
-	auto view = window.getView();
-
-	text.setPosition(static_cast<sf::Vector2f>(window.mapCoordsToPixel(text.getPosition())));
-
-	window.setView(window.getDefaultView());
-	text.setScale(0.5f * sf::Vector2f{ 1.f, 1.f });
-	window.draw(text);
-	window.setView(view);
+    ... (removed text rendering)
+	*/
 }
