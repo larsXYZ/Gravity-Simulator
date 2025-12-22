@@ -812,7 +812,7 @@ void Space::initSetup()
 		massSlider->setValue(massSlider->getMinimum());
 	});
 
-	autoBound->setPosition(170, 105 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
+	autoBound->setPosition(170, 112 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
 	autoBound->setSize(14, 14);
 	autoBound->setChecked(true);
 

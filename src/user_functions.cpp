@@ -42,8 +42,7 @@ void setFunctionGUIFromHotkeys(tgui::ListBox::Ptr listbox)
 void fillTextBox(tgui::TextArea::Ptr textbox, double mass)
 {
 	Planet temp(mass);
-	textbox->setText("NEW OBJECT\nMass:   " + std::to_string(static_cast<int>(mass))
-							+ "\nType:      " + Planet::getTypeString(temp.getType()));
+	textbox->setText("Mass:   " + std::to_string(static_cast<int>(mass)));
 }
 
 namespace PredictionConfig
