@@ -136,6 +136,10 @@ double accumulate_acceleration(const DistanceCalculationResult& distance_info,
 
 PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, const Planet& subject)
 {
+	const double opt_strength = std::min(1.0, static_cast<double>(planets_orig.size()) / 30.0);
+	const double mass_threshold = opt_strength * 5.0;
+	const double ratio_threshold = opt_strength * 0.05;
+
 	std::vector<PhysicsBody> planets;
 	planets.reserve(planets_orig.size() + 1);
 	for (const auto& p : planets_orig)
@@ -143,6 +147,7 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 	planets.push_back({ subject.getPosition(), subject.getVelocity(), subject.getMass(), subject.getRadius() });
 
 	const size_t subject_index = planets.size() - 1;
+	const double subject_mass = subject.getMass();
 	PredictionResult result;
 	result.path.reserve(PredictionConfig::PREDICTION_LENGTH);
 
@@ -162,6 +167,11 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 			for (size_t k = 0; k < planets.size(); k++)
 			{
 				if (j == k || planets[k].mass <= 0) continue;
+
+				// OPTIMIZATIONS: Ignore small attractors or attractors much smaller than subject
+				if (planets[k].mass < mass_threshold) continue;
+				if (planets[k].mass < subject_mass * ratio_threshold) continue;
+
 				auto dist = calculateDistance(planets[j], planets[k]);
 				accumulate_acceleration(dist, acc_1[j], planets[k]);
 			}
@@ -245,6 +255,11 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 			for (size_t k = 0; k < planets.size(); k++)
 			{
 				if (j == k || planets[k].mass <= 0) continue;
+
+				// OPTIMIZATIONS
+				if (planets[k].mass < mass_threshold) continue;
+				if (planets[k].mass < subject_mass * ratio_threshold) continue;
+
 				auto dist = calculateDistance(planets[j], planets[k]);
 				accumulate_acceleration(dist, acc_2[j], planets[k]);
 			}

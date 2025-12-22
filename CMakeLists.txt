@@ -24,8 +24,19 @@ set(TGUI_BACKEND "SFML_GRAPHICS")
 file(GLOB_RECURSE SOURCE "src/*")
 
 if(MSVC)
-    add_compile_options(/ZI)
-    add_link_options(/INCREMENTAL)
+    add_compile_options($<$<CONFIG:Debug>:/ZI>)
+    add_link_options($<$<CONFIG:Debug>:/INCREMENTAL>)
+
+    # Optimization flags for Release builds
+    add_compile_options($<$<CONFIG:Release>:/O2>)      # Maximize Speed
+    add_compile_options($<$<CONFIG:Release>:/Oi>)      # Enable Intrinsic Functions
+    add_compile_options($<$<CONFIG:Release>:/Ot>)      # Favor Fast Code
+    add_compile_options($<$<CONFIG:Release>:/GL>)      # Whole Program Optimization
+    add_compile_options($<$<CONFIG:Release>:/Gy>)      # Enable Function-Level Linking
+    
+    add_link_options($<$<CONFIG:Release>:/LTCG>)      # Link Time Code Generation
+    add_link_options($<$<CONFIG:Release>:/OPT:REF>)   # Eliminate Unreferenced Data
+    add_link_options($<$<CONFIG:Release>:/OPT:ICF>)   # Enable COMDAT Folding
 endif()
 
 # Detect the target architecture
