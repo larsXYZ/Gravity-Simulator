@@ -46,6 +46,7 @@ class Space
 	Bound bound;
 	
 	tgui::TextArea::Ptr simInfo = std::make_shared<tgui::TextArea>();
+	tgui::Label::Ptr toolInfo = std::make_shared<tgui::Label>();
 	tgui::TextArea::Ptr newPlanetInfo = std::make_shared<tgui::TextArea>();
 	tgui::ListBox::Ptr functions = std::make_shared<tgui::ListBox>();
 	tgui::Tabs::Ptr temperatureUnitSelector = std::make_shared<tgui::Tabs>();

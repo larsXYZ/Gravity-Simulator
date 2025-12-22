@@ -39,9 +39,22 @@ class SpaceShip
     double tug_rest_length{ 0.0 };
     float tug_activity_score{ 0.0f };
 
+    struct GrappleHook {
+        sf::Vector2f pos;
+        sf::Vector2f vel;
+        bool flying{ false };
+    } grapple;
+
     // Shield
     float shield_active_timer{ 0.0f };
-    const float shield_radius{ 25.0f };
+    const float shield_radius{ 30.0f };
+
+public:
+    enum class Tool { GUN, GRAPPLE };
+
+private:
+    Tool current_tool{ Tool::GUN };
+    bool space_key_prev{ false };
 
 public:
 
@@ -50,6 +63,10 @@ public:
 
 	int move(int timeStep);
     void checkShield(Space& space, double dt);
+    void handleInput(Space& space, double dt);
+    void switchTool();
+    std::string getToolName() const;
+
 	bool pullofGravity(Planet forcer, SpaceShip &ship, int timeStep, bool gravity_enabled);
 	sf::Vector2f getpos();
 	sf::Vector2f getvel();
@@ -72,6 +89,8 @@ public:
     void checkProjectileCollisions(Space& space, double dt);
 
     void toggleTug(Space& space);
+    void shootGrapple();
+    void updateGrapple(double dt, Space& space);
     void updateTug(Space& space, double dt);
     void renderTug(sf::RenderWindow& window, Space& space);
 };

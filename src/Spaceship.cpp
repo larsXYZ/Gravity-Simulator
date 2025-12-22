@@ -4,6 +4,8 @@
 #include "HeatSim.h"
 #include <iostream>
 
+bool segmentIntersectsCircle(sf::Vector2f start, sf::Vector2f end, sf::Vector2f circlePos, float radius, sf::Vector2f& intersection);
+
 SpaceShip::SpaceShip(sf::Vector2f p)
 {
 	pos = p;
@@ -207,6 +209,7 @@ void SpaceShip::reset(sf::Vector2f p)
     projectiles.clear();
     tug_active = false;
     tug_target_id = -1;
+    grapple.flying = false;
     charge_level = 0.0;
     is_charging = false;
 }
@@ -302,6 +305,65 @@ void SpaceShip::updateProjectiles(double dt, Space& space)
         }
     }
     std::erase_if(projectiles, [](const Projectile& p) { return p.life <= 0; });
+}
+
+void SpaceShip::shootGrapple()
+{
+    if (tug_active || grapple.flying) return;
+
+    grapple.flying = true;
+    grapple.pos = pos;
+
+    double rad_angle = 2 * PI * angle / 360.0;
+    const double GRAPPLE_SPEED = 3.0;
+
+    grapple.vel.x = speed.x + cos(rad_angle) * GRAPPLE_SPEED;
+    grapple.vel.y = speed.y + sin(rad_angle) * GRAPPLE_SPEED;
+}
+
+void SpaceShip::updateGrapple(double dt, Space& space)
+{
+    if (!grapple.flying) return;
+
+    sf::Vector2f start = grapple.pos;
+    sf::Vector2f movement = grapple.vel * (float)dt;
+    sf::Vector2f end = start + movement;
+    grapple.pos = end;
+
+    // Check for collisions with planets
+    for (const auto& planet : space.planets)
+    {
+        // Not stars
+        if (planet.getType() == SMALLSTAR || planet.getType() == STAR || planet.getType() == BIGSTAR)
+        {
+            continue;
+        }
+
+        sf::Vector2f planetPos(planet.getx(), planet.gety());
+        sf::Vector2f intersection;
+
+        if (segmentIntersectsCircle(start, end, planetPos, planet.getRadius(), intersection))
+        {
+            // HIT!
+            grapple.flying = false;
+            tug_active = true;
+            tug_target_id = planet.getId();
+            
+            double dx = planet.getx() - pos.x;
+            double dy = planet.gety() - pos.y;
+            tug_rest_length = std::hypot(dx, dy);
+            tug_activity_score = 0.5f; // Initial tension
+            return;
+        }
+    }
+
+    // Range limit for grapple
+    double dx = grapple.pos.x - pos.x;
+    double dy = grapple.pos.y - pos.y;
+    if (std::hypot(dx, dy) > TUG_RANGE * 1.5)
+    {
+        grapple.flying = false;
+    }
 }
 
 void SpaceShip::renderCharge(sf::RenderWindow& window)
@@ -546,9 +608,14 @@ void SpaceShip::updateTug(Space& space, double dt)
     double dir_x = cos(angle);
     double dir_y = sin(angle);
 
+    // Mass-dependent scaling to prevent jitter on light objects
+    // For small masses, we reduce stiffness so they don't oscillate violently.
+    double mass_scaling = std::min(1.0, target->getMass() / 200.0);
+    if (mass_scaling < 0.01) mass_scaling = 0.01;
+
     // Spring-Damper Physics
-    double k = 0.05; // Strong spring
-    double c = 0.8;  // Heavy damping
+    double k = 0.05 * mass_scaling; // Strong spring, scaled
+    double c = 0.8 * mass_scaling;  // Heavy damping, scaled
 
     // Relative velocity (Planet - Ship) along the string
     double rel_vel_x = target->getVelocity().x - speed.x;
@@ -561,9 +628,24 @@ void SpaceShip::updateTug(Space& space, double dt)
     // Update activity score based on force
     // Normalizing factor: what constitutes "max force"? 
     // total_force can be e.g. 0.05 * 100 = 5.
-    float force_impact = abs((float)total_force) * 3.0f; 
+    float force_impact = abs((float)total_force) * 0.5f; 
     tug_activity_score += force_impact * dt;
     if (tug_activity_score > 1.0f) tug_activity_score = 1.0f;
+
+    // Safety clamp for small masses to prevent instability/explosion
+    // If the force moves the object too far in one frame, the next frame's distance is huge -> infinite force -> crash.
+    if (dt > 0.1)
+    {
+        double max_move = 5.0; // Max pixels acceleration-induced movement per frame
+        double max_acc = max_move / (dt * dt);
+        double max_safe_force = max_acc * target->getMass();
+
+        if (abs(total_force) > max_safe_force)
+        {
+            // Preserve direction, clamp magnitude
+            total_force = (total_force > 0 ? 1.0 : -1.0) * max_safe_force;
+        }
+    }
     
     // Pull planet towards ship (or push if compressed)
     sf::Vector2f p_vel = target->getVelocity();
@@ -589,6 +671,22 @@ void SpaceShip::updateTug(Space& space, double dt)
 
 void SpaceShip::renderTug(sf::RenderWindow& window, Space& space)
 {
+    if (grapple.flying)
+    {
+        sf::VertexArray line(sf::Lines, 2);
+        line[0].position = pos;
+        line[0].color = sf::Color(0, 255, 0, 150);
+        line[1].position = grapple.pos;
+        line[1].color = sf::Color(0, 255, 0, 150);
+        window.draw(line);
+
+        sf::CircleShape hook(2.0f);
+        hook.setOrigin(2.0f, 2.0f);
+        hook.setPosition(grapple.pos);
+        hook.setFillColor(sf::Color::Green);
+        window.draw(hook);
+    }
+
     if (!tug_active) return;
      Planet* target = space.findPlanetPtr(tug_target_id);
     if (!target) return;
@@ -645,4 +743,55 @@ void SpaceShip::checkShield(Space& space, double dt)
             shield_active_timer = 250.0f; // Glow for 250ms
         }
     }
+}
+
+void SpaceShip::handleInput(Space& space, double dt)
+{
+    if (!exist) return;
+
+    bool space_pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
+
+    if (current_tool == Tool::GUN)
+    {
+        if (space_pressed)
+        {
+            startCharge();
+            updateCharge(dt);
+        }
+        else
+        {
+            shoot(space); // Fires only if was charging
+        }
+    }
+    else if (current_tool == Tool::GRAPPLE)
+    {
+        // Toggle/Shoot on press (rising edge)
+        if (space_pressed && !space_key_prev)
+        {
+            if (tug_active || grapple.flying)
+            {
+                tug_active = false;
+                tug_target_id = -1;
+                grapple.flying = false;
+            }
+            else
+            {
+                shootGrapple();
+            }
+        }
+    }
+
+    space_key_prev = space_pressed;
+}
+
+void SpaceShip::switchTool()
+{
+    if (current_tool == Tool::GUN) current_tool = Tool::GRAPPLE;
+    else current_tool = Tool::GUN;
+}
+
+std::string SpaceShip::getToolName() const
+{
+    if (current_tool == Tool::GUN) return "Gun";
+    else return "Grapple Hook";
 }

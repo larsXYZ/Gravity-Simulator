@@ -311,6 +311,9 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 		case sf::Keyboard::P:
 			paused = !paused;
 			break;
+		case sf::Keyboard::Q:
+			ship.switchTool();
+			break;
 		case sf::Keyboard::G:
 			gravity_enabled = !gravity_enabled;
 			break;
@@ -665,32 +668,11 @@ void Space::update_spaceship()
     // NEW FEATURES
     if (ship.isExist())
     {
-        // Shoot with charge
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-        {
-            ship.startCharge();
-            ship.updateCharge(timestep);
-        }
-        else
-        {
-            ship.shoot(*this); // Fires only if was charging
-        }
-
-        // Tug
-        static bool t_pressed = false;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::T))
-        {
-            if (!t_pressed)
-            {
-                ship.toggleTug(*this);
-                t_pressed = true;
-            }
-        }
-        else
-            t_pressed = false;
+        ship.handleInput(*this, timestep);
 
         ship.updateProjectiles(timestep, *this);
         ship.checkProjectileCollisions(*this, timestep);
+        ship.updateGrapple(timestep, *this);
         ship.updateTug(*this, timestep);
         ship.checkShield(*this, timestep);
     }
@@ -705,6 +687,8 @@ void Space::updateInfoBox()
 		"\nObjects: " + std::to_string(planets.size()) +
 		"\nParticles: " + std::to_string(particles->size()) +
 		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()));
+
+	toolInfo->setText("Tool: " + ship.getToolName());
 }
 
 void Space::initSetup()
@@ -713,6 +697,11 @@ void Space::initSetup()
 	simInfo->setSize(160, 110);
 	simInfo->setPosition(5, 5);
 	simInfo->setTextSize(14);
+
+	toolInfo->setPosition("2%", "95%");
+	toolInfo->setTextSize(18);
+	toolInfo->getRenderer()->setTextColor(sf::Color::White);
+	toolInfo->setText("Tool: Gun");
 
 	functions->setItemHeight(14);
 	functions->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);

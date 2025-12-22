@@ -32,6 +32,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.setFont("sansation.ttf");
 	initSetup();
 	gui.add(simInfo);
+	gui.add(toolInfo);
 	gui.add(functions);
 	gui.add(newPlanetInfo);
 	gui.add(massSlider);
