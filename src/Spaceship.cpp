@@ -33,6 +33,14 @@ int SpaceShip::move(int timeStep)
     if (shoot_cooldown > 0)
         shoot_cooldown -= timeStep;
 
+    if (shield_recovery_pause_timer > 0)
+        shield_recovery_pause_timer -= timeStep;
+    else if (shield_energy < SHIELD_MAX_ENERGY)
+    {
+        shield_energy += SHIELD_RECOVERY_RATE * timeStep;
+        if (shield_energy > SHIELD_MAX_ENERGY) shield_energy = SHIELD_MAX_ENERGY;
+    }
+
 	if (exist)
 	{
 		// Thrust
@@ -760,11 +768,41 @@ void SpaceShip::checkShield(Space& space, double dt)
 
         if (distSq < minDist * minDist)
         {
-            // Destroy!
-            space.addExplosion(sf::Vector2f(planet.getx(), planet.gety()), planet.getRadius()*2, planet.getVelocity(), 20);
-            space.removePlanet(planet.getId());
-            shield_active_timer = 250.0f; // Glow for 250ms
+            if (shield_energy >= SHIELD_DRAIN_EXPLOSION)
+            {
+                // Destroy!
+                space.addExplosion(sf::Vector2f(planet.getx(), planet.gety()), planet.getRadius()*2, planet.getVelocity(), 20);
+                space.removePlanet(planet.getId());
+                shield_active_timer = 250.0f; // Glow for 250ms
+                shield_energy -= SHIELD_DRAIN_EXPLOSION;
+                shield_recovery_pause_timer = SHIELD_RECOVERY_PAUSE;
+            }
+            else
+            {
+                // Shield failed!
+                destroy();
+                space.addExplosion(pos, 20, speed, 30);
+                return;
+            }
         }
+    }
+}
+
+void SpaceShip::missileHit(Space& space)
+{
+    if (!exist) return;
+
+    if (shield_energy >= SHIELD_DRAIN_MISSILE)
+    {
+        shield_energy -= SHIELD_DRAIN_MISSILE;
+        shield_active_timer = 400.0f;
+        shield_recovery_pause_timer = SHIELD_RECOVERY_PAUSE;
+    }
+    else
+    {
+        // Boom!
+        destroy();
+        space.addExplosion(pos, 25, speed, 40);
     }
 }
 

@@ -27,6 +27,15 @@ enum class TemperatureUnit
 	FAHRENHEIT
 };
 
+struct Missile {
+	sf::Vector2f pos;
+	sf::Vector2f vel;
+	double current_speed;
+	int life;
+	int owner_id;
+	sf::Color color;
+};
+
 class Space
 {
 	double total_mass{0.0};
@@ -46,6 +55,7 @@ class Space
 	std::unique_ptr<IParticleContainer> particles;
 	std::vector<Explosion> explosions;
 	std::vector<Trail> trail;
+	std::vector<Missile> missiles;
 	Bound bound;
 	
 	tgui::TextArea::Ptr simInfo = std::make_shared<tgui::TextArea>();
@@ -97,6 +107,7 @@ public:
 	void drawLifeVisuals(sf::RenderWindow& window, const Planet& p);
 	void drawCivConnections(sf::RenderWindow& window, const Planet& p, bool drawIndicatorsOnColonies = false);
 	void drawEffects(sf::RenderWindow & window);
+	void drawMissiles(sf::RenderWindow& window);
 	void drawDust(sf::RenderWindow &window);
 	void giveId(Planet &p);
 	Planet findPlanet(int id);

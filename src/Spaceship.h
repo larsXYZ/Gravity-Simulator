@@ -49,10 +49,14 @@ class SpaceShip
     // Shield
     float shield_active_timer{ 0.0f };
     const float shield_radius{ 30.0f };
+    double shield_energy{ SHIELD_MAX_ENERGY };
+    int shield_recovery_pause_timer{ 0 };
 
     // Trajectory
     bool trajectory_active{ false };
     PredictionResult last_prediction;
+
+    friend class Space;
 
 public:
     enum class Tool { ENERGY_CANNON, GRAPPLE, TRAJECTORY };
@@ -79,8 +83,10 @@ public:
     // Removed landing getters/setters
 	void destroy();
 	double getMaxCollisionSpeed();
+    double getShieldEnergy() const { return shield_energy; }
 	bool isExist();
 	float getAngle();
+    void missileHit(Space& space);
 	
 	void draw(sf::RenderWindow &w);
 

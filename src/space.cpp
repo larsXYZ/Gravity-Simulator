@@ -323,6 +323,124 @@ void Space::update()
 
 	flushPlanets();
 	total_mass = std::accumulate(planets.begin(), planets.end(), 0.0, [](auto v, const auto & p) {return v + p.getMass(); });
+
+	// MISSILE LOGIC
+	if (ship.isExist())
+	{
+		for (auto& planet : planets)
+		{
+			if (planet.getLife().getTypeEnum() >= 6)
+			{
+				if (uniform_random(0, MISSILE_LAUNCH_COOLDOWN) == 0)
+				{
+					double dist = std::hypot(planet.getx() - ship.getpos().x, planet.gety() - ship.getpos().y);
+					if (dist < MISSILE_DETECTION_RANGE)
+					{
+						Missile m;
+						double angle = atan2(ship.getpos().y - planet.gety(), ship.getpos().x - planet.getx());
+						// Spawn at surface
+						m.pos = sf::Vector2f(planet.getx() + cos(angle) * (planet.getRadius() + 2), 
+											 planet.gety() + sin(angle) * (planet.getRadius() + 2));
+						
+						m.current_speed = MISSILE_START_SPEED;
+						m.vel = sf::Vector2f(cos(angle) * m.current_speed, sin(angle) * m.current_speed);
+						m.life = MISSILE_LIFESPAN;
+						m.owner_id = planet.getLife().getId();
+						m.color = planet.getLife().getCol();
+						missiles.push_back(m);
+					}
+				}
+			}
+		}
+	}
+
+	for (auto it = missiles.begin(); it != missiles.end(); )
+	{
+		bool destroyed = false;
+		it->life -= timestep;
+		if (it->life <= 0)
+		{
+			destroyed = true;
+			addExplosion(it->pos, 10, it->vel, 15);
+		}
+
+		if (!destroyed)
+		{
+			// Accelerate
+			it->current_speed += MISSILE_ACCELERATION * timestep;
+			if (it->current_speed > MISSILE_MAX_SPEED) it->current_speed = MISSILE_MAX_SPEED;
+
+			// Guidance
+			if (ship.isExist())
+			{
+				double target_angle = atan2(ship.getpos().y - it->pos.y, ship.getpos().x - it->pos.x);
+				double current_angle = atan2(it->vel.y, it->vel.x);
+				double diff = target_angle - current_angle;
+				while (diff > PI) diff -= 2 * PI;
+				while (diff < -PI) diff += 2 * PI;
+
+				double turn = std::clamp(diff, -MISSILE_TURN_SPEED * timestep, MISSILE_TURN_SPEED * timestep);
+				double new_angle = current_angle + turn;
+				it->vel = sf::Vector2f(cos(new_angle) * it->current_speed, sin(new_angle) * it->current_speed);
+			}
+			else
+			{
+				// Maintain velocity if ship is gone
+				double current_angle = atan2(it->vel.y, it->vel.x);
+				it->vel = sf::Vector2f(cos(current_angle) * it->current_speed, sin(current_angle) * it->current_speed);
+			}
+
+			it->pos += it->vel * (float)timestep;
+
+			// Collision with planets
+			for (auto& planet : planets)
+			{
+				double dx = planet.getx() - it->pos.x;
+				double dy = planet.gety() - it->pos.y;
+				if (dx * dx + dy * dy < planet.getRadius() * planet.getRadius())
+				{
+					destroyed = true;
+					addExplosion(it->pos, 15, planet.getVelocity(), 20);
+					
+					// Heat up the planet (arbitrary but significant energy)
+					planet.increaseThermalEnergy(COLLISION_HEAT_MULTIPLIER * 0.1); 
+					break;
+				}
+			}
+
+			// Collision with ship
+			if (!destroyed && ship.isExist())
+			{
+				double dx = ship.getpos().x - it->pos.x;
+				double dy = ship.getpos().y - it->pos.y;
+				if (dx * dx + dy * dy < 15 * 15) // Rough ship hitbox
+				{
+					destroyed = true;
+					ship.missileHit(*this);
+					addExplosion(it->pos, 10, ship.getvel(), 15);
+				}
+			}
+
+			// Collision with projectiles
+			if (!destroyed)
+			{
+				for (auto const& proj : ship.projectiles)
+				{
+					double dx = proj.pos.x - it->pos.x;
+					double dy = proj.pos.y - it->pos.y;
+					if (dx * dx + dy * dy < 10 * 10)
+					{
+						destroyed = true;
+						addExplosion(it->pos, 8, { 0,0 }, 12);
+						break;
+					}
+				}
+			}
+		}
+
+		if (destroyed) it = missiles.erase(it);
+		else ++it;
+	}
 }
 
 void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& window)
@@ -730,7 +848,8 @@ void Space::updateInfoBox()
 		"\nTotal mass: " + std::to_string(static_cast<int>(total_mass)) +
 		"\nObjects: " + std::to_string(planets.size()) +
 		"\nParticles: " + std::to_string(particles->size()) +
-		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()));
+		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()) +
+		(ship.isExist() ? ("\nShield: " + std::to_string(static_cast<int>(ship.getShieldEnergy())) + "%") : ""));
 
 	if (ship.isExist())
 	{
@@ -1149,6 +1268,8 @@ void Space::drawEffects(sf::RenderWindow &window)
 		}
 	}
 
+	drawMissiles(window);
+
     if (ship.isExist())
     {
         ship.renderProjectiles(window);
@@ -1162,6 +1283,27 @@ void Space::drawEffects(sf::RenderWindow &window)
 void Space::drawDust(sf::RenderWindow &window)
 {
     particles->render_all(window);
+}
+
+void Space::drawMissiles(sf::RenderWindow& window)
+{
+	for (const auto& m : missiles)
+	{
+		sf::CircleShape shape(2.0f);
+		shape.setOrigin(2.0f, 2.0f);
+		shape.setPosition(m.pos);
+		shape.setFillColor(m.color);
+		window.draw(shape);
+
+		// Small glow/trail
+		render_shine(window, m.pos, m.color, 6.0f);
+		
+		// Add some smoke trail occasionally
+		if (iteration % 5 == 0)
+		{
+			// Need non-const access or just use addSmoke which is non-const
+		}
+	}
 }
 
 double Space::thermalEnergyAtPosition(sf::Vector2f pos)
