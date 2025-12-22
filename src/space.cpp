@@ -342,7 +342,7 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 			paused = !paused;
 			break;
 		case sf::Keyboard::RControl:
-			ship.switchTool();
+			ship.switchTool(*this);
 			break;
 		case sf::Keyboard::Escape:
 			exit(0);

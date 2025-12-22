@@ -333,12 +333,6 @@ void SpaceShip::updateGrapple(double dt, Space& space)
     // Check for collisions with planets
     for (const auto& planet : space.planets)
     {
-        // Not stars
-        if (planet.getType() == SMALLSTAR || planet.getType() == STAR || planet.getType() == BIGSTAR)
-        {
-            continue;
-        }
-
         sf::Vector2f planetPos(planet.getx(), planet.gety());
         sf::Vector2f intersection;
 
@@ -346,13 +340,23 @@ void SpaceShip::updateGrapple(double dt, Space& space)
         {
             // HIT!
             grapple.flying = false;
-            tug_active = true;
-            tug_target_id = planet.getId();
             
-            double dx = planet.getx() - pos.x;
-            double dy = planet.gety() - pos.y;
-            tug_rest_length = std::hypot(dx, dy);
-            tug_activity_score = 0.5f; // Initial tension
+            // Check if supported (Not stars, not black holes)
+            bool supported = (planet.getType() != SMALLSTAR && 
+                             planet.getType() != STAR && 
+                             planet.getType() != BIGSTAR && 
+                             planet.getType() != BLACKHOLE);
+
+            if (supported)
+            {
+                tug_active = true;
+                tug_target_id = planet.getId();
+                
+                double dx = planet.getx() - pos.x;
+                double dy = planet.gety() - pos.y;
+                tug_rest_length = std::hypot(dx, dy);
+                tug_activity_score = 0.5f; // Initial tension
+            }
             return;
         }
     }
@@ -803,10 +807,17 @@ void SpaceShip::handleInput(Space& space, double dt)
     space_key_prev = space_pressed;
 }
 
-void SpaceShip::switchTool()
+void SpaceShip::switchTool(Space& space)
 {
-    if (current_tool == Tool::ENERGY_CANNON) current_tool = Tool::GRAPPLE;
-    else current_tool = Tool::ENERGY_CANNON;
+    if (current_tool == Tool::ENERGY_CANNON)
+    {
+        if (is_charging) shoot(space);
+        current_tool = Tool::GRAPPLE;
+    }
+    else
+    {
+        current_tool = Tool::ENERGY_CANNON;
+    }
 }
 
 std::string SpaceShip::getToolName() const

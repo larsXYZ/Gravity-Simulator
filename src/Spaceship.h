@@ -64,7 +64,7 @@ public:
 	int move(int timeStep);
     void checkShield(Space& space, double dt);
     void handleInput(Space& space, double dt);
-    void switchTool();
+    void switchTool(Space& space);
     std::string getToolName() const;
 
 	bool pullofGravity(Planet forcer, SpaceShip &ship, int timeStep, bool gravity_enabled);
