@@ -4,13 +4,35 @@
 
 bool is_mouse_on_widgets(const sf::RenderWindow & window, const tgui::Gui & gui)
 {
+    static bool started_on_gui = false;
+    static bool mouse_was_pressed = false;
+
+    bool mouse_currently_over_gui = false;
 	for (const auto& gui_element : gui.getWidgets())
 	{
 		const sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 		if (gui_element->isMouseOnWidget(sf::Vector2f(mousePos.x, mousePos.y)))
-			return true;
+        {
+            mouse_currently_over_gui = true;
+            break;
+        }
 	}
-	return false;
+
+    bool mouse_pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left) || sf::Mouse::isButtonPressed(sf::Mouse::Right);
+    
+    if (mouse_pressed && !mouse_was_pressed)
+    {
+        started_on_gui = mouse_currently_over_gui;
+    }
+    
+    if (!mouse_pressed)
+    {
+        started_on_gui = false;
+    }
+
+    mouse_was_pressed = mouse_pressed;
+
+	return mouse_currently_over_gui || started_on_gui;
 }
 
 void Space::runSim(sf::Vector2i window_size, bool fullscreen)
@@ -37,6 +59,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.add(newPlanetInfo);
 	gui.add(objectTypeSelector);
 	gui.add(massSlider);
+	gui.add(timeStepLabel);
 	gui.add(timeStepSlider);
 	gui.add(temperatureUnitSelector);
 
@@ -49,6 +72,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		window.clear(sf::Color::Black);
 
 		timestep = paused ? 0.0 : timeStepSlider->getValue();
+        is_mouse_on_gui = is_mouse_on_widgets(window, gui);
 		
 		FunctionContext context
 		{
@@ -59,7 +83,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			.window = window,
 			.mouse_pos_window = sf::Mouse::getPosition(window),
 			.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView),
-			.is_mouse_on_widgets = is_mouse_on_widgets(window, gui),
+			.is_mouse_on_widgets = is_mouse_on_gui,
 			.mass_slider = massSlider,
 			.object_type_selector = objectTypeSelector,
 			.new_object_info = newPlanetInfo,

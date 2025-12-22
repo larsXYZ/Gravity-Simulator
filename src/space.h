@@ -36,6 +36,7 @@ class Space
 	int iteration{0};
 	int fps{ 0 };
 	bool show_gui{true};
+    bool is_mouse_on_gui{ false };
 	
 	SpaceShip ship;
 	std::vector<Planet> planets;
@@ -50,6 +51,7 @@ class Space
 	tgui::TextArea::Ptr newPlanetInfo = std::make_shared<tgui::TextArea>();
 	tgui::ListBox::Ptr functions = std::make_shared<tgui::ListBox>();
 	tgui::Tabs::Ptr temperatureUnitSelector = std::make_shared<tgui::Tabs>();
+	tgui::Label::Ptr timeStepLabel = std::make_shared<tgui::Label>();
 	tgui::ComboBox::Ptr objectTypeSelector = std::make_shared<tgui::ComboBox>();
 	tgui::Slider::Ptr massSlider = std::make_shared<tgui::Slider>();
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();

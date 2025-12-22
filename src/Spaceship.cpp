@@ -763,7 +763,7 @@ void SpaceShip::handleInput(Space& space, double dt)
 {
     if (!exist) return;
 
-    bool space_pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
+    bool space_pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && !space.is_mouse_on_gui;
 
     if (current_tool == Tool::GUN)
     {

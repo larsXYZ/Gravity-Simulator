@@ -213,7 +213,7 @@ void Space::update()
 
 				if (otherPlanet.emitsHeat())
 				{
-					const auto heat = tempConstTwo * thisPlanet->getRadius() * thisPlanet->getRadius() * otherPlanet.giveThermalEnergy(timestep) / distance.dist;
+					const auto heat = tempConstTwo * thisPlanet->getRadius() * thisPlanet->getRadius() * otherPlanet.giveThermalEnergy(timestep) / std::max(distance.dist, 1.0);
 					thisPlanet->absorbHeat(heat, timestep);
 				}
 
@@ -608,9 +608,9 @@ std::string Space::temperature_info_string(double temperature_kelvin, Temperatur
 	case TemperatureUnit::KELVIN:
 		return std::to_string(static_cast<int>(temperature_kelvin)) + "K";
 	case TemperatureUnit::CELSIUS:
-		return std::to_string(static_cast<int>(temperature_kelvin - 273.15)) + "�C";
+		return std::to_string(static_cast<int>(temperature_kelvin - 273.15)) + "°C";
 	case TemperatureUnit::FAHRENHEIT:
-		return std::to_string(static_cast<int>((temperature_kelvin - 273.15) * 1.8 + 32.0)) + "�F";
+		return std::to_string(static_cast<int>((temperature_kelvin - 273.15) * 1.8 + 32.0)) + "°F";
 	default:
 		return "-";
 	}
@@ -727,32 +727,32 @@ void Space::initSetup()
 	objectTypeSelector->setSelectedItem("Rocky");
 	objectTypeSelector->setPosition(5, tgui::bindBottom(newPlanetInfo) + 2 * UI_SEPERATION_DISTANCE);
 	objectTypeSelector->setSize(160, 20);
-	objectTypeSelector->setVisible(false);
+	objectTypeSelector->setVisible(true);
 
 	objectTypeSelector->onItemSelect([this](const tgui::String& item) {
 		if (item == "Rocky") {
 			massSlider->setMinimum(1);
-			massSlider->setMaximum(ROCKYLIMIT);
+			massSlider->setMaximum(ROCKYLIMIT - 1);
 		}
 		else if (item == "Terrestial") {
 			massSlider->setMinimum(ROCKYLIMIT);
-			massSlider->setMaximum(TERRESTIALLIMIT);
+			massSlider->setMaximum(TERRESTIALLIMIT - 1);
 		}
 		else if (item == "Gas Giant") {
 			massSlider->setMinimum(TERRESTIALLIMIT);
-			massSlider->setMaximum(GASGIANTLIMIT);
+			massSlider->setMaximum(GASGIANTLIMIT - 1);
 		}
 		else if (item == "Small Star") {
 			massSlider->setMinimum(GASGIANTLIMIT);
-			massSlider->setMaximum(SMALLSTARLIMIT);
+			massSlider->setMaximum(SMALLSTARLIMIT - 1);
 		}
 		else if (item == "Star") {
 			massSlider->setMinimum(SMALLSTARLIMIT);
-			massSlider->setMaximum(STARLIMIT);
+			massSlider->setMaximum(STARLIMIT - 1);
 		}
 		else if (item == "Big Star") {
 			massSlider->setMinimum(STARLIMIT);
-			massSlider->setMaximum(BIGSTARLIMIT);
+			massSlider->setMaximum(BIGSTARLIMIT - 1);
 		}
 		else if (item == "Black Hole") {
 			massSlider->setMinimum(BIGSTARLIMIT);
@@ -769,21 +769,26 @@ void Space::initSetup()
 	massSlider->setSize(160, 10);
 	massSlider->setValue(1);
 	massSlider->setMinimum(1);
-	massSlider->setMaximum(ROCKYLIMIT);
+	massSlider->setMaximum(ROCKYLIMIT - 1);
 
-	timeStepSlider->setPosition(165, 40);
-	timeStepSlider->setSize(160, 5);
+	timeStepLabel->setText("Timestep");
+	timeStepLabel->setTextSize(14);
+	timeStepLabel->getRenderer()->setTextColor(sf::Color::White);
+	timeStepLabel->setPosition("100% - 250", 5);
+
+	timeStepSlider->setPosition(tgui::bindRight(timeStepLabel) + 10, 8);
+	timeStepSlider->setSize(160, 10);
 	timeStepSlider->setValue(TIMESTEP_VALUE_START);
 	timeStepSlider->setMinimum(0);
 	timeStepSlider->setMaximum(MAX_TIMESTEP);
 
 	temperatureUnitSelector->add("K");
-	temperatureUnitSelector->add("�C");
-	temperatureUnitSelector->add("�F");
+	temperatureUnitSelector->add("°C");
+	temperatureUnitSelector->add("°F");
 	temperatureUnitSelector->select("K");
 	temperatureUnitSelector->setTextSize(10);
 	temperatureUnitSelector->setTabHeight(12);
-	temperatureUnitSelector->setPosition(165, 50);
+	temperatureUnitSelector->setPosition("100% - 170", tgui::bindBottom(timeStepSlider) + 10);
 }
 
 template<typename T>
@@ -899,7 +904,8 @@ double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 	{
 		if (planets[i].getMass() < BIGSTARLIMIT && planets[i].getMass() >= GASGIANTLIMIT)
 		{
-			tEnergyFromOutside += planets[i].giveThermalEnergy(1)/ sqrt((planets[i].getPosition().x - pos.x)*(planets[i].getPosition().x - pos.x) + (planets[i].getPosition().y - pos.y) * (planets[i].getPosition().y - pos.y));
+			double dist = sqrt((planets[i].getPosition().x - pos.x)*(planets[i].getPosition().x - pos.x) + (planets[i].getPosition().y - pos.y) * (planets[i].getPosition().y - pos.y));
+			tEnergyFromOutside += planets[i].giveThermalEnergy(1)/ std::max(dist, 1.0);
 		}
 	}
 
