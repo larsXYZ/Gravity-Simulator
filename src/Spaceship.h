@@ -27,7 +27,7 @@ class SpaceShip
 
 	sf::RectangleShape ship; // Will be replaced by custom drawing
 
-    // Gun
+    // Energy cannon
     std::vector<Projectile> projectiles;
     int shoot_cooldown{ 0 };
     double charge_level{ 0.0 };
@@ -50,10 +50,10 @@ class SpaceShip
     const float shield_radius{ 30.0f };
 
 public:
-    enum class Tool { GUN, GRAPPLE };
+    enum class Tool { ENERGY_CANNON, GRAPPLE };
 
 private:
-    Tool current_tool{ Tool::GUN };
+    Tool current_tool{ Tool::ENERGY_CANNON };
     bool space_key_prev{ false };
 
 public:

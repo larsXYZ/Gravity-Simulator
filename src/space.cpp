@@ -743,7 +743,7 @@ void Space::initSetup()
 	toolInfo->setPosition("2%", "95%");
 	toolInfo->setTextSize(18);
 	toolInfo->getRenderer()->setTextColor(sf::Color::White);
-	toolInfo->setText("Tool: Gun (R-Ctrl to switch)");
+	toolInfo->setText("Tool: Energy cannon (R-Ctrl to switch)");
 
 	functions->setItemHeight(14);
 	functions->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);

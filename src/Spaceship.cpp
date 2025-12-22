@@ -544,10 +544,15 @@ void SpaceShip::checkProjectileCollisions(Space& space, double dt)
                     space.explodePlanet(planet);
                     // Visual pop
                     space.addExplosion(intersection, planet.getRadius() * 3 * it->power, planet.getVelocity(), 25);
+                    
+                    // Reduce power slightly but continue
+                    it->power *= 0.8;
                 }
-                
-                hit = true;
-                break;
+                else
+                {
+                    hit = true;
+                    break;
+                }
             }
         }
         
@@ -765,7 +770,7 @@ void SpaceShip::handleInput(Space& space, double dt)
 
     bool space_pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && !space.is_mouse_on_gui;
 
-    if (current_tool == Tool::GUN)
+    if (current_tool == Tool::ENERGY_CANNON)
     {
         if (space_pressed)
         {
@@ -800,12 +805,12 @@ void SpaceShip::handleInput(Space& space, double dt)
 
 void SpaceShip::switchTool()
 {
-    if (current_tool == Tool::GUN) current_tool = Tool::GRAPPLE;
-    else current_tool = Tool::GUN;
+    if (current_tool == Tool::ENERGY_CANNON) current_tool = Tool::GRAPPLE;
+    else current_tool = Tool::ENERGY_CANNON;
 }
 
 std::string SpaceShip::getToolName() const
 {
-    if (current_tool == Tool::GUN) return "Gun";
+    if (current_tool == Tool::ENERGY_CANNON) return "Energy cannon";
     else return "Grapple Hook";
 }
