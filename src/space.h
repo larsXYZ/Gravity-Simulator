@@ -3,6 +3,8 @@
 #include <vector>
 #include <random>
 #include <string>
+#include <map>
+#include <limits>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>

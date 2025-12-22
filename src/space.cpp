@@ -890,7 +890,7 @@ void Space::initSetup()
 	optionsMenu->setSize(200, 120);
 	optionsMenu->setPosition("50% - 100", "50% - 50");
 	optionsMenu->setVisible(false);
-	optionsMenu->onClose([this]() { optionsMenu->setVisible(false); });
+	optionsMenu->setCloseBehavior(tgui::ChildWindow::CloseBehavior::Hide);
 
 	gravityCheckBox->setPosition(10, 10);
 	gravityCheckBox->setChecked(gravity_enabled);
@@ -898,7 +898,7 @@ void Space::initSetup()
 	optionsMenu->add(gravityCheckBox);
 
 	renderLifeAlwaysCheckBox->setPosition(10, 40);
-	renderLifeAlwaysCheckBox->setChecked(false);
+	renderLifeAlwaysCheckBox->setChecked(true);
 	optionsMenu->add(renderLifeAlwaysCheckBox);
 }
 
@@ -962,22 +962,60 @@ void Space::drawPlanets(sf::RenderWindow &window)
 
 	if (renderLifeAlwaysCheckBox->isChecked())
 	{
+		std::map<int, std::vector<size_t>> civGroups;
 		for (size_t i = 0; i < planets.size(); i++)
 		{
 			drawLifeVisuals(window, planets[i]);
-			
 			if (planets[i].getLife().getTypeEnum() >= 6)
 			{
-				for (size_t j = i + 1; j < planets.size(); j++)
+				civGroups[planets[i].getLife().getId()].push_back(i);
+			}
+		}
+
+		for (auto const& [id, members] : civGroups)
+		{
+			if (members.size() < 2) continue;
+
+			// Prim's algorithm for MST
+			std::vector<bool> inMST(members.size(), false);
+			std::vector<double> minEdge(members.size(), std::numeric_limits<double>::max());
+			std::vector<int> parent(members.size(), -1);
+
+			minEdge[0] = 0;
+			for (size_t count = 0; count < members.size(); ++count)
+			{
+				int u = -1;
+				for (size_t i = 0; i < members.size(); ++i)
 				{
-					if (planets[j].getLife().getId() == planets[i].getLife().getId())
+					if (!inMST[i] && (u == -1 || minEdge[i] < minEdge[u]))
+						u = i;
+				}
+
+				if (u == -1 || minEdge[u] == std::numeric_limits<double>::max()) break;
+
+				inMST[u] = true;
+				if (parent[u] != -1)
+				{
+					const auto& p1 = planets[members[u]];
+					const auto& p2 = planets[members[parent[u]]];
+					sf::Vertex q[] =
 					{
-						sf::Vertex q[] =
+						sf::Vertex(sf::Vector2f(p1.getx(), p1.gety()), p1.getLife().getCol()),
+						sf::Vertex(sf::Vector2f(p2.getx(), p2.gety()), p1.getLife().getCol())
+					};
+					window.draw(q, 2, sf::Lines);
+				}
+
+				for (size_t v = 0; v < members.size(); ++v)
+				{
+					if (!inMST[v])
+					{
+						double dist = planets[members[u]].getDist(planets[members[v]]);
+						if (dist < minEdge[v])
 						{
-							sf::Vertex(sf::Vector2f(planets[i].getx(), planets[i].gety()), planets[i].getLife().getCol()),
-							sf::Vertex(sf::Vector2f(planets[j].getx(), planets[j].gety()), planets[i].getLife().getCol())
-						};
-						window.draw(q, 2, sf::Lines);
+							minEdge[v] = dist;
+							parent[v] = u;
+						}
 					}
 				}
 			}
@@ -1014,23 +1052,67 @@ void Space::drawCivConnections(sf::RenderWindow& window, const Planet& p, bool d
 {
 	if (p.getLife().getTypeEnum() < 6) return;
 
-	sf::Vector2f pos(p.getx(), p.gety());
-	for (const auto& other : planets)
+	std::vector<size_t> members;
+	for (size_t i = 0; i < planets.size(); i++)
 	{
-		if (other.getLife().getId() == p.getLife().getId())
+		if (planets[i].getLife().getId() == p.getLife().getId())
 		{
-			if (&other != &p)
-			{
-				sf::Vertex q[] =
-				{
-					sf::Vertex(pos, p.getLife().getCol()),
-					sf::Vertex(sf::Vector2f(other.getx(), other.gety()), p.getLife().getCol())
-				};
-				window.draw(q, 2, sf::Lines);
+			members.push_back(i);
+		}
+	}
 
-				if (drawIndicatorsOnColonies)
-					drawLifeVisuals(window, other);
+	if (members.size() < 2) return;
+
+	// Prim's algorithm for MST
+	std::vector<bool> inMST(members.size(), false);
+	std::vector<double> minEdge(members.size(), std::numeric_limits<double>::max());
+	std::vector<int> parent(members.size(), -1);
+
+	minEdge[0] = 0;
+	for (size_t count = 0; count < members.size(); ++count)
+	{
+		int u = -1;
+		for (size_t i = 0; i < members.size(); ++i)
+		{
+			if (!inMST[i] && (u == -1 || minEdge[i] < minEdge[u]))
+				u = i;
+		}
+
+		if (u == -1 || minEdge[u] == std::numeric_limits<double>::max()) break;
+
+		inMST[u] = true;
+		if (parent[u] != -1)
+		{
+			const auto& p1 = planets[members[u]];
+			const auto& p2 = planets[members[parent[u]]];
+			sf::Vertex q[] =
+			{
+				sf::Vertex(sf::Vector2f(p1.getx(), p1.gety()), p1.getLife().getCol()),
+				sf::Vertex(sf::Vector2f(p2.getx(), p2.gety()), p1.getLife().getCol())
+			};
+			window.draw(q, 2, sf::Lines);
+		}
+
+		for (size_t v = 0; v < members.size(); ++v)
+		{
+			if (!inMST[v])
+			{
+				double dist = planets[members[u]].getDist(planets[members[v]]);
+				if (dist < minEdge[v])
+				{
+					minEdge[v] = dist;
+					parent[v] = u;
+				}
 			}
+		}
+	}
+
+	if (drawIndicatorsOnColonies)
+	{
+		for (size_t idx : members)
+		{
+			if (&planets[idx] != &p)
+				drawLifeVisuals(window, planets[idx]);
 		}
 	}
 }
