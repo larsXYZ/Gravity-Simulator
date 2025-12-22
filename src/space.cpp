@@ -327,12 +327,6 @@ void Space::update()
 
 void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& window)
 {
-	if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::D && event.key.control)
-	{
-		debugMenu->setVisible(!debugMenu->isVisible());
-		return;
-	}
-
 	if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::RControl)
 	{
 		ship.switchTool(*this);
@@ -853,15 +847,59 @@ void Space::initSetup()
 	temperatureUnitSelector->setTabHeight(12);
 	temperatureUnitSelector->setPosition("100% - 170", tgui::bindBottom(timeStepSlider) + 10);
 
-	debugMenu->setSize(200, 100);
-	debugMenu->setPosition("50% - 100", "50% - 50");
-	debugMenu->setVisible(false);
-	debugMenu->onClose([this]() { debugMenu->setVisible(false); });
+	// Procedurally generate a cog icon
+	sf::RenderTexture rt;
+	rt.create(32, 32);
+	rt.clear(sf::Color::Transparent);
+
+	sf::CircleShape body(10);
+	body.setOrigin(10, 10);
+	body.setPosition(16, 16);
+	body.setFillColor(sf::Color(200, 200, 200));
+	rt.draw(body);
+
+	sf::RectangleShape tooth(sf::Vector2f(6, 6));
+	tooth.setOrigin(3, 14);
+	tooth.setPosition(16, 16);
+	tooth.setFillColor(sf::Color(200, 200, 200));
+
+	for (int i = 0; i < 8; ++i)
+	{
+		tooth.setRotation(i * 45.0f);
+		rt.draw(tooth);
+	}
+
+	sf::CircleShape hole(4);
+	hole.setOrigin(4, 4);
+	hole.setPosition(16, 16);
+	hole.setFillColor(sf::Color::Transparent);
+	// Use blend mode to cut a hole
+	rt.draw(hole, sf::BlendNone);
+
+	rt.display();
+	optionsButtonTexture = rt.getTexture();
+
+	optionsButton->setImage(optionsButtonTexture);
+	optionsButton->setSize(21, 21);
+	optionsButton->setPosition("100% - 30", "100% - 30");
+	optionsButton->getRenderer()->setBackgroundColor(sf::Color::Transparent);
+	optionsButton->getRenderer()->setBorderColor(sf::Color::Transparent);
+	optionsButton->getRenderer()->setBackgroundColorHover(sf::Color(255, 255, 255, 50));
+	optionsButton->onPress([this]() { optionsMenu->setVisible(!optionsMenu->isVisible()); });
+
+	optionsMenu->setSize(200, 120);
+	optionsMenu->setPosition("50% - 100", "50% - 50");
+	optionsMenu->setVisible(false);
+	optionsMenu->onClose([this]() { optionsMenu->setVisible(false); });
 
 	gravityCheckBox->setPosition(10, 10);
 	gravityCheckBox->setChecked(gravity_enabled);
 	gravityCheckBox->onChange([this](bool checked) { gravity_enabled = checked; });
-	debugMenu->add(gravityCheckBox);
+	optionsMenu->add(gravityCheckBox);
+
+	renderLifeAlwaysCheckBox->setPosition(10, 40);
+	renderLifeAlwaysCheckBox->setChecked(false);
+	optionsMenu->add(renderLifeAlwaysCheckBox);
 }
 
 template<typename T>
@@ -920,6 +958,80 @@ void Space::drawPlanets(sf::RenderWindow &window)
 	for(size_t i = 0; i < planets.size(); i++)
 	{
 		planets[i].render(window);
+	}
+
+	if (renderLifeAlwaysCheckBox->isChecked())
+	{
+		for (size_t i = 0; i < planets.size(); i++)
+		{
+			drawLifeVisuals(window, planets[i]);
+			
+			if (planets[i].getLife().getTypeEnum() >= 6)
+			{
+				for (size_t j = i + 1; j < planets.size(); j++)
+				{
+					if (planets[j].getLife().getId() == planets[i].getLife().getId())
+					{
+						sf::Vertex q[] =
+						{
+							sf::Vertex(sf::Vector2f(planets[i].getx(), planets[i].gety()), planets[i].getLife().getCol()),
+							sf::Vertex(sf::Vector2f(planets[j].getx(), planets[j].gety()), planets[i].getLife().getCol())
+						};
+						window.draw(q, 2, sf::Lines);
+					}
+				}
+			}
+		}
+	}
+}
+
+void Space::drawLifeVisuals(sf::RenderWindow& window, const Planet& p)
+{
+	lType lt = p.getLife().getTypeEnum();
+	if (lt < 1) return;
+
+	sf::Vector2f pos(p.getx(), p.gety());
+	float zoom = click_and_drag_handler.get_zoom();
+
+	float indicatorRad = p.getRadius() + 5.0f;
+	if (lt < 4) indicatorRad = p.getRadius() + 2.0f;
+
+	sf::CircleShape indicator(indicatorRad);
+	indicator.setPosition(pos);
+	indicator.setOrigin(indicatorRad, indicatorRad);
+	indicator.setFillColor(sf::Color(0, 0, 0, 0));
+	indicator.setOutlineColor(p.getLife().getCol());
+
+	float thickness = 1.0f;
+	if (lt >= 4) thickness = 2.0f;
+	if (lt >= 6) thickness = 3.0f;
+
+	indicator.setOutlineThickness(thickness * zoom);
+	window.draw(indicator);
+}
+
+void Space::drawCivConnections(sf::RenderWindow& window, const Planet& p, bool drawIndicatorsOnColonies)
+{
+	if (p.getLife().getTypeEnum() < 6) return;
+
+	sf::Vector2f pos(p.getx(), p.gety());
+	for (const auto& other : planets)
+	{
+		if (other.getLife().getId() == p.getLife().getId())
+		{
+			if (&other != &p)
+			{
+				sf::Vertex q[] =
+				{
+					sf::Vertex(pos, p.getLife().getCol()),
+					sf::Vertex(sf::Vector2f(other.getx(), other.gety()), p.getLife().getCol())
+				};
+				window.draw(q, 2, sf::Lines);
+
+				if (drawIndicatorsOnColonies)
+					drawLifeVisuals(window, other);
+			}
+		}
 	}
 }
 

@@ -57,8 +57,11 @@ class Space
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
 	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();
 
-	tgui::ChildWindow::Ptr debugMenu = tgui::ChildWindow::create("Debug Menu");
+	tgui::ChildWindow::Ptr optionsMenu = tgui::ChildWindow::create("Options Menu");
+	tgui::BitmapButton::Ptr optionsButton = tgui::BitmapButton::create();
+	sf::Texture optionsButtonTexture;
 	tgui::CheckBox::Ptr gravityCheckBox = tgui::CheckBox::create("Gravity Enabled");
+	tgui::CheckBox::Ptr renderLifeAlwaysCheckBox = tgui::CheckBox::create("Always Render Life");
 
 	ClickAndDragHandler click_and_drag_handler;
 	ObjectTracker object_tracker;
@@ -89,6 +92,8 @@ public:
 	void update();
 	void runSim(sf::Vector2i window_size, bool fullscreen);
 	void drawPlanets(sf::RenderWindow &window);
+	void drawLifeVisuals(sf::RenderWindow& window, const Planet& p);
+	void drawCivConnections(sf::RenderWindow& window, const Planet& p, bool drawIndicatorsOnColonies = false);
 	void drawEffects(sf::RenderWindow & window);
 	void drawDust(sf::RenderWindow &window);
 	void giveId(Planet &p);

@@ -140,15 +140,23 @@ bool Life::willExp() const noexcept {
 
 void Life::genDesc() {
     static const std::vector<std::string> startAdj = { 
-        "Flat", "Tall", "Wide", "Slimy", "Scaly", "Small", "Tiny", "Big" 
+        "Flat", "Tall", "Wide", "Slimy", "Scaly", "Small", "Tiny", "Big", "Bioluminescent",
+        "Spiky", "Armored", "Gelatinous", "Transparent", "Hairy", "Glowing", "Soft",
+        "Metallic", "Rubbery", "Feathered", "Crystalline", "Gaseous", "Multi-limbed"
     };
     static const std::vector<std::string> creature = { 
-        "fishes", "amphibians", "reptiles", "birds", "mammals", "insects", "snails", "arachnids" 
+        "fishes", "amphibians", "reptiles", "birds", "mammals", "insects", "snails", 
+        "arachnids", "crustaceans", "worms", "fungi-like organisms", "mollusks",
+        "cephalopods", "slugs", "polyps", "jellies", "tentacled beasts", "hexapods"
     };
     static const std::vector<std::string> area = { 
-        "in caves", "deep underground", "floating in organic ballons", "on the seabed", 
+        "in caves", "deep underground", "floating in organic balloons", "on the seabed", 
         "in self made structures", "drifting in the oceans", "on the sides of cliffs", 
-        "near active volcanoes"
+        "near active volcanoes", "in the upper atmosphere", "within toxic swamps",
+        "under thick ice sheets", "on floating islands", "inside geothermal vents",
+        "within giant crystalline forests", "across endless desert dunes",
+        "in radioactive craters", "attached to massive fungal towers",
+        "in high-gravity plains"
     };
 
     description = startAdj[modernRandomWithLimits(0, startAdj.size() - 1)] + " " +

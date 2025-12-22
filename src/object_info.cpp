@@ -258,6 +258,12 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 	if (space.get_iteration() % TRAILFREQ == 0)
 		space.addTrail(pos, TRAILLIFE);
 
+	if (!space.renderLifeAlwaysCheckBox->isChecked())
+	{
+		space.drawLifeVisuals(window, *target);
+		space.drawCivConnections(window, *target, true);
+	}
+
 	Planet* target_parent = space.findPlanetPtr(target->getStrongestAttractorId());
 	if (target_parent)
 	{
@@ -317,29 +323,6 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 			g.setFillColor(sf::Color(0, 0, 0, 0));
 			g.setOutlineColor(sf::Color(0, 200, 0, goldi_strength));
 			window.draw(g);
-		}
-	}
-	
-	if (target->getLife().getTypeEnum() >= 6) {
-		for (const auto & planet : space.planets)
-		{
-			if (planet.getLife().getId() == target->getLife().getId())
-			{
-				sf::Vertex q[] =
-				{
-					sf::Vertex(sf::Vector2f(planet.getx(), planet.gety()),target->getLife().getCol()),
-					sf::Vertex(pos,target->getLife().getCol())
-				};
-				window.draw(q, 2, sf::Lines);
-
-				sf::CircleShape indicator(planet.getRadius() + 5);
-				indicator.setPosition(sf::Vector2f(planet.getx(), planet.gety()));
-				indicator.setOrigin(planet.getRadius() + 5, planet.getRadius() + 5);
-				indicator.setFillColor(sf::Color(0, 0, 0, 0));
-				indicator.setOutlineColor(planet.getLife().getCol());
-				indicator.setOutlineThickness(3.*space.click_and_drag_handler.get_zoom());
-				window.draw(indicator);
-			}
 		}
 	}
 }

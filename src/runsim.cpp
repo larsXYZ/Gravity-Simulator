@@ -68,7 +68,8 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.add(timeStepSlider);
 	gui.add(temperatureUnitSelector);
 
-	gui.add(debugMenu);
+	gui.add(optionsMenu);
+	gui.add(optionsButton);
 
 	gui.add(autoBound);
 	autoBound->onUncheck([&]() {bound.setActiveState(false); });
