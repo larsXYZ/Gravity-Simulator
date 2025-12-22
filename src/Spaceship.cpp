@@ -14,7 +14,7 @@ SpaceShip::SpaceShip(sf::Vector2f p)
     angular_velocity = 0;
 	acc = 0;
 	isFiring = false;
-	exist = true;
+	exist = false;
 }
 
 SpaceShip::SpaceShip()
@@ -25,7 +25,7 @@ SpaceShip::SpaceShip()
     angular_velocity = 0;
 	acc = 0;
 	isFiring = false;
-	exist = true;
+	exist = false;
 }
 
 int SpaceShip::move(int timeStep)
@@ -521,15 +521,29 @@ void SpaceShip::checkProjectileCollisions(Space& space, double dt)
             if (segmentIntersectsCircle(start, end, planetPos, planet.getRadius(), intersection))
             {
                 // Hit! Scale explosion by power
-                space.addExplosion(intersection, 5 * it->power, {0,0}, 10 * it->power);
+                space.addExplosion(intersection, 12 * it->power, {0,0}, 15 * it->power);
                 
+                // Add shrapnel particles
+                int num_shrapnel = static_cast<int>(20 * it->power);
+                for (int i = 0; i < num_shrapnel; ++i)
+                {
+                    sf::Vector2f shrapnel_vel = space.random_vector(0.5 * it->power);
+                    // Add planet's velocity to shrapnel
+                    shrapnel_vel += planet.getVelocity();
+                    
+                    space.addSmoke(intersection, shrapnel_vel, 
+                                   space.uniform_random(1.0, 2.5), 
+                                   space.uniform_random(1500.0, 3000.0), 
+                                   planet.getTemp() + 1000);
+                }
+
                 // Damage based on power
                 if (planet.getMass() < PROJECTILE_DAMAGE_MASS_LIMIT * it->power)
                 {
                     // Explode object
                     space.explodePlanet(planet);
                     // Visual pop
-                    space.addExplosion(intersection, planet.getRadius() * 2 * it->power, planet.getVelocity(), 20);
+                    space.addExplosion(intersection, planet.getRadius() * 3 * it->power, planet.getVelocity(), 25);
                 }
                 
                 hit = true;

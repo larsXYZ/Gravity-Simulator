@@ -311,7 +311,7 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 		case sf::Keyboard::P:
 			paused = !paused;
 			break;
-		case sf::Keyboard::Q:
+		case sf::Keyboard::RControl:
 			ship.switchTool();
 			break;
 		case sf::Keyboard::G:
@@ -688,7 +688,7 @@ void Space::updateInfoBox()
 		"\nParticles: " + std::to_string(particles->size()) +
 		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()));
 
-	toolInfo->setText("Tool: " + ship.getToolName());
+	toolInfo->setText("Tool: " + ship.getToolName() + " (R-Ctrl to switch)");
 }
 
 void Space::initSetup()
@@ -701,7 +701,7 @@ void Space::initSetup()
 	toolInfo->setPosition("2%", "95%");
 	toolInfo->setTextSize(18);
 	toolInfo->getRenderer()->setTextColor(sf::Color::White);
-	toolInfo->setText("Tool: Gun");
+	toolInfo->setText("Tool: Gun (R-Ctrl to switch)");
 
 	functions->setItemHeight(14);
 	functions->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
