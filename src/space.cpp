@@ -333,13 +333,14 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 		return;
 	}
 
+	if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::RControl)
+	{
+		ship.switchTool(*this);
+		return;
+	}
+
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl))
 	{
-		// Allow RControl itself as a tool switcher even if Ctrl state is active
-		if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::RControl)
-		{
-			ship.switchTool(*this);
-		}
 		return;
 	}
 

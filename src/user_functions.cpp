@@ -928,8 +928,7 @@ public:
 				context.new_object_info->setText(info);
 				
 				// Count lines for scaling
-				int lines = std::count(info.begin(), info.end(), '\n') + 1;
-				updateGuiSize(context.new_object_info, lines);
+				updateGuiSize(context.new_object_info, context.new_object_info->getLinesCount() - 2);
 			}
 		}
 	}

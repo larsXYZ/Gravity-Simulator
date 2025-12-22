@@ -130,21 +130,21 @@ std::string Planet::getFlavorTextLife() const
 	switch (static_cast<int>(life.getTypeEnum()))
 	{
 	case 0:
-		return "Lifeless planet. Either the conditions\nfor life are not met or life has yet to evolve.";
+		return "Lifeless planet. Either the conditions for life are not met or life has yet to evolve.";
 	case 1:
-		return "Organisms that consist of one cell. The first form of life.\nOften lives in fluids in, on or under the surface.";
+		return "Organisms that consist of one cell. The first form of life. Often lives in fluids in, on or under the surface.";
 	case 2:
-		return "Aggregate from either cell division or individuals cells\ncoming togheter. The next step in the evolution of life.";
+		return "Aggregate from either cell division or individuals cells coming together. The next step in the evolution of life.";
 	case 3:
-		return "Enormous numbers of cells work togheter to\nsupport a sizable lifeform. These can often be found\nroaming the surface of the planet.";
+		return "Enormous numbers of cells work together to support a sizable lifeform. These can often be found roaming the surface of the planet.";
 	case 4:
-		return "The organisms have developed intelligence and are banding\ntogheter in groups. Often using simple technology.";
+		return "The organisms have developed intelligence and are banding together in groups. Often using simple technology.";
 	case 5:
-		return "The organisms are now the dominant species on the planet.\nThey have created advanced technology and culture.";
+		return "The organisms are now the dominant species on the planet. They have created advanced technology and culture.";
 	case 6:
-		return "The organisms technology has enabled them to spread to other planets.\nOnly a truly devestating event can end their civilization now.";
+		return "The organisms technology has enabled them to spread to other planets. Only a truly devestating event can end their civilization now.";
 	case 7:
-		return "An outpost made by the organisms. With time it will\ngrow to a fully capable part of the civilization.";
+		return "An outpost made by the organisms. With time it will grow into a fully capable part of the civilization.";
 	default:
 		return "Do not look into the void.";
 	}
