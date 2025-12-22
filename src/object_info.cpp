@@ -1,6 +1,15 @@
 #include "object_info.h"
 
 #include "Space.h"
+#include <iomanip>
+#include <sstream>
+
+// Helper for double to string with precision
+static std::string d2s(double d, int precision = 2) {
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(precision) << d;
+    return ss.str();
+}
 
 ObjectInfo::ObjectInfo()
 {
@@ -16,11 +25,173 @@ bool ObjectInfo::is_active() const
 void ObjectInfo::deactivate()
 {
 	target_id = -1;
+	if (panel)
+		panel->setVisible(false);
 }
 
 void ObjectInfo::activate(int new_target_id)
 {
 	target_id = new_target_id;
+	if (panel)
+		panel->setVisible(true);
+}
+
+void ObjectInfo::setup(Space& space, tgui::Gui& gui)
+{
+	m_space = &space;
+
+	panel = tgui::Panel::create();
+	panel->setSize(300, 360);
+	panel->setPosition("100% - 310", 100);
+	panel->setVisible(false);
+	panel->getRenderer()->setBackgroundColor(sf::Color(30, 30, 30, 220));
+	gui.add(panel);
+
+	float y = 10;
+	float labelWidth = 80;
+	float boxX = 100;
+	float boxWidth = 180;
+	float rowHeight = 35;
+
+	auto addRow = [&](const std::string& labelText, tgui::EditBox::Ptr& box, bool numeric = true) {
+		auto label = tgui::Label::create(labelText);
+		label->setPosition(10, y + 4); // +4 to center vertically roughly
+		label->setSize(labelWidth, 25);
+		label->getRenderer()->setTextColor(sf::Color::White);
+		panel->add(label);
+
+		box = tgui::EditBox::create();
+		box->setPosition(boxX, y);
+		box->setSize(boxWidth, 25);
+		if (numeric)
+			box->setInputValidator(tgui::EditBox::Validator::Float);
+		panel->add(box);
+		y += rowHeight;
+	};
+
+	addRow("Name:", nameBox, false);
+	nameBox->onReturnKeyPress([this](const tgui::String& val) {
+		if (m_space && target_id != -1) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				p->setName(val.toStdString());
+			}
+		}
+	});
+
+	addRow("Mass:", massBox);
+	massBox->onReturnKeyPress([this](const tgui::String& val) {
+		if (m_space && target_id != -1) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				try {
+					p->setMass(std::stod(val.toStdString()));
+					p->updateRadiAndType(); // Update radius and type based on mass
+				} catch (...) {}
+			}
+		}
+	});
+
+	addRow("Temp (K):", tempBox);
+	tempBox->onReturnKeyPress([this](const tgui::String& val) {
+		if (m_space && target_id != -1) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				try {
+					p->setTemp(std::stod(val.toStdString()));
+				} catch (...) {}
+			}
+		}
+	});
+
+	addRow("Pos X:", xBox);
+	xBox->onReturnKeyPress([this](const tgui::String& val) {
+		if (m_space && target_id != -1) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				try {
+					sf::Vector2f pos = p->getPosition();
+					pos.x = std::stod(val.toStdString());
+					p->setPosition(pos);
+				} catch (...) {}
+			}
+		}
+	});
+
+	addRow("Pos Y:", yBox);
+	yBox->onReturnKeyPress([this](const tgui::String& val) {
+		if (m_space && target_id != -1) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				try {
+					sf::Vector2f pos = p->getPosition();
+					pos.y = std::stod(val.toStdString());
+					p->setPosition(pos);
+				} catch (...) {}
+			}
+		}
+	});
+
+	addRow("Vel X:", vxBox);
+	vxBox->onReturnKeyPress([this](const tgui::String& val) {
+		if (m_space && target_id != -1) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				try {
+					sf::Vector2f vel = p->getVelocity();
+					vel.x = std::stod(val.toStdString());
+					p->setVelocity(vel);
+				} catch (...) {}
+			}
+		}
+	});
+
+	addRow("Vel Y:", vyBox);
+	vyBox->onReturnKeyPress([this](const tgui::String& val) {
+		if (m_space && target_id != -1) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				try {
+					sf::Vector2f vel = p->getVelocity();
+					vel.y = std::stod(val.toStdString());
+					p->setVelocity(vel);
+				} catch (...) {}
+			}
+		}
+	});
+
+	closeBtn = tgui::Button::create("Close");
+	closeBtn->setPosition(10, y);
+	closeBtn->setSize(270, 30);
+	closeBtn->onClick([this] { deactivate(); });
+	panel->add(closeBtn);
+}
+
+bool ObjectInfo::is_focused() const
+{
+	if (!panel || !panel->isVisible()) return false;
+	
+	if (nameBox && nameBox->isFocused()) return true;
+	if (massBox && massBox->isFocused()) return true;
+	if (tempBox && tempBox->isFocused()) return true;
+	if (xBox && xBox->isFocused()) return true;
+	if (yBox && yBox->isFocused()) return true;
+	if (vxBox && vxBox->isFocused()) return true;
+	if (vyBox && vyBox->isFocused()) return true;
+	
+	return false;
+}
+
+void ObjectInfo::update_ui_values(Space& space)
+{
+	if (target_id == -1 || !panel || !panel->isVisible()) return;
+
+	Planet* target = space.findPlanetPtr(target_id);
+	if (!target) {
+		deactivate();
+		return;
+	}
+
+	if (!nameBox->isFocused()) nameBox->setText(target->getName());
+	if (!massBox->isFocused()) massBox->setText(d2s(target->getMass()));
+	if (!tempBox->isFocused()) tempBox->setText(d2s(target->getTemp()));
+	if (!xBox->isFocused()) xBox->setText(d2s(target->getx()));
+	if (!yBox->isFocused()) yBox->setText(d2s(target->gety()));
+	if (!vxBox->isFocused()) vxBox->setText(d2s(target->getxv(), 4));
+	if (!vyBox->isFocused()) vyBox->setText(d2s(target->getyv(), 4));
 }
 
 void ObjectInfo::render(Space& space, sf::RenderWindow& window)
@@ -31,11 +202,15 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		deactivate();
 		return;
 	}
+
+	update_ui_values(space);
 	
 	sf::Vector2f pos(target->getx(), target->gety());
 	
     // Draw indicator square
     float rectSize = target->getRadius() * 2.2f;
+    if (rectSize < 10.0f) rectSize = 10.0f; // Minimum size for visibility
+
     sf::RectangleShape indicator(sf::Vector2f(rectSize, rectSize));
     indicator.setOrigin(rectSize / 2.0f, rectSize / 2.0f);
     indicator.setPosition(pos);
@@ -138,10 +313,4 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 			}
 		}
 	}
-	
-	/*
-	text.setPosition(pos.x + 1.5 * target->getRadius(), 
-						pos.y + 1.5 * target->getRadius());
-    ... (removed text rendering)
-	*/
 }

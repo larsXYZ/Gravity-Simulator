@@ -321,6 +321,22 @@ void Space::update()
 
 void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& window)
 {
+	if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::D && event.key.control)
+	{
+		debugMenu->setVisible(!debugMenu->isVisible());
+		return;
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl))
+	{
+		// Allow RControl itself as a tool switcher even if Ctrl state is active
+		if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::RControl)
+		{
+			ship.switchTool(*this);
+		}
+		return;
+	}
+
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Comma) && timeStepSlider->getValue() > timeStepSlider->getMinimum())
 		timeStepSlider->setValue(std::max(timeStepSlider->getValue() - 1, timeStepSlider->getMinimum()));
 
@@ -331,18 +347,10 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 
 	if (event.type == sf::Event::KeyReleased)
 	{
-		if (event.key.code == sf::Keyboard::D && event.key.control)
-		{
-			debugMenu->setVisible(!debugMenu->isVisible());
-		}
-
 		switch (event.key.code)
 		{
 		case sf::Keyboard::P:
 			paused = !paused;
-			break;
-		case sf::Keyboard::RControl:
-			ship.switchTool(*this);
 			break;
 		case sf::Keyboard::Escape:
 			exit(0);

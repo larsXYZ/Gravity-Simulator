@@ -29,6 +29,9 @@ void fillFunctionGUIDropdown(tgui::ListBox::Ptr listbox)
 
 void setFunctionGUIFromHotkeys(tgui::ListBox::Ptr listbox)
 {
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl))
+		return;
+
 	for (const auto& function : function_info)
 	{
 		if (sf::Keyboard::isKeyPressed(function.hotkey))

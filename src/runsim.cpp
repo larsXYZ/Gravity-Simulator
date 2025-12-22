@@ -56,6 +56,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	tgui::Gui gui{ window };
 	gui.setFont("sansation.ttf");
 	initSetup();
+	object_info.setup(*this, gui);
 	gui.add(simInfo);
 	gui.add(toolInfo);
 	gui.add(functions);
@@ -101,7 +102,8 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			if (event.type == sf::Event::Closed)
 				window.close();
 
-			hotkeys(event, mainView, window);
+			if (!object_info.is_focused())
+				hotkeys(event, mainView, window);
 
 			if (event.type == sf::Event::MouseWheelScrolled || !object_tracker.is_active())
 				click_and_drag_handler.update(mainView, window, event);

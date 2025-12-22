@@ -76,6 +76,7 @@ public:
 	[[nodiscard]] GoldilockInfo getGoldilockInfo() const noexcept;
 
 	// Setters
+	void setName(const std::string& n) noexcept { name = n; }
 	void setStrongestAttractorIdRef(int id) noexcept;
 	void markForRemoval() noexcept { marked_for_removal = true; }
 	void setStrongestAttractorStrength(double strength) noexcept { STRENGTH_strongest_attractor = strength; }
