@@ -6,6 +6,7 @@ Life::Life() :
     lifeLevel(0),
     expand(false),
     description(""),
+    civName(""),
     timer(0),
     lifeColor(sf::Color(modernRandomWithLimits(0, 255), 
                        modernRandomWithLimits(0, 255), 
@@ -20,6 +21,7 @@ Life::Life(int i) :
     lifeLevel(7),
     expand(false),
     description(""),
+    civName(""),
     timer(0),
     lifeColor(sf::Color(modernRandomWithLimits(0, 255), 
                        modernRandomWithLimits(0, 255), 
@@ -37,6 +39,10 @@ void Life::giveCol(sf::Color c) {
 
 void Life::giveDesc(std::string d) {
     description = d;
+}
+
+void Life::giveCivName(std::string cn) {
+    civName = cn;
 }
 
 void Life::update(double supportedBM, int t, double rad) {
@@ -59,7 +65,10 @@ void Life::update(double supportedBM, int t, double rad) {
         // EVOLVE
         if (modernRandomWithLimits(0, 3500000 * lifeLevel) < (biomass - 900 * lifeLevel) && lifeLevel < 6) {
             lifeLevel++;
-            if (lifeLevel == 4) genDesc();
+            if (lifeLevel == 4) {
+                genDesc();
+                genCivName();
+            }
             if (lifeLevel == 6) {
                 expand = true;
             }
@@ -120,6 +129,9 @@ void Life::update(double supportedBM, int t, double rad) {
 void Life::kill() {
     biomass = 0;
     type = NONE;
+    lifeLevel = 0;
+    description = "";
+    civName = "";
 }
 
 bool Life::willExp() const noexcept {
@@ -142,6 +154,23 @@ void Life::genDesc() {
     description = startAdj[modernRandomWithLimits(0, startAdj.size() - 1)] + " " +
                  creature[modernRandomWithLimits(0, creature.size() - 1)] + " " +
                  area[modernRandomWithLimits(0, area.size() - 1)];
+}
+
+void Life::genCivName() {
+    static const std::vector<std::string> part1 = { 
+        "Gloo", "Ble", "Kri", "Zor", "Pla", "Xi", "Vora", "Sali", "Grom", "Trak", 
+        "Mora", "Siv", "Ocr", "Ura", "Zet", "Kla", "Vex", "Dra", "Loo", "Trel"
+    };
+    static const std::vector<std::string> part2 = { 
+        "bi", "to", "a", "i", "e", "u", "o", "ra", "si", "lo", "va", "ne", "mu", "ka"
+    };
+    static const std::vector<std::string> part3 = { 
+        "ans", "oids", "ish", "ites", "ons", "erons", "alians", "ians", "ids", "ods"
+    };
+
+    civName = part1[modernRandomWithLimits(0, part1.size() - 1)] + 
+              part2[modernRandomWithLimits(0, part2.size() - 1)] + 
+              part3[modernRandomWithLimits(0, part3.size() - 1)];
 }
 
 lType Life::getTypeEnum() const {
@@ -185,6 +214,10 @@ sf::Color Life::getCol() const {
 
 std::string Life::getDesc() const {
     return description;
+}
+
+std::string Life::getCivName() const {
+    return civName;
 }
 
 int Life::modernRandomWithLimits(int min, int max) {

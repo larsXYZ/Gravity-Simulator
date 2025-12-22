@@ -103,7 +103,7 @@ public:
 	void coolDown(int t) noexcept;
 	void absorbHeat(double e, int t) noexcept;
 	void updateAtmosphere(int t) noexcept;
-	void colonize(int i, const sf::Color& c, std::string_view d);
+	void colonize(int i, const sf::Color& c, std::string_view d, std::string_view cn);
 
 	// Simulation and rendering
 	void update(double timestep) override;

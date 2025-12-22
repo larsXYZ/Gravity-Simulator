@@ -295,7 +295,7 @@ void Space::update()
 		{
 			int index = findBestPlanet(i);
 			if (index != -1) 
-				planets[index].colonize(planets[i].getLife().getId(), planets[i].getLife().getCol(), planets[i].getLife().getDesc());
+				planets[index].colonize(planets[i].getLife().getId(), planets[i].getLife().getCol(), planets[i].getLife().getDesc(), planets[i].getLife().getCivName());
 		}
 	}
 	
