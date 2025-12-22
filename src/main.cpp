@@ -6,7 +6,7 @@
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
 
-void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2);
+void start(sf::RenderWindow& settingScreen, tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2);
 
 void getPrevSettings(tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode)
 {
@@ -127,10 +127,10 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	b->setSize(95, 35);
 	b->setText("START");
 	b->setTextSize(15);
-	b->onPress([=](){start(res, mode, c1, c2); });
+	b->onPress([&s, res, mode, c1, c2](){start(s, res, mode, c1, c2); });
 }
 
-void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2)
+void start(sf::RenderWindow& settingScreen, tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2)
 {
 	int x = 640;
 	int y = 480;
@@ -159,6 +159,8 @@ void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c
 	//STARTING
 	const auto fullscreen = (mode->getSelectedItemIndex() == 0);
 	saveSettings(x, y, fullscreen);
+
+	settingScreen.close();
 
 	Space space;
 	space.runSim({x, y}, fullscreen);
@@ -230,7 +232,7 @@ void main2()
 		settingScreen.display();
 
 		if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
-			start(resSetup, modeSetup, customResX, customResY);
+			start(settingScreen, resSetup, modeSetup, customResX, customResY);
 	}
 }
 

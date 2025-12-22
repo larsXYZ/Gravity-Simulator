@@ -94,6 +94,11 @@ struct PredictionResult {
 	PredictionEndReason reason{ PredictionEndReason::MaxSteps };
 	sf::Vector2f endPoint;
 	sf::Vector2f endVelocity;
+	struct CollisionMarker {
+		sf::Vector2f position;
+		float size;
+	};
+	std::vector<CollisionMarker> collisionMarkers;
 };
 
 struct PhysicsBody
@@ -153,9 +158,10 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 		// 1. Calculate first acceleration
 		for (size_t j = 0; j < planets.size(); j++)
 		{
+			if (planets[j].mass <= 0) continue;
 			for (size_t k = 0; k < planets.size(); k++)
 			{
-				if (j == k) continue;
+				if (j == k || planets[k].mass <= 0) continue;
 				auto dist = calculateDistance(planets[j], planets[k]);
 				accumulate_acceleration(dist, acc_1[j], planets[k]);
 			}
@@ -170,11 +176,13 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 
 		// CHECK COLLISIONS / ROCHE HERE (using new positions)
 		PhysicsBody& pSub = planets.back();
-		bool collision = false;
+		bool absorbed = false;
 		bool disintegration = false;
 
 		for (size_t k = 0; k < planets.size() - 1; ++k) // Check against all others
 		{
+			if (planets[k].mass <= 0) continue; // Skip already absorbed planets
+
 			auto distRes = calculateDistance(pSub, planets[k]); 
 
 			// Roche
@@ -189,14 +197,34 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 			// Collision
 			if (distRes.dist < distRes.rad_dist)
 			{
-				collision = true;
-				break;
+				if (pSub.mass < planets[k].mass)
+				{
+					// Subject is absorbed
+					absorbed = true;
+					result.collisionMarkers.push_back({ pSub.position, (float)pSub.radius * 2.0f });
+					break;
+				}
+				else
+				{
+					// Other planet is absorbed by subject
+					result.collisionMarkers.push_back({ pSub.position, (float)planets[k].radius * 1.5f });
+
+					// Conservation of momentum
+					pSub.velocity.x = (pSub.mass * pSub.velocity.x + planets[k].mass * planets[k].velocity.x) / (pSub.mass + planets[k].mass);
+					pSub.velocity.y = (pSub.mass * pSub.velocity.y + planets[k].mass * planets[k].velocity.y) / (pSub.mass + planets[k].mass);
+					
+					// Mass and radius update
+					pSub.mass += planets[k].mass;
+					pSub.radius = std::cbrt(pSub.mass) / 0.5; // Using 0.5 as typical density for Rocky/Terrestrial (approx)
+					
+					planets[k].mass = 0; // Mark as absorbed for the rest of prediction
+				}
 			}
 		}
 
 		result.path.emplace_back(pSub.position, sf::Color::Red);
 
-		if (collision) {
+		if (absorbed) {
 			result.reason = PredictionEndReason::Collision;
 			result.endPoint = pSub.position;
 			break;
@@ -213,9 +241,10 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 		// 3. Calculate second acceleration (at new position)
 		for (size_t j = 0; j < planets.size(); j++)
 		{
+			if (planets[j].mass <= 0) continue;
 			for (size_t k = 0; k < planets.size(); k++)
 			{
-				if (j == k) continue;
+				if (j == k || planets[k].mass <= 0) continue;
 				auto dist = calculateDistance(planets[j], planets[k]);
 				accumulate_acceleration(dist, acc_2[j], planets[k]);
 			}
@@ -323,18 +352,20 @@ public:
 				{
 					context.window.draw(&result.path[0], result.path.size(), sf::PrimitiveType::LineStrip);
 					
-					if (result.reason == PredictionEndReason::Collision)
+					// Render collision markers
+					for (const auto& marker : result.collisionMarkers)
 					{
-						float size = 10.0f * context.zoom;
+						float size = marker.size * context.zoom;
 						sf::Vertex xLines[] = {
-							sf::Vertex(result.endPoint + sf::Vector2f(-size, -size), sf::Color::Red),
-							sf::Vertex(result.endPoint + sf::Vector2f(size, size), sf::Color::Red),
-							sf::Vertex(result.endPoint + sf::Vector2f(-size, size), sf::Color::Red),
-							sf::Vertex(result.endPoint + sf::Vector2f(size, -size), sf::Color::Red)
+							sf::Vertex(marker.position + sf::Vector2f(-size, -size), sf::Color::Red),
+							sf::Vertex(marker.position + sf::Vector2f(size, size), sf::Color::Red),
+							sf::Vertex(marker.position + sf::Vector2f(-size, size), sf::Color::Red),
+							sf::Vertex(marker.position + sf::Vector2f(size, -size), sf::Color::Red)
 						};
 						context.window.draw(xLines, 4, sf::PrimitiveType::Lines);
 					}
-					else if (result.reason == PredictionEndReason::Disintegration)
+
+					if (result.reason == PredictionEndReason::Disintegration)
 					{
 						 float size = 15.0f * context.zoom;
 						 

@@ -57,6 +57,9 @@ class Space
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
 	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();
 
+	tgui::ChildWindow::Ptr debugMenu = tgui::ChildWindow::create("Debug Menu");
+	tgui::CheckBox::Ptr gravityCheckBox = tgui::CheckBox::create("Gravity Enabled");
+
 	ClickAndDragHandler click_and_drag_handler;
 	ObjectTracker object_tracker;
 	ObjectInfo object_info;

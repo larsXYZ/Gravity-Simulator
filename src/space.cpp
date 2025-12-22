@@ -200,12 +200,37 @@ void Space::update()
 				{
 					if (thisPlanet->getMass() <= otherPlanet.getMass())
 					{
+						const auto collision_pos = sf::Vector2f(thisPlanet->getPosition().x, thisPlanet->getPosition().y);
+						const auto collision_vel = sf::Vector2f(thisPlanet->getVelocity().x, thisPlanet->getVelocity().y);
+						const auto collision_radius = thisPlanet->getRadius();
+						const auto collision_temp = thisPlanet->getTemp();
+
 						thisPlanet->becomeAbsorbedBy(otherPlanet);
 
-						addExplosion(sf::Vector2f(thisPlanet->getPosition().x, thisPlanet->getPosition().y), 
-									2 * thisPlanet->getRadius(), 
-									sf::Vector2f(thisPlanet->getVelocity().x * 0.5, thisPlanet->getVelocity().y * 0.5), 
-									sqrt(thisPlanet->getMass()) / 2);
+						addExplosion(collision_pos, 
+									4 * collision_radius, 
+									sf::Vector2f(collision_vel.x * 0.5, collision_vel.y * 0.5), 
+									sqrt(otherPlanet.getMass()));
+
+						// Particle generation
+						// Non-linear relationship: fewer particles for small bodies
+						const size_t n_particles_to_add = static_cast<size_t>(20 * collision_radius * std::sqrt(collision_radius));
+						const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
+							static_cast<size_t>(0), n_particles_to_add);
+
+						for (size_t k = 0; k < n_dust_particles; k++)
+						{
+							const auto scatter_pos = collision_pos + random_vector(collision_radius);
+							sf::Vector2f rnd_vel = random_vector(30.0);
+							rnd_vel *= static_cast<float>(CREATEDUSTSPEEDMULT);
+							const auto scatter_vel = collision_vel + rnd_vel;
+							const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
+							
+							double p_temp = collision_temp;
+							if (uniform_random(0, 100) < 15) p_temp *= 2.5; // 15% of particles are much hotter/glowing
+
+							addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+						}
 
 						break;
 					}
@@ -306,6 +331,11 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 
 	if (event.type == sf::Event::KeyReleased)
 	{
+		if (event.key.code == sf::Keyboard::D && event.key.control)
+		{
+			debugMenu->setVisible(!debugMenu->isVisible());
+		}
+
 		switch (event.key.code)
 		{
 		case sf::Keyboard::P:
@@ -313,9 +343,6 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 			break;
 		case sf::Keyboard::RControl:
 			ship.switchTool();
-			break;
-		case sf::Keyboard::G:
-			gravity_enabled = !gravity_enabled;
 			break;
 		case sf::Keyboard::Escape:
 			exit(0);
@@ -434,7 +461,10 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 
 	const auto& particles_by_rad = [planet]()
 	{
-		return static_cast<size_t>(50 * planet.getRadius());
+		// Non-linear relationship: fewer particles for small bodies
+		// Base count scaled by radius^1.5 or similar
+		double rad = planet.getRadius();
+		return static_cast<size_t>(25 * rad * std::sqrt(rad));
 	};
 
 	const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
@@ -446,7 +476,11 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 		rnd_vel *= static_cast<float>(CREATEDUSTSPEEDMULT);
 		const auto scatter_vel = sf::Vector2f(planet.getVelocity().x, planet.getVelocity().y) + rnd_vel;
 		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
-		addSmoke(scatter_pos, scatter_vel, 2, lifespan, planet.getTemp());
+
+		double p_temp = planet.getTemp();
+		if (uniform_random(0, 100) < 15) p_temp *= 2.5; // 15% of particles are much hotter/glowing
+
+		addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
 	}
 
 	const auto n_planets{ std::floor(planet.getMass() / MINIMUMBREAKUPSIZE) };
@@ -493,8 +527,8 @@ void Space::explodePlanet(Planet planet)
 	const sf::Vector2f original_velocity = { static_cast<float>(planet.getVelocity().x),
 										static_cast<float>(planet.getVelocity().y) };
 
-	const auto lifetime = 0.1 * planet.getRadius();
-	const auto size = 5.0 * planet.getRadius();
+	const auto lifetime = 0.5 * planet.getRadius();
+	const auto size = 15.0 * planet.getRadius();
 
 	addExplosion(original_position, size, original_velocity, lifetime);
 
@@ -688,7 +722,15 @@ void Space::updateInfoBox()
 		"\nParticles: " + std::to_string(particles->size()) +
 		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()));
 
-	toolInfo->setText("Tool: " + ship.getToolName() + " (R-Ctrl to switch)");
+	if (ship.isExist())
+	{
+		toolInfo->setVisible(true);
+		toolInfo->setText("Tool: " + ship.getToolName() + " (R-Ctrl to switch)");
+	}
+	else
+	{
+		toolInfo->setVisible(false);
+	}
 }
 
 void Space::initSetup()
@@ -789,6 +831,16 @@ void Space::initSetup()
 	temperatureUnitSelector->setTextSize(10);
 	temperatureUnitSelector->setTabHeight(12);
 	temperatureUnitSelector->setPosition("100% - 170", tgui::bindBottom(timeStepSlider) + 10);
+
+	debugMenu->setSize(200, 100);
+	debugMenu->setPosition("50% - 100", "50% - 50");
+	debugMenu->setVisible(false);
+	debugMenu->onClose([this]() { debugMenu->setVisible(false); });
+
+	gravityCheckBox->setPosition(10, 10);
+	gravityCheckBox->setChecked(gravity_enabled);
+	gravityCheckBox->onChange([this](bool checked) { gravity_enabled = checked; });
+	debugMenu->add(gravityCheckBox);
 }
 
 template<typename T>

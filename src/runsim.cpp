@@ -10,6 +10,9 @@ bool is_mouse_on_widgets(const sf::RenderWindow & window, const tgui::Gui & gui)
     bool mouse_currently_over_gui = false;
 	for (const auto& gui_element : gui.getWidgets())
 	{
+		if (!gui_element->isVisible())
+			continue;
+
 		const sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 		if (gui_element->isMouseOnWidget(sf::Vector2f(mousePos.x, mousePos.y)))
         {
@@ -62,6 +65,8 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.add(timeStepLabel);
 	gui.add(timeStepSlider);
 	gui.add(temperatureUnitSelector);
+
+	gui.add(debugMenu);
 
 	gui.add(autoBound);
 	autoBound->onUncheck([&]() {bound.setActiveState(false); });
