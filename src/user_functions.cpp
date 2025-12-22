@@ -928,7 +928,7 @@ public:
 				context.new_object_info->setText(info);
 				
 				// Count lines for scaling
-				updateGuiSize(context.new_object_info, context.new_object_info->getLinesCount() - 2);
+				updateGuiSize(context.new_object_info, context.new_object_info->getLinesCount());
 			}
 		}
 	}
