@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.3)
 
 project(Gravity-Simulator)
 set(Gravity_Simulator_VERSION_MAJOR 1)
-set(Gravity_Simulator_VERSION_MINOR 1)
+set(Gravity_Simulator_VERSION_MINOR 2)
 set(Gravity_Simulator_VERSION_PATCH 0)
 set(Gravity_Simulator_HOMEPAGE_URL "https://www.youtube.com/@LarsGames_")
 set(Gravity_Simulator_DESCRIPTION "A simple 2D gravity simulator")

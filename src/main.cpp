@@ -1,5 +1,7 @@
 #include "space.h"
 #include <fstream>
+#include <filesystem>
+#include <cstdlib>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
@@ -31,10 +33,33 @@ namespace LauncherConfig
 
 void start(sf::RenderWindow& settingScreen, tgui::ListBox::Ptr resolutionList, tgui::ListBox::Ptr windowModeList, tgui::EditBox::Ptr customResX, tgui::EditBox::Ptr customResY);
 
+std::string getSettingsPath()
+{
+	const char* appData = std::getenv("APPDATA");
+	if (!appData)
+		return "settings.txt";
+
+	std::filesystem::path dir = std::filesystem::path(appData) / "Gravity-Simulator";
+
+	if (!std::filesystem::exists(dir))
+	{
+		try
+		{
+			std::filesystem::create_directories(dir);
+		}
+		catch (...)
+		{
+			return "settings.txt";
+		}
+	}
+
+	return (dir / "settings.txt").string();
+}
+
 void getPrevSettings(tgui::EditBox::Ptr& customResX, tgui::EditBox::Ptr& customResY, tgui::ListBox::Ptr& resolutionList, tgui::ListBox::Ptr& windowModeList)
 {
 	std::ifstream file;
-	file.open("settings.txt");
+	file.open(getSettingsPath());
 
 	if (file.fail())
 		return;
@@ -66,7 +91,7 @@ void getPrevSettings(tgui::EditBox::Ptr& customResX, tgui::EditBox::Ptr& customR
 void saveSettings(int x, int y, bool fullscreen)
 {
 	std::ofstream file;
-	file.open("settings.txt");
+	file.open(getSettingsPath());
 
 	if (file.fail())
 		return;
