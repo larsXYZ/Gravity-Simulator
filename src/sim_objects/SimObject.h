@@ -1,0 +1,47 @@
+#pragma once
+#include <SFML/Graphics.hpp>
+
+class SimObject {
+protected:
+    sf::Vector2f position;
+    sf::Vector2f velocity;
+    int id;
+    double mass;
+    double radius = 0.0;
+    double density = 0.0;
+    double tCapacity = 1;
+    double tEnergy = 0.0;
+public:
+    SimObject(sf::Vector2f pos = {0.f, 0.f}, sf::Vector2f vel = {0.f, 0.f}, int id_ = -1)
+        : position(pos), velocity(vel), id(id_), mass(0.0) {}
+    virtual ~SimObject() = default;
+
+    virtual sf::Vector2f getPosition() const { return position; }
+    virtual sf::Vector2f getVelocity() const { return velocity; }
+    virtual int getId() const { return id; }
+    virtual double getMass() const { return mass; }
+    virtual double getRadius() const { return radius; }
+    virtual double getDensity() const { return density; }
+    virtual double getTemp() const noexcept { return tEnergy / (getMass() * getTCap()); }
+    virtual double getTCap() const noexcept { return tCapacity; }
+    virtual double getThermalEnergy() const noexcept { return getTemp() * getMass() * getTCap(); }
+    
+    float getx() const { return position.x; }
+    float gety() const { return position.y; }
+    float getxv() const { return velocity.x; }
+    float getyv() const { return velocity.y; }
+
+    virtual void setPosition(sf::Vector2f pos) { position = pos; }
+    virtual void setVelocity(sf::Vector2f vel) { velocity = vel; }
+    virtual void setId(int id_) { id = id_; }
+    virtual void setMass(double m) { mass = m; }
+    virtual void setRadius(double r) { radius = r; }
+    virtual void setDensity(double d) { density = d; }
+    virtual void setTemp(double t) noexcept { tEnergy = getMass() * t * tCapacity; }
+    virtual void increaseThermalEnergy(double e) noexcept { setTemp(getTemp() + e / (getMass() * getTCap())); }
+    virtual void setTCap(double cap) noexcept { tCapacity = cap; }
+    virtual void setThermalEnergy(double e) noexcept { tEnergy = e; }
+
+    virtual void update(double timestep) = 0;
+    virtual void render(sf::RenderWindow& window) const = 0;
+};

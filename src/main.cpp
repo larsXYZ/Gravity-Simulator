@@ -1,17 +1,65 @@
 #include "space.h"
 #include <fstream>
+#include <filesystem>
+#include <cstdlib>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
+namespace LauncherConfig
+{
+    const sf::Vector2i WindowSize = {300, 195};
+    const sf::Color BackgroundColor = sf::Color(20, 20, 20);
+    const int FramerateLimit = 10;
+    const std::string FontPath = "sansation.ttf";
+    
+    namespace Title
+    {
+        const sf::Vector2f Position = {-5, 0};
+        const int CharacterSize = 30;
+        const std::string Text = " GRAVITY SIMULATOR ";
+    }
+    
+    namespace Version
+    {
+        const sf::Vector2f Position = {247, 33};
+        const int CharacterSize = 25;
+        const std::string Text = "v1.2";
+        const sf::Color Color = sf::Color(252, 240, 3);
+    }
+}
 
-void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2);
 
-void getPrevSettings(tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode)
+void start(sf::RenderWindow& settingScreen, tgui::ListBox::Ptr resolutionList, tgui::ListBox::Ptr windowModeList, tgui::EditBox::Ptr customResX, tgui::EditBox::Ptr customResY);
+
+std::string getSettingsPath()
+{
+	const char* appData = std::getenv("APPDATA");
+	if (!appData)
+		return "settings.txt";
+
+	std::filesystem::path dir = std::filesystem::path(appData) / "Gravity-Simulator";
+
+	if (!std::filesystem::exists(dir))
+	{
+		try
+		{
+			std::filesystem::create_directories(dir);
+		}
+		catch (...)
+		{
+			return "settings.txt";
+		}
+	}
+
+	return (dir / "settings.txt").string();
+}
+
+void getPrevSettings(tgui::EditBox::Ptr& customResX, tgui::EditBox::Ptr& customResY, tgui::ListBox::Ptr& resolutionList, tgui::ListBox::Ptr& windowModeList)
 {
 	std::ifstream file;
-	file.open("settings.txt");
+	file.open(getSettingsPath());
 
 	if (file.fail())
 		return;
@@ -27,28 +75,28 @@ void getPrevSettings(tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::ListB
 	file.close();
 
 	if (m == "w")
-		mode->setSelectedItemByIndex(1);
+		windowModeList->setSelectedItemByIndex(1);
 
-	c1->setText(x);
-	c2->setText(y);
+	customResX->setText(x);
+	customResY->setText(y);
 
-	const auto& items = res->getItems();
+	const auto& items = resolutionList->getItems();
 	if (auto match = std::find(items.begin(), items.end(), x + " x " + y); 
 		match != items.end())
-		res->setSelectedItem(*match);
+		resolutionList->setSelectedItem(*match);
 	else
-		res->setSelectedItem("CUSTOM");
+		resolutionList->setSelectedItem("CUSTOM");
 }
 
-void saveSettings(int x, int y, bool m)
+void saveSettings(int x, int y, bool fullscreen)
 {
 	std::ofstream file;
-	file.open("settings.txt");
+	file.open(getSettingsPath());
 
 	if (file.fail())
 		return;
 
-	if (m) 
+	if (fullscreen) 
 		file << "f" << " " << x << " " << y;
 	else
 		file << "w" << " " << x << " " << y;
@@ -56,109 +104,111 @@ void saveSettings(int x, int y, bool m)
 	file.close();
 }
 
-void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::ListBox::Ptr& res, tgui::ListBox::Ptr& mode, tgui::EditBox::Ptr& c1, tgui::EditBox::Ptr& c2, tgui::Button::Ptr& b, tgui::Gui& sg)
+void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::ListBox::Ptr& resolutionList, tgui::ListBox::Ptr& windowModeList, tgui::EditBox::Ptr& customResX, tgui::EditBox::Ptr& customResY, tgui::Button::Ptr& b, tgui::Gui& sg)
 {
-	tf.loadFromFile("sansation.ttf");
+	tf.loadFromFile(LauncherConfig::FontPath);
 
 	//WINDOW
-	s.setFramerateLimit(10);
+	s.setFramerateLimit(LauncherConfig::FramerateLimit);
 
 	//TITLE
 	t.setFont(tf);
-	t.setPosition(-5, 0);
+	t.setPosition(LauncherConfig::Title::Position);
 	t.setStyle(sf::Text::Underlined);
-	t.setString(" GRAVITY SIMULATOR ");
-	t.setCharacterSize(30);
+	t.setString(LauncherConfig::Title::Text);
+	t.setCharacterSize(LauncherConfig::Title::CharacterSize);
 
 	//VERSIONTEXT
 	v.setFont(tf);
-	v.setColor(sf::Color(51, 255, 255));
-	v.setPosition(247, 33);
-	v.setString("v1.1");
-	v.setCharacterSize(25);
+	v.setFillColor(LauncherConfig::Version::Color);
+	v.setPosition(LauncherConfig::Version::Position);
+	v.setString(LauncherConfig::Version::Text);
+	v.setCharacterSize(LauncherConfig::Version::CharacterSize);
 
 	//GUI
-	tgui::Font font("sansation.ttf");
+	tgui::Font font(LauncherConfig::FontPath);
 	sg.setFont(font);
-	sg.add(res);
-	sg.add(mode);
-	sg.add(c1);
-	sg.add(c2);
+	sg.add(resolutionList);
+	sg.add(windowModeList);
+	sg.add(customResX);
+	sg.add(customResY);
 	sg.add(b);
 
 	//VIDEOMODE
-	mode->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
-	mode->setPosition(20, 80);
-	mode->setItemHeight(15);
-	mode->setSize(95, 30);
-	mode->setTextSize(15);
-	mode->addItem("FULLSCREEN");
-	mode->addItem("WINDOWED");
-	mode->setSelectedItemByIndex(0);
+	windowModeList->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
+	windowModeList->setPosition(20, 80);
+	windowModeList->setItemHeight(15);
+	windowModeList->setSize(95, 30);
+	windowModeList->setTextSize(15);
+	windowModeList->addItem("FULLSCREEN");
+	windowModeList->addItem("WINDOWED");
+	windowModeList->setSelectedItemByIndex(0);
 
 	//RESOLUTIONS
-	res->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
-	res->setPosition(20, 115);
-	res->setItemHeight(15);
-	res->setTextSize(15);
+	resolutionList->getScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
+	resolutionList->setPosition(20, 115);
+	resolutionList->setItemHeight(15);
+	resolutionList->setTextSize(15);
 
-	res->addItem("2560 x 1440");
-	res->addItem("1920 x 1080");
-	res->addItem("1366 x 768");
-	res->addItem("CUSTOM");
-	res->setSize(95, res->getItemCount() * 15);
-	res->setFocusable(false);
+	resolutionList->addItem("2560 x 1440");
+	resolutionList->addItem("1920 x 1080");
+	resolutionList->addItem("1366 x 768");
+	resolutionList->addItem("CUSTOM");
+	resolutionList->setSize(95, resolutionList->getItemCount() * 15);
+	resolutionList->setFocusable(false);
 
 	//CUSTOM RESOLUTION
-	c1->setDefaultText("X");
-	c1->setPosition(125, 140);
-	c1->setSize(50, 15);
-	c1->setTextSize(15);
-	c1->setMaximumCharacters(4);
+	customResX->setDefaultText("X");
+	customResX->setPosition(125, 140);
+	customResX->setSize(50, 15);
+	customResX->setTextSize(15);
+	customResX->setMaximumCharacters(4);
 	
-	c2->setDefaultText("Y");
-	c2->setPosition(125, 160);
-	c2->setSize(50, 15);
-	c2->setTextSize(15);
-	c2->setMaximumCharacters(4);
+	customResY->setDefaultText("Y");
+	customResY->setPosition(125, 160);
+	customResY->setSize(50, 15);
+	customResY->setTextSize(15);
+	customResY->setMaximumCharacters(4);
 
 	//STARTBUTTON
 	b->setPosition(185, 140);
 	b->setSize(95, 35);
 	b->setText("START");
 	b->setTextSize(15);
-	b->onPress([=](){start(res, mode, c1, c2); });
+	b->onPress([&s, resolutionList, windowModeList, customResX, customResY](){start(s, resolutionList, windowModeList, customResX, customResY); });
 }
 
-void start(tgui::ListBox::Ptr res, tgui::ListBox::Ptr mode, tgui::EditBox::Ptr c1, tgui::EditBox::Ptr c2)
+void start(sf::RenderWindow& settingScreen, tgui::ListBox::Ptr resolutionList, tgui::ListBox::Ptr windowModeList, tgui::EditBox::Ptr customResX, tgui::EditBox::Ptr customResY)
 {
 	int x = 640;
 	int y = 480;
 
-	if (res->getSelectedItem() == ("2560 x 1440"))
+	if (resolutionList->getSelectedItem() == ("2560 x 1440"))
 	{
 		x = 2560;
 		y = 1440;
 	}
-	else if (res->getSelectedItem() == ("1920 x 1080"))
+	else if (resolutionList->getSelectedItem() == ("1920 x 1080"))
 	{
 		x = 1920;
 		y = 1080;
 	}
-	else if (res->getSelectedItem() == ("1366 x 768"))
+	else if (resolutionList->getSelectedItem() == ("1366 x 768"))
 	{
 		x = 1366;
 		y = 768;
 	}
-	else if (res->getSelectedItem() == ("CUSTOM"))
+	else if (resolutionList->getSelectedItem() == ("CUSTOM"))
 	{
-		x = Space::convertStringToDouble(c1->getText().toStdString());
-		y = Space::convertStringToDouble(c2->getText().toStdString());
+		x = Space::convertStringToDouble(customResX->getText().toStdString());
+		y = Space::convertStringToDouble(customResY->getText().toStdString());
 	}
 
 	//STARTING
-	const auto fullscreen = (mode->getSelectedItemIndex() == 0);
+	const auto fullscreen = (windowModeList->getSelectedItemIndex() == 0);
 	saveSettings(x, y, fullscreen);
+
+	settingScreen.close();
 
 	Space space;
 	space.runSim({x, y}, fullscreen);
@@ -189,10 +239,10 @@ void evaluateStartButtonVisibility(tgui::ListBox::Ptr resSetup,
 }
 
 
-void main2()
+void runLauncher()
 {
 	sf::RenderWindow settingScreen;
-	settingScreen.create(sf::VideoMode(300, 195), "", sf::Style::None);
+	settingScreen.create(sf::VideoMode(LauncherConfig::WindowSize.x, LauncherConfig::WindowSize.y), "", sf::Style::None);
 	tgui::Gui settingGUI{ settingScreen };
 	sf::Event event;
 	sf::Text title;
@@ -211,7 +261,7 @@ void main2()
 	{
 		while (settingScreen.pollEvent(event))
 		{
-			settingScreen.clear(sf::Color(20, 20, 20));
+			settingScreen.clear(LauncherConfig::BackgroundColor);
 			settingGUI.handleEvent(event);
 
 			if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
@@ -230,20 +280,20 @@ void main2()
 		settingScreen.display();
 
 		if (startButton->isVisible() && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
-			start(resSetup, modeSetup, customResX, customResY);
+			start(settingScreen, resSetup, modeSetup, customResX, customResY);
 	}
 }
 
 #ifdef _DEBUG
 int main(int argc, char** argv)
 {
-    main2();
+    runLauncher();
 }
 #else
 #include <windows.h>
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    main2();
+    runLauncher();
 }
 #endif

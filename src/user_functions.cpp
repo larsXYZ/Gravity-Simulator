@@ -1,6 +1,8 @@
 #include "user_functions.h"
 
 #include "space.h"
+#include "physics_utils.h"
+#include <algorithm>
 
 
 FunctionType getSelectedFunction(tgui::ListBox::Ptr listbox)
@@ -28,6 +30,9 @@ void fillFunctionGUIDropdown(tgui::ListBox::Ptr listbox)
 
 void setFunctionGUIFromHotkeys(tgui::ListBox::Ptr listbox)
 {
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl))
+		return;
+
 	for (const auto& function : function_info)
 	{
 		if (sf::Keyboard::isKeyPressed(function.hotkey))
@@ -38,8 +43,174 @@ void setFunctionGUIFromHotkeys(tgui::ListBox::Ptr listbox)
 void fillTextBox(tgui::TextArea::Ptr textbox, double mass)
 {
 	Planet temp(mass);
-	textbox->setText("NEW OBJECT\nMass:   " + std::to_string(static_cast<int>(mass))
-							+ "\nType:      " + Planet::getTypeString(temp.getType()));
+	textbox->setText("Mass:   " + std::to_string(static_cast<int>(mass)));
+}
+
+namespace PredictionConfig
+{
+	constexpr int PREDICTION_LENGTH = 200;
+	constexpr float PREDICTION_STEP_SIZE = 50.0f;
+}
+
+using PhysicsBody = PhysicsUtils::PhysicsBody;
+
+PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, const Planet& subject, int steps)
+{
+	const double opt_strength = std::min(1.0, static_cast<double>(planets_orig.size()) / 30.0);
+	const double mass_threshold = opt_strength * 5.0;
+	const double ratio_threshold = opt_strength * 0.05;
+
+	std::vector<PhysicsBody> planets;
+	planets.reserve(planets_orig.size() + 1);
+	for (const auto& p : planets_orig)
+		planets.push_back({ p.getPosition(), p.getVelocity(), p.getMass(), p.getRadius() });
+	planets.push_back({ subject.getPosition(), subject.getVelocity(), subject.getMass(), subject.getRadius() });
+
+	const size_t subject_index = planets.size() - 1;
+	const double subject_mass = subject.getMass();
+	PredictionResult result;
+	result.path.reserve(steps);
+
+	const float dt = PredictionConfig::PREDICTION_STEP_SIZE;
+
+	std::vector<Acceleration2D> acc_1(planets.size());
+	std::vector<Acceleration2D> acc_2(planets.size());
+
+	for (int i = 0; i < steps; i++)
+	{
+		std::fill(acc_1.begin(), acc_1.end(), Acceleration2D{ 0,0 });
+
+		// 1. Calculate first acceleration
+		for (size_t j = 0; j < planets.size(); j++)
+		{
+			if (planets[j].mass <= 0) continue;
+			for (size_t k = 0; k < planets.size(); k++)
+			{
+				if (j == k || planets[k].mass <= 0) continue;
+
+				// OPTIMIZATIONS: Ignore small attractors or attractors much smaller than subject
+				if (planets[k].mass < mass_threshold) continue;
+				if (planets[k].mass < subject_mass * ratio_threshold) continue;
+
+				auto dist = PhysicsUtils::calculateDistance(planets[j], planets[k]);
+				PhysicsUtils::accumulate_acceleration_body(dist, acc_1[j], planets[k].mass);
+			}
+		}
+
+		// 2. First integration step (Position)
+		for (size_t j = 0; j < planets.size(); j++)
+		{
+			planets[j].position.x += planets[j].velocity.x * dt + 0.5f * acc_1[j].x * dt * dt;
+			planets[j].position.y += planets[j].velocity.y * dt + 0.5f * acc_1[j].y * dt * dt;
+		}
+
+		// CHECK COLLISIONS / ROCHE HERE (using new positions)
+		PhysicsBody& pSub = planets.back();
+		bool absorbed = false;
+		bool disintegration = false;
+
+		for (size_t k = 0; k < planets.size() - 1; ++k) // Check against all others
+		{
+			if (planets[k].mass <= 0) continue; // Skip already absorbed planets
+
+			auto distRes = PhysicsUtils::calculateDistance(pSub, planets[k]); 
+
+			// Roche
+			if (pSub.mass >= MINIMUMBREAKUPSIZE &&
+				distRes.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distRes.rad_dist &&
+				pSub.mass / planets[k].mass < ROCHE_LIMIT_SIZE_DIFFERENCE)
+			{
+				disintegration = true;
+				break;
+			}
+
+			// Collision
+			if (distRes.dist < distRes.rad_dist)
+			{
+				if (pSub.mass < planets[k].mass)
+				{
+					// Subject is absorbed
+					absorbed = true;
+					result.collisionMarkers.push_back({ pSub.position, (float)pSub.radius * 2.0f });
+					break;
+				}
+				else
+				{
+					// Other planet is absorbed by subject
+					result.collisionMarkers.push_back({ pSub.position, (float)planets[k].radius * 1.5f });
+
+					// Conservation of momentum
+					pSub.velocity.x = (pSub.mass * pSub.velocity.x + planets[k].mass * planets[k].velocity.x) / (pSub.mass + planets[k].mass);
+					pSub.velocity.y = (pSub.mass * pSub.velocity.y + planets[k].mass * planets[k].velocity.y) / (pSub.mass + planets[k].mass);
+					
+					// Mass and radius update
+					pSub.mass += planets[k].mass;
+					pSub.radius = std::cbrt(pSub.mass) / 0.5; // Using 0.5 as typical density for Rocky/Terrestrial (approx)
+					
+					planets[k].mass = 0; // Mark as absorbed for the rest of prediction
+				}
+			}
+		}
+
+		result.path.emplace_back(pSub.position, sf::Color::Red);
+
+		if (absorbed) {
+			result.reason = PredictionEndReason::Collision;
+			result.endPoint = pSub.position;
+			break;
+		}
+		if (disintegration) {
+			result.reason = PredictionEndReason::Disintegration;
+			result.endPoint = pSub.position;
+			result.endVelocity = pSub.velocity;
+			break;
+		}
+
+		std::fill(acc_2.begin(), acc_2.end(), Acceleration2D{ 0,0 });
+
+		// 3. Calculate second acceleration (at new position)
+		for (size_t j = 0; j < planets.size(); j++)
+		{
+			if (planets[j].mass <= 0) continue;
+			for (size_t k = 0; k < planets.size(); k++)
+			{
+				if (j == k || planets[k].mass <= 0) continue;
+
+				// OPTIMIZATIONS
+				if (planets[k].mass < mass_threshold) continue;
+				if (planets[k].mass < subject_mass * ratio_threshold) continue;
+
+				auto dist = PhysicsUtils::calculateDistance(planets[j], planets[k]);
+				PhysicsUtils::accumulate_acceleration_body(dist, acc_2[j], planets[k].mass);
+			}
+		}
+
+		// 4. Second integration step (Velocity)
+		for (size_t j = 0; j < planets.size(); j++)
+		{
+			planets[j].velocity.x += 0.5f * (acc_1[j].x + acc_2[j].x) * dt;
+			planets[j].velocity.y += 0.5f * (acc_1[j].y + acc_2[j].y) * dt;
+		}
+	}
+	
+	if (result.reason == PredictionEndReason::MaxSteps && !result.path.empty())
+	{
+		int fadeLen = std::min((int)result.path.size(), steps); 
+		for (int k = 0; k < fadeLen; ++k) {
+			int idx = result.path.size() - 1 - k;
+			sf::Color c = result.path[idx].color;
+			c.a = static_cast<sf::Uint8>(255.0f * ((float)k / fadeLen));
+			result.path[idx].color = c;
+		}
+	}
+	
+	return result;
+}
+
+void updateGuiSize(tgui::TextArea::Ptr textbox, int lines)
+{
+    float lineHeight = textbox->getTextSize() * 1.2f;
+    textbox->setSize(textbox->getSize().x, std::max(32.0f, lines * lineHeight + 12.0f));
 }
 
 class IUserFunction
@@ -50,12 +221,16 @@ public:
 	virtual void on_selection(FunctionContext& context)
 	{
 		context.mass_slider->setVisible(false);
-		context.new_object_info->setVisible(false);
+		context.object_type_selector->setVisible(false);
+		context.new_object_info->setVisible(true); // Always show for instructions
 	};
 	virtual void execute(FunctionContext& context) {}
 	virtual void handle_event(FunctionContext& context, sf::Event event) {}
 	virtual void on_deselection(FunctionContext& context)
 	{
+        context.new_object_info->setVisible(false);
+        context.mass_slider->setVisible(false);
+        context.object_type_selector->setVisible(false);
 		reset();
 	};
 };
@@ -67,13 +242,20 @@ class NewObjectFunction : public IUserFunction
 public:
 	void on_selection(FunctionContext& context) override
 	{
+		IUserFunction::on_selection(context);
 		context.mass_slider->setVisible(true);
+		context.object_type_selector->setVisible(true);
 		context.new_object_info->setVisible(true);
+        context.new_object_info->setText("Select type/mass, then click and drag to launch.");
+        updateGuiSize(context.new_object_info, 1);
 	}
 
 	void execute(FunctionContext& context) override
 	{
 		fillTextBox(context.new_object_info, context.mass_slider->getValue());
+        updateGuiSize(context.new_object_info, 1);
+
+
 
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 		{
@@ -85,20 +267,57 @@ public:
 			if (mouseToggle)
 			{
 				Planet R(context.mass_slider->getValue());
-				sf::CircleShape tempCircle(R.getRad());
-				tempCircle.setOrigin(R.getRad(), R.getRad());
+				sf::CircleShape tempCircle(R.getRadius());
+				tempCircle.setOrigin(R.getRadius(), R.getRadius());
 				tempCircle.setPosition(start_pos);
 				tempCircle.setFillColor(sf::Color(255, 0, 0, 100));
 				context.window.draw(tempCircle);
 				
 				const auto to_now = context.mouse_pos_world - start_pos;
-				sf::Vertex line[] =
+				
+				// TRAJECTORY PREDICTION
+				const auto speed_multiplier{ 0.002 };
+				R.setPosition(start_pos);
+				R.setVelocity({
+					static_cast<float>(-speed_multiplier * to_now.x),
+					static_cast<float>(-speed_multiplier * to_now.y)
+				});
+				
+				auto result = predict_trajectory(context.space.planets, R);
+				if (!result.path.empty())
 				{
-					sf::Vertex(start_pos,sf::Color::Red),
-					sf::Vertex(start_pos - to_now, sf::Color::Red)
-				};
+					context.window.draw(&result.path[0], result.path.size(), sf::PrimitiveType::LineStrip);
+					
+					// Render collision markers
+					for (const auto& marker : result.collisionMarkers)
+					{
+						float size = marker.size * context.zoom;
+						sf::Vertex xLines[] = {
+							sf::Vertex(marker.position + sf::Vector2f(-size, -size), sf::Color::Red),
+							sf::Vertex(marker.position + sf::Vector2f(size, size), sf::Color::Red),
+							sf::Vertex(marker.position + sf::Vector2f(-size, size), sf::Color::Red),
+							sf::Vertex(marker.position + sf::Vector2f(size, -size), sf::Color::Red)
+						};
+						context.window.draw(xLines, 4, sf::PrimitiveType::Lines);
+					}
 
-				context.window.draw(line, 2, sf::Lines);
+					if (result.reason == PredictionEndReason::Disintegration)
+					{
+						 float size = 15.0f * context.zoom;
+						 
+						 float vLen = std::hypot(result.endVelocity.x, result.endVelocity.y);
+						 sf::Vector2f dir = (vLen > 0) ? result.endVelocity / vLen : sf::Vector2f(1, 0);
+						 sf::Vector2f perp(-dir.y, dir.x);
+						 
+						 sf::Vertex coneLines[] = {
+							sf::Vertex(result.endPoint, sf::Color::Red),
+							sf::Vertex(result.endPoint + dir * size + perp * (size * 0.5f), sf::Color::Red),
+							sf::Vertex(result.endPoint, sf::Color::Red),
+							sf::Vertex(result.endPoint + dir * size - perp * (size * 0.5f), sf::Color::Red)
+						 };
+						 context.window.draw(coneLines, 4, sf::PrimitiveType::Lines);
+					}
+				}
 			}
 		}
 		else if (mouseToggle)
@@ -130,13 +349,18 @@ class NewObjectInOrbitFunction : public IUserFunction
 public:
 	void on_selection(FunctionContext& context) override
 	{
+		IUserFunction::on_selection(context);
 		context.mass_slider->setVisible(true);
+		context.object_type_selector->setVisible(true);
 		context.new_object_info->setVisible(true);
+        context.new_object_info->setText("Select type/mass, click parent, then click orbit.");
+        updateGuiSize(context.new_object_info, 1);
 	}
 
 	void execute(FunctionContext& context) override
 	{
 		fillTextBox(context.new_object_info, context.mass_slider->getValue());
+        updateGuiSize(context.new_object_info, 1);
 
 		switch (state)
 		{
@@ -149,7 +373,7 @@ public:
 				{
 					const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 														planet.gety() - context.mouse_pos_world.y);
-					if (dist < planet.getRad())
+					if (dist < planet.getRadius())
 					{
 						target_planet_id = planet.getId();
 						state = InOrbitFunctionState::PARENT_FOUND;
@@ -204,7 +428,7 @@ public:
 				center_point.setFillColor(sf::Color(255, 0, 0));
 				
 				double dist = std::hypot(context.mouse_pos_world.x - target->getx(), context.mouse_pos_world.y - target->gety());
-				dist = dist * (temp_planet.getmass()) / (temp_planet.getmass() + target->getmass());
+				dist = dist * (temp_planet.getMass()) / (temp_planet.getMass() + target->getMass());
 				double angleb = atan2(context.mouse_pos_world.y - target->gety(), context.mouse_pos_world.x - target->getx());
 
 				center_point.setPosition(target->getx() + dist * cos(angleb), target->gety() + dist * sin(angleb));
@@ -212,9 +436,9 @@ public:
 
 				//DRAWING ROCHE LIMIT
 				if (context.mass_slider->getValue() > MINIMUMBREAKUPSIZE 
-					&& context.mass_slider->getValue() / target->getmass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+					&& context.mass_slider->getValue() / target->getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
 				{
-					double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (temp_planet.getRad() + target->getRad());
+					double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (temp_planet.getRadius() + target->getRadius());
 
 					sf::CircleShape viz(rocheRad);
 					viz.setPosition(sf::Vector2f(target->getx(), target->gety()));
@@ -227,8 +451,8 @@ public:
 				}
 
 				//DRAWING PLANET
-				sf::CircleShape bump(temp_planet.getRad());
-				bump.setOrigin(temp_planet.getRad(), temp_planet.getRad());
+				sf::CircleShape bump(temp_planet.getRadius());
+				bump.setOrigin(temp_planet.getRadius(), temp_planet.getRadius());
 				bump.setFillColor(sf::Color::Red);
 				bump.setPosition(context.mouse_pos_world);
 				context.window.draw(bump);
@@ -236,14 +460,14 @@ public:
 				if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
 				{
 
-					const auto speed = sqrt(G * (target->getmass() + context.mass_slider->getValue()) / rad);
+					const auto speed = sqrt(G * (target->getMass() + context.mass_slider->getValue()) / rad);
 					const auto angle = atan2(context.mouse_pos_world.y - target->gety(), context.mouse_pos_world.x - target->getx());
 
 					//To keep total momentum change = 0
-					const auto normalizing_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + target->getmass());
+					const float normalizing_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + target->getMass());
 
-					target->setxv(target->getxv() - normalizing_speed * cos(angle + PI / 2.0));
-					target->setyv(target->getyv() - normalizing_speed * sin(angle + PI / 2.0));
+					target->setVelocity({ target->getxv() - normalizing_speed * cosf(angle + PI / 2.0),
+											target->getyv() - normalizing_speed * sinf(angle + PI / 2.0) });
 
 					Planet new_planet(context.mass_slider->getValue(),
 						target->getx() + rad * cos(angle),
@@ -265,6 +489,13 @@ public:
 class RemoveObjectFunction : public IUserFunction
 {
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click on an object to remove it.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) || context.is_mouse_on_widgets)
@@ -274,7 +505,7 @@ public:
 		{
 			const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 				planet.gety() - context.mouse_pos_world.y);
-			if (dist < planet.getRad())
+			if (dist < planet.getRadius())
 			{
 				planet.markForRemoval();
 				return;
@@ -286,6 +517,13 @@ public:
 class SpawnShipFunction : public IUserFunction
 {
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click anywhere to spawn the spaceship.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
@@ -313,6 +551,13 @@ class AddRingsFunction : public IUserFunction
 	}
 
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click an object to start adding rings.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		switch (state)
@@ -326,7 +571,7 @@ public:
 			{
 				const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 					planet.gety() - context.mouse_pos_world.y);
-				if (dist < planet.getRad())
+				if (dist < planet.getRadius())
 				{
 					target_planet_id = planet.getId();
 					state = AddRingsFunctionState::PARENT_FOUND;
@@ -348,7 +593,7 @@ public:
 				const auto rad = std::hypot(context.mouse_pos_world.x - parent->getx(),
 													context.mouse_pos_world.y - parent->gety());
 
-				if (rad < parent->getRad())
+				if (rad < parent->getRadius())
 				{
 					if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
 						reset();
@@ -435,6 +680,13 @@ public:
 		font.loadFromFile("sansation.ttf");
 	}
 
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click and drag to spawn a random solar system.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		switch (state)
@@ -473,7 +725,7 @@ public:
 				+ "\nMass: ca " + std::to_string(MASS_MULTIPLIER * cbrt(rad))
 				+ "\nRadius: " + std::to_string(rad));
 			t.setPosition(context.mouse_pos_world.x + 10, context.mouse_pos_world.y);
-			t.setColor(sf::Color::Red);
+			t.setFillColor(sf::Color::Red);
 			t.setFont(font);
 			t.setCharacterSize(10);
 
@@ -494,6 +746,12 @@ public:
 class TrackObjectFunction : public IUserFunction
 {
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click on an object to follow it.");
+        updateGuiSize(context.new_object_info, 1);
+    }
 
 	void handle_event(FunctionContext& context, sf::Event event) override
 	{
@@ -502,11 +760,24 @@ public:
 
 		if (event.mouseButton.button == sf::Mouse::Left && !context.is_mouse_on_widgets)
 		{
+            // Check spaceship
+            if (context.space.ship.isExist())
+            {
+                 sf::Vector2f ship_pos = context.space.ship.getpos();
+                 float dist = std::hypot(ship_pos.x - context.mouse_pos_world.x, ship_pos.y - context.mouse_pos_world.y);
+                 // Simple hit box for ship (approx 10 units radius)
+                 if (dist < 10.0f)
+                 {
+                     context.space.object_tracker.activate_for_spaceship();
+                     return;
+                 }
+            }
+
 			for (const auto& planet : context.space.planets)
 			{
 				const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 					planet.gety() - context.mouse_pos_world.y);
-				if (dist >= planet.getRad())
+				if (dist >= planet.getRadius())
 					continue;
 				context.space.object_tracker.activate(planet.getId());
 				return;
@@ -519,20 +790,75 @@ public:
 class ShowObjectInfoFunction : public IUserFunction
 {
 public:
+	void on_selection(FunctionContext& context) override
+	{
+        IUserFunction::on_selection(context);
+		context.new_object_info->setText("Click on an object to see information.");
+        updateGuiSize(context.new_object_info, 1);
+	}
+
+    void on_deselection(FunctionContext& context) override
+    {
+        IUserFunction::on_deselection(context);
+        context.space.object_info.set_visible(false);
+        context.space.object_info.deactivate();
+    }
+
 	void execute(FunctionContext& context) override
 	{
+		context.space.object_info.set_visible(context.space.editObjectCheckBox->isChecked());
+
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 		{
 			for (const auto& planet : context.space.planets)
 			{
 				const auto dist = std::hypot(planet.getx() - context.mouse_pos_world.x,
 					planet.gety() - context.mouse_pos_world.y);
-				if (dist >= planet.getRad())
+				if (dist >= planet.getRadius())
 					continue;
+				
 				context.space.object_info.activate(planet.getId());
 				return;
 			}
-			context.space.object_info.deactivate();
+		}
+
+		if (context.space.object_info.is_active())
+		{
+			Planet* target = context.space.findPlanetPtr(context.space.object_info.get_target_id());
+			if (target)
+			{
+				const auto selected_temp_unit = static_cast<TemperatureUnit>(context.space.temperatureUnitSelector->getSelectedIndex());
+
+				std::string info = target->getName() +
+					"\nType: " + std::string(target->getTypeString(target->getType())) +
+					"\nRadius: " + std::to_string(static_cast<int>(target->getRadius())) +
+					"\nMass: " + std::to_string(static_cast<int>(target->getMass())) +
+					"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) +
+					"\nTemperature: " + Space::temperature_info_string(target->getTemp(), selected_temp_unit);
+
+				Planet* target_parent = context.space.findPlanetPtr(target->getStrongestAttractorId());
+				if (target_parent)
+					info += "\nDistance: " + std::to_string(static_cast<int>(std::hypot(target->getx() - target_parent->getx(),
+						target->gety() - target_parent->gety())));
+
+				if (target->getType() == TERRESTIAL)
+				{
+					info += "\n\nAtmo: " + std::to_string((int)target->getCurrentAtmosphere()) + " / " + std::to_string((int)target->getAtmospherePotensial()) + "kPa";
+					if (target->getLife().getTypeEnum() == 0)
+						info += "\n\n" + target->getFlavorTextLife();
+				}
+
+				if (target->getLife().getTypeEnum() != 0)
+				{
+					info += "\n\nBiomass: " + std::to_string((int)target->getLife().getBmass()) + "MT";
+					info += "\n" + target->getLife().getType() + "\n" + target->getFlavorTextLife();
+				}
+
+				context.new_object_info->setText(info);
+				
+				// Count lines for scaling
+				updateGuiSize(context.new_object_info, context.new_object_info->getLinesCount());
+			}
 		}
 	}
 };
@@ -544,8 +870,11 @@ public:
 
 	void on_selection(FunctionContext& context) override
 	{
+		IUserFunction::on_selection(context);
 		context.mass_slider->setVisible(true);
 		context.new_object_info->setVisible(true);
+        context.new_object_info->setText("Select objects, then Ctrl-Click to place in orbit.");
+        updateGuiSize(context.new_object_info, 1);
 	}
 
 	void reset() override
@@ -563,7 +892,7 @@ public:
 			for (const auto& planet : context.space.planets)
 			{
 				if (std::hypot(planet.getx() - context.mouse_pos_world.x,
-					planet.gety() - context.mouse_pos_world.y) < planet.getRad())
+					planet.gety() - context.mouse_pos_world.y) < planet.getRadius())
 				{
 					auto match = std::find(object_ids.begin(), object_ids.end(), planet.getId());
 					if (match == object_ids.end())
@@ -582,7 +911,7 @@ public:
 				const auto speed = sqrt(G * (massCenterInfoVector.z + context.mass_slider->getValue()) / rad);
 				const auto angle = atan2(context.mouse_pos_world.y - massCenterInfoVector.y,
 					context.mouse_pos_world.x - massCenterInfoVector.x);
-				const auto adjust_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + massCenterInfoVector.z);
+				const float adjust_speed = context.mass_slider->getValue() * speed / (context.mass_slider->getValue() + massCenterInfoVector.z);
 
 
 				Planet new_planet(context.mass_slider->getValue(),
@@ -598,8 +927,8 @@ public:
 				{
 					if (Planet* planet = context.space.findPlanetPtr(id))
 					{
-						planet->setxv(planet->getxv() - adjust_speed * cos(angle + PI / 2.0));
-						planet->setyv(planet->getyv() - adjust_speed * sin(angle + PI / 2.0));
+						planet->setVelocity({ planet->getxv() - adjust_speed * cosf(angle + PI / 2.0), 
+							planet->getyv() - adjust_speed * sinf(angle + PI / 2.0) });
 					}
 				}
 
@@ -623,7 +952,7 @@ public:
 		{
 			Planet* planet = context.space.findPlanetPtr(id);
 			
-			sf::CircleShape indicator(planet->getRad() + 10);
+			sf::CircleShape indicator(planet->getRadius() + 10);
 			indicator.setPosition(planet->getx(), planet->gety());
 			indicator.setOrigin(indicator.getRadius(), indicator.getRadius());
 			indicator.setFillColor(sf::Color(0, 0, 0, 0));
@@ -635,6 +964,7 @@ public:
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
 		{
 			const auto massCenterInfoVector(context.space.centerOfMass(object_ids));
+			const auto massCenterVelocity = context.space.centerOfMassVelocity(object_ids);
 			const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x,
 				context.mouse_pos_world.y - massCenterInfoVector.y);
 
@@ -652,8 +982,8 @@ public:
 
 				//DRAWING PLANET
 				Planet temp(context.mass_slider->getValue());
-				sf::CircleShape bump(temp.getRad());
-				bump.setOrigin(temp.getRad(), temp.getRad());
+				sf::CircleShape bump(temp.getRadius());
+				bump.setOrigin(temp.getRadius(), temp.getRadius());
 				bump.setFillColor(sf::Color::Red);
 				bump.setPosition(context.mouse_pos_world);
 				context.window.draw(bump);
@@ -665,6 +995,13 @@ public:
 class ExplodeObjectFunction : public IUserFunction
 {
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click on an object to explode it.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void handle_event(FunctionContext& context, sf::Event event) override
 	{
 		if (event.type != sf::Event::EventType::MouseButtonReleased)
@@ -675,7 +1012,7 @@ public:
 			for (const auto planet : context.space.planets)
 			{
 				if (std::hypot(planet.getx() - context.mouse_pos_world.x,
-					planet.gety() - context.mouse_pos_world.y) < planet.getRad())
+					planet.gety() - context.mouse_pos_world.y) < planet.getRadius())
 				{
 					context.space.explodePlanet(planet);
 					return;
@@ -689,6 +1026,13 @@ class BoundControlFunction : public IUserFunction
 {
 	bool has_center{ false };
 public:
+    void on_selection(FunctionContext& context) override
+    {
+        IUserFunction::on_selection(context);
+        context.new_object_info->setText("Click and drag to set the simulation boundary.");
+        updateGuiSize(context.new_object_info, 1);
+    }
+
 	void execute(FunctionContext& context) override
 	{
 		if (context.space.auto_bound_active())
@@ -699,7 +1043,7 @@ public:
 
 		if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
-			if (has_center && context.bound.getRad() > BOUND_MIN_RAD)
+			if (has_center && context.bound.getRadius() > BOUND_MIN_RAD)
 			{
 				context.bound.setActiveState(true);
 				reset();
@@ -719,7 +1063,7 @@ public:
 								context.mouse_pos_world.y - context.bound.getPos().y);
 		context.bound.setRad(rad);
 
-		if (context.bound.getRad() > BOUND_MIN_RAD)
+		if (context.bound.getRadius() > BOUND_MIN_RAD)
 			context.bound.render(context.window, context.zoom);
 
 	}

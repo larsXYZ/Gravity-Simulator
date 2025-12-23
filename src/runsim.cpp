@@ -4,13 +4,38 @@
 
 bool is_mouse_on_widgets(const sf::RenderWindow & window, const tgui::Gui & gui)
 {
+    static bool started_on_gui = false;
+    static bool mouse_was_pressed = false;
+
+    bool mouse_currently_over_gui = false;
 	for (const auto& gui_element : gui.getWidgets())
 	{
+		if (!gui_element->isVisible())
+			continue;
+
 		const sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 		if (gui_element->isMouseOnWidget(sf::Vector2f(mousePos.x, mousePos.y)))
-			return true;
+        {
+            mouse_currently_over_gui = true;
+            break;
+        }
 	}
-	return false;
+
+    bool mouse_pressed = sf::Mouse::isButtonPressed(sf::Mouse::Left) || sf::Mouse::isButtonPressed(sf::Mouse::Right);
+    
+    if (mouse_pressed && !mouse_was_pressed)
+    {
+        started_on_gui = mouse_currently_over_gui;
+    }
+    
+    if (!mouse_pressed)
+    {
+        started_on_gui = false;
+    }
+
+    mouse_was_pressed = mouse_pressed;
+
+	return mouse_currently_over_gui || started_on_gui;
 }
 
 void Space::runSim(sf::Vector2i window_size, bool fullscreen)
@@ -31,12 +56,20 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	tgui::Gui gui{ window };
 	gui.setFont("sansation.ttf");
 	initSetup();
+	object_info.setup(*this, gui);
 	gui.add(simInfo);
+	gui.add(toolInfo);
 	gui.add(functions);
+	gui.add(editObjectCheckBox);
 	gui.add(newPlanetInfo);
+	gui.add(objectTypeSelector);
 	gui.add(massSlider);
+	gui.add(timeStepLabel);
 	gui.add(timeStepSlider);
 	gui.add(temperatureUnitSelector);
+
+	gui.add(optionsMenu);
+	gui.add(optionsButton);
 
 	gui.add(autoBound);
 	autoBound->onUncheck([&]() {bound.setActiveState(false); });
@@ -47,6 +80,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		window.clear(sf::Color::Black);
 
 		timestep = paused ? 0.0 : timeStepSlider->getValue();
+        is_mouse_on_gui = is_mouse_on_widgets(window, gui);
 		
 		FunctionContext context
 		{
@@ -57,8 +91,9 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			.window = window,
 			.mouse_pos_window = sf::Mouse::getPosition(window),
 			.mouse_pos_world = window.mapPixelToCoords(sf::Mouse::getPosition(window), mainView),
-			.is_mouse_on_widgets = is_mouse_on_widgets(window, gui),
+			.is_mouse_on_widgets = is_mouse_on_gui,
 			.mass_slider = massSlider,
+			.object_type_selector = objectTypeSelector,
 			.new_object_info = newPlanetInfo,
 			.bound = bound,
 			.zoom = click_and_drag_handler.get_zoom()
@@ -69,9 +104,10 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			if (event.type == sf::Event::Closed)
 				window.close();
 
-			hotkeys(event, mainView, window);
+			if (!object_info.is_focused(window))
+				hotkeys(event, mainView, window);
 
-			if (!object_tracker.is_active())
+			if (event.type == sf::Event::MouseWheelScrolled || !object_tracker.is_active())
 				click_and_drag_handler.update(mainView, window, event);
 
 			gui.handleEvent(event);
@@ -82,6 +118,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		window.setView(mainView);
 		
 		executeFunction(context);
+		flushPlanets();
 
 		if (object_tracker.is_active())
 			object_tracker.update(*this, mainView);
@@ -89,8 +126,9 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		updateInfoBox();
 
 		drawPlanets(window);
-		drawEffects(window);
 		ship.draw(window);
+		drawDust(window);
+		drawEffects(window);
 		
 		if (bound.isActive())
 			bound.render(window, click_and_drag_handler.get_zoom());

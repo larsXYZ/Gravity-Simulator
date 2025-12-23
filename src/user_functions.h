@@ -69,9 +69,27 @@ struct FunctionContext
 	const sf::Vector2f & mouse_pos_world;
 	const bool is_mouse_on_widgets;
 	tgui::Slider::Ptr mass_slider;
+	tgui::ComboBox::Ptr object_type_selector;
 	tgui::TextArea::Ptr new_object_info;
 	Bound& bound;
 	float zoom;
 };
+
+enum class PredictionEndReason { MaxSteps, Collision, Disintegration };
+
+struct PredictionResult {
+	std::vector<sf::Vertex> path;
+	PredictionEndReason reason{ PredictionEndReason::MaxSteps };
+	sf::Vector2f endPoint;
+	sf::Vector2f endVelocity;
+	struct CollisionMarker {
+		sf::Vector2f position;
+		float size;
+	};
+	std::vector<CollisionMarker> collisionMarkers;
+};
+
+PredictionResult predict_trajectory(const std::vector<class Planet>& planets_orig, const class Planet& subject, int steps = 200);
+
 void executeFunction(FunctionContext& context);
 void giveFunctionEvent(FunctionContext& context, sf::Event event);

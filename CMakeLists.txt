@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.3)
 
 project(Gravity-Simulator)
 set(Gravity_Simulator_VERSION_MAJOR 1)
-set(Gravity_Simulator_VERSION_MINOR 1)
+set(Gravity_Simulator_VERSION_MINOR 2)
 set(Gravity_Simulator_VERSION_PATCH 0)
 set(Gravity_Simulator_HOMEPAGE_URL "https://www.youtube.com/@LarsGames_")
 set(Gravity_Simulator_DESCRIPTION "A simple 2D gravity simulator")
@@ -21,8 +21,19 @@ set(TGUI_BACKEND "SFML_GRAPHICS")
 file(GLOB_RECURSE SOURCE "src/*")
 
 if(MSVC)
-    add_compile_options(/ZI)
-    add_link_options(/INCREMENTAL)
+    add_compile_options($<$<CONFIG:Debug>:/ZI>)
+    add_link_options($<$<CONFIG:Debug>:/INCREMENTAL>)
+
+    # Optimization flags for Release builds
+    add_compile_options($<$<CONFIG:Release>:/O2>)      # Maximize Speed
+    add_compile_options($<$<CONFIG:Release>:/Oi>)      # Enable Intrinsic Functions
+    add_compile_options($<$<CONFIG:Release>:/Ot>)      # Favor Fast Code
+    add_compile_options($<$<CONFIG:Release>:/GL>)      # Whole Program Optimization
+    add_compile_options($<$<CONFIG:Release>:/Gy>)      # Enable Function-Level Linking
+    
+    add_link_options($<$<CONFIG:Release>:/LTCG>)      # Link Time Code Generation
+    add_link_options($<$<CONFIG:Release>:/OPT:REF>)   # Eliminate Unreferenced Data
+    add_link_options($<$<CONFIG:Release>:/OPT:ICF>)   # Enable COMDAT Folding
 endif()
 
 # Detect the target architecture
@@ -41,11 +52,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${SFML_INCLUDE_DIR} ${TGUI_INCLU
 
 # Add executable with conditional subsystem
 add_executable(Gravity-Simulator ${SOURCE} ${CMAKE_SOURCE_DIR}/resources/resources.rc)
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
-else()
-    set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-endif()
+
+set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_DEBUG "/DEBUG /SUBSYSTEM:CONSOLE")
+set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
+set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/DEBUG /SUBSYSTEM:WINDOWS")
+set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:WINDOWS")
 
 target_link_libraries(Gravity-Simulator sfml-graphics 
 					sfml-window
