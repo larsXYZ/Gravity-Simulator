@@ -165,7 +165,7 @@ public:
 
 		// Fading short range light
 		sf::Color sr_col = col;
-		sr_col.a = static_cast<sf::Uint8>(250 * std::max(0.f,(1.f - 5.f*life_ratio)));
+		sr_col.a = static_cast<sf::Uint8>(250 * std::max(0.f,(1.f - 7.f*life_ratio)));
 		render_shine(w, getpos(), sr_col, short_range_luminosity);
 	}
 };
