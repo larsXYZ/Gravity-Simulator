@@ -820,9 +820,6 @@ public:
 				context.space.object_info.activate(planet.getId());
 				return;
 			}
-			context.space.object_info.deactivate();
-			context.new_object_info->setText("Click on an object to see information.");
-            updateGuiSize(context.new_object_info, 1);
 		}
 
 		if (context.space.object_info.is_active())
