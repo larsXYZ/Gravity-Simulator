@@ -3,6 +3,7 @@
 #include "particles/particle_container.h"
 #include "user_functions.h"
 #include "physics_utils.h"
+#include "roche_limit.h"
 
 Space::Space()
 	: particles(std::make_unique<DecimatedLegacyParticleContainer>())
@@ -147,14 +148,10 @@ void Space::update()
 			const auto acceleration_magnitude = PhysicsUtils::accumulate_acceleration(distance, acc_sum_1, otherPlanet);
 
 			if (thisPlanet->canDisintegrate(curr_time) &&
-				distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
-				thisPlanet->getMass() / otherPlanet.getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+				RocheLimit::isBreached(distance.dist, distance.rad_dist, thisPlanet->getMass(), otherPlanet.getMass(), otherPlanet.getType() == pType::BLACKHOLE))
 			{
-				const auto rad = thisPlanet->getRadius();
-
 				disintegratePlanet(*thisPlanet);
 				thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
-
 				break;
 			}
 
@@ -547,7 +544,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 	if (match == planets.end())
 		return {};
 
-	if (match->getMass() < MINIMUMBREAKUPSIZE)
+	if (!RocheLimit::hasMinimumBreakupSize(match->getMass()))
 		return {};
 
 	const auto& particles_by_rad = [planet]()
@@ -574,7 +571,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 		addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
 	}
 
-	const auto n_planets{ std::floor(planet.getMass() / MINIMUMBREAKUPSIZE) };
+	const auto n_planets{ std::floor(planet.getMass() / RocheLimit::MINIMUM_BREAKUP_SIZE) };
 	const auto mass_per_planet = planet.getMass() / n_planets;
 
 	std::vector<int> generated_ids;

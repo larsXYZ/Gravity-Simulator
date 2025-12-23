@@ -1,5 +1,6 @@
 #include "Planet.h"
 #include "../HeatSim.h"
+#include "../roche_limit.h"
 
 #include <sstream>
 
@@ -170,7 +171,7 @@ bool Planet::canDisintegrate(double curr_time) const noexcept
 	if (getType() == BLACKHOLE)
 		return false;
 
-	if (getMass() < MINIMUMBREAKUPSIZE)
+	if (!RocheLimit::hasMinimumBreakupSize(getMass()))
 		return false;
 
 	if (!ignore_ids.empty())
