@@ -3,51 +3,6 @@
 
 #include <sstream>
 
-Planet::Planet()
-	: SimObject({0.f, 0.f}, {0.f, 0.f})
-{
-	setMass(6);
-
-	randBrightness = modernRandomWithLimits(-30, +30);
-	updateRadiAndType();
-	circle.setPosition(position);
-
-	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
-	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
-	for (int i = 0; i < numAtmoLines; i++) atmoLinesBrightness.push_back(
-		modernRandomWithLimits(-brightnessVariance, brightnessVariance));
-}
-
-Planet::Planet(double m)
-	: SimObject({0.f, 0.f}, {0.f, 0.f})
-{
-	setMass(m);
-
-	randBrightness = modernRandomWithLimits(-30, +30);
-	updateRadiAndType();
-	circle.setPosition(position);
-
-	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
-	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
-	for (int i = 0; i < numAtmoLines; i++) atmoLinesBrightness.push_back(
-		modernRandomWithLimits(-brightnessVariance, brightnessVariance));
-}
-
-Planet::Planet(double m, double xx, double yy)
-	: SimObject({static_cast<float>(xx), static_cast<float>(yy)}, {0.f, 0.f})
-{
-	setMass(m);
-
-	randBrightness = modernRandomWithLimits(-30, +30);
-	updateRadiAndType();
-	circle.setPosition(position);
-
-	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
-	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
-	for (int i = 0; i < numAtmoLines; i++) atmoLinesBrightness.push_back(
-		modernRandomWithLimits(-brightnessVariance, brightnessVariance));
-}
-
 Planet::Planet(double m, double xx, double yy, double xvv, double yvv)
 	: SimObject({static_cast<float>(xx), static_cast<float>(yy)}, {static_cast<float>(xvv), static_cast<float>(yvv)})
 {
@@ -83,21 +38,6 @@ std::string Planet::getTypeString(pType type) noexcept
 	case BLACKHOLE: return "Black hole";
 	default: return "Unknown";
 	}
-}
-
-int Planet::getStrongestAttractorId() const noexcept
-{
-	return ID_strongest_attractor;
-}
-
-int Planet::getStrongestAttractorIdRef() const noexcept
-{
-	return ID_strongest_attractor;
-}
-
-void Planet::setStrongestAttractorIdRef(int id) noexcept
-{
-	ID_strongest_attractor = id;
 }
 
 const std::string& Planet::getName() const noexcept
@@ -400,9 +340,9 @@ void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
 
 		//FINDING COLOR
 		auto temp_effect = temperature_effect(getTemp());
-		double r = atmoCol_r + atmoLinesBrightness[i] + temp_effect.r;
-		double g = atmoCol_g + atmoLinesBrightness[i] + temp_effect.g;
-		double b = atmoCol_b + atmoLinesBrightness[i] + temp_effect.b;
+		double r = atmoColor.r + atmoLinesBrightness[i] + temp_effect.r;
+		double g = atmoColor.g + atmoLinesBrightness[i] + temp_effect.g;
+		double b = atmoColor.b + atmoLinesBrightness[i] + temp_effect.b;
 
 		r = std::clamp(r, 0., 255.);
 		g = std::clamp(g, 0., 255.);
@@ -498,7 +438,7 @@ void Planet::updateAtmosphere(int t) noexcept
 		if (atmoCur < 0) atmoCur = 0;
 	}
 
-	circle.setOutlineColor(sf::Color(atmoCol_r, atmoCol_g, atmoCol_b, atmoCur * atmoAlphaMult));
+	circle.setOutlineColor(sf::Color(atmoColor.r, atmoColor.g, atmoColor.b, atmoCur * atmoAlphaMult));
 	circle.setOutlineThickness(sqrt(atmoCur) * atmoThicknessMult);
 }
 
@@ -537,13 +477,7 @@ int Planet::modernRandomWithLimits(int min, int max) const
 
 std::string convertDoubleToString(double number)
 {
-	std::string Result;
-
-	std::stringstream convert;
-
-	convert << number;
-
-	return Result;
+	return std::to_string(static_cast<int>(number));
 }
 
 [[nodiscard]] std::string Planet::generate_name()

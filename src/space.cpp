@@ -2,6 +2,7 @@
 
 #include "particles/particle_container.h"
 #include "user_functions.h"
+#include "physics_utils.h"
 
 Space::Space()
 	: particles(std::make_unique<DecimatedLegacyParticleContainer>())
@@ -102,43 +103,6 @@ sf::Vector2f Space::centerOfMassAll()
 	return sf::Vector2f(xCont / tMass, yCont / tMass);
 }
 
-struct DistanceCalculationResult
-{
-	double dx{ 0.0 };
-	double dy{ 0.0 };
-	double dist{ 0.0 };
-	double rad_dist{ 0.0 };
-};
-
-DistanceCalculationResult calculateDistance(const Planet & planet, const Planet & other_planet)
-{
-	DistanceCalculationResult result;
-	result.dx = other_planet.getPosition().x - planet.getPosition().x;
-	result.dy = other_planet.getPosition().y - planet.getPosition().y;
-	result.dist = std::hypot(result.dx, result.dy);
-	result.rad_dist = planet.getRadius() + other_planet.getRadius();
-	return result;
-}
-
-struct Acceleration2D
-{
-	float x{ 0.0 };
-	float y{ 0.0 };
-};
-
-double accumulate_acceleration(const DistanceCalculationResult & distance_info, 
-						Acceleration2D & acceleration,
-						const Planet & other_planet)
-{
-	const auto A = G * other_planet.getMass() / std::max(distance_info.dist * distance_info.dist, 0.01);
-	const auto angle = atan2(distance_info.dy, distance_info.dx);
-
-	acceleration.x += cos(angle) * A;
-	acceleration.y += sin(angle) * A;
-
-	return A;
-}
-
 bool isIgnoringOtherPlanet(const Planet & thisPlanet, const Planet & otherPlanet)
 {
 	return (otherPlanet.isMarkedForRemoval() ||
@@ -179,8 +143,8 @@ void Space::update()
 			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
 				continue;
 
-			DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
-			const auto acceleration_magnitude = accumulate_acceleration(distance, acc_sum_1, otherPlanet);
+			DistanceCalculationResult distance = PhysicsUtils::calculateDistance(*thisPlanet, otherPlanet);
+			const auto acceleration_magnitude = PhysicsUtils::accumulate_acceleration(distance, acc_sum_1, otherPlanet);
 
 			if (thisPlanet->canDisintegrate(curr_time) &&
 				distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
@@ -268,8 +232,8 @@ void Space::update()
 			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
 				continue;
 
-			DistanceCalculationResult distance = calculateDistance(*thisPlanet, otherPlanet);
-			accumulate_acceleration(distance, acc_sum_2, otherPlanet);
+			DistanceCalculationResult distance = PhysicsUtils::calculateDistance(*thisPlanet, otherPlanet);
+			PhysicsUtils::accumulate_acceleration(distance, acc_sum_2, otherPlanet);
 		}
 
 		if (!gravity_enabled)
@@ -1069,114 +1033,8 @@ double Space::convertStringToDouble(std::string string)
 	return result;
 }
 
-void Space::drawPlanets(sf::RenderWindow &window)
+void Space::renderMST(sf::RenderWindow& window, const std::vector<size_t>& members)
 {
-	//DRAWING PLANETS																										
-	for(size_t i = 0; i < planets.size(); i++)
-	{
-		planets[i].render(window);
-	}
-
-	if (renderLifeAlwaysCheckBox->isChecked())
-	{
-		std::map<int, std::vector<size_t>> civGroups;
-		for (size_t i = 0; i < planets.size(); i++)
-		{
-			drawLifeVisuals(window, planets[i]);
-			if (planets[i].getLife().getTypeEnum() >= 6)
-			{
-				civGroups[planets[i].getLife().getId()].push_back(i);
-			}
-		}
-
-		for (auto const& [id, members] : civGroups)
-		{
-			if (members.size() < 2) continue;
-
-			// Prim's algorithm for MST
-			std::vector<bool> inMST(members.size(), false);
-			std::vector<double> minEdge(members.size(), std::numeric_limits<double>::max());
-			std::vector<int> parent(members.size(), -1);
-
-			minEdge[0] = 0;
-			for (size_t count = 0; count < members.size(); ++count)
-			{
-				int u = -1;
-				for (size_t i = 0; i < members.size(); ++i)
-				{
-					if (!inMST[i] && (u == -1 || minEdge[i] < minEdge[u]))
-						u = i;
-				}
-
-				if (u == -1 || minEdge[u] == std::numeric_limits<double>::max()) break;
-
-				inMST[u] = true;
-				if (parent[u] != -1)
-				{
-					const auto& p1 = planets[members[u]];
-					const auto& p2 = planets[members[parent[u]]];
-					sf::Vertex q[] =
-					{
-						sf::Vertex(sf::Vector2f(p1.getx(), p1.gety()), p1.getLife().getCol()),
-						sf::Vertex(sf::Vector2f(p2.getx(), p2.gety()), p1.getLife().getCol())
-					};
-					window.draw(q, 2, sf::Lines);
-				}
-
-				for (size_t v = 0; v < members.size(); ++v)
-				{
-					if (!inMST[v])
-					{
-						double dist = planets[members[u]].getDist(planets[members[v]]);
-						if (dist < minEdge[v])
-						{
-							minEdge[v] = dist;
-							parent[v] = u;
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-void Space::drawLifeVisuals(sf::RenderWindow& window, const Planet& p)
-{
-	lType lt = p.getLife().getTypeEnum();
-	if (lt < 1) return;
-
-	sf::Vector2f pos(p.getx(), p.gety());
-	float zoom = click_and_drag_handler.get_zoom();
-
-	float indicatorRad = p.getRadius() + 5.0f;
-
-	sf::CircleShape indicator(indicatorRad);
-	indicator.setPosition(pos);
-	indicator.setOrigin(indicatorRad, indicatorRad);
-	indicator.setFillColor(sf::Color(0, 0, 0, 0));
-	indicator.setOutlineColor(p.getLife().getCol());
-
-	float thickness = 1.0f;
-	if (lt >= 4) thickness = 2.0f;
-	if (lt >= 6) thickness = 3.0f;
-
-	indicator.setOutlineThickness(thickness * zoom);
-	window.draw(indicator);
-}
-
-void Space::drawCivConnections(sf::RenderWindow& window, const Planet& p, bool drawIndicatorsOnColonies)
-{
-	if (p.getLife().getTypeEnum() < 6) return;
-
-	std::vector<size_t> members;
-	for (size_t i = 0; i < planets.size(); i++)
-	{
-		if (planets[i].getLife().getId() == p.getLife().getId())
-		{
-			members.push_back(i);
-		}
-	}
-
 	if (members.size() < 2) return;
 
 	// Prim's algorithm for MST
@@ -1222,6 +1080,73 @@ void Space::drawCivConnections(sf::RenderWindow& window, const Planet& p, bool d
 			}
 		}
 	}
+}
+
+void Space::drawPlanets(sf::RenderWindow &window)
+{
+	//DRAWING PLANETS																										
+	for(size_t i = 0; i < planets.size(); i++)
+	{
+		planets[i].render(window);
+	}
+
+	if (renderLifeAlwaysCheckBox->isChecked())
+	{
+		std::map<int, std::vector<size_t>> civGroups;
+		for (size_t i = 0; i < planets.size(); i++)
+		{
+			drawLifeVisuals(window, planets[i]);
+			if (planets[i].getLife().getTypeEnum() >= 6)
+			{
+				civGroups[planets[i].getLife().getId()].push_back(i);
+			}
+		}
+
+		for (auto const& [id, members] : civGroups)
+		{
+			renderMST(window, members);
+		}
+	}
+}
+
+void Space::drawLifeVisuals(sf::RenderWindow& window, const Planet& p)
+{
+	lType lt = p.getLife().getTypeEnum();
+	if (lt < 1) return;
+
+	sf::Vector2f pos(p.getx(), p.gety());
+	float zoom = click_and_drag_handler.get_zoom();
+
+	float indicatorRad = p.getRadius() + 5.0f;
+
+	sf::CircleShape indicator(indicatorRad);
+	indicator.setPosition(pos);
+	indicator.setOrigin(indicatorRad, indicatorRad);
+	indicator.setFillColor(sf::Color(0, 0, 0, 0));
+	indicator.setOutlineColor(p.getLife().getCol());
+
+	float thickness = 1.0f;
+	if (lt >= 4) thickness = 2.0f;
+	if (lt >= 6) thickness = 3.0f;
+
+	indicator.setOutlineThickness(thickness * zoom);
+	window.draw(indicator);
+}
+
+void Space::drawCivConnections(sf::RenderWindow& window, const Planet& p, bool drawIndicatorsOnColonies)
+{
+	if (p.getLife().getTypeEnum() < 6) return;
+
+	std::vector<size_t> members;
+	for (size_t i = 0; i < planets.size(); i++)
+	{
+		if (planets[i].getLife().getId() == p.getLife().getId())
+		{
+			members.push_back(i);
+		}
+	}
+
+	renderMST(window, members);
 
 	if (drawIndicatorsOnColonies)
 	{

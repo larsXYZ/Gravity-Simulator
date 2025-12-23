@@ -2,9 +2,9 @@
 #include "space.h"
 #include "CONSTANTS.h"
 #include "HeatSim.h"
+#include "physics_utils.h"
 #include <iostream>
 
-bool segmentIntersectsCircle(sf::Vector2f start, sf::Vector2f end, sf::Vector2f circlePos, float radius, sf::Vector2f& intersection);
 
 SpaceShip::SpaceShip(sf::Vector2f p)
 {
@@ -169,39 +169,38 @@ void SpaceShip::draw(sf::RenderWindow &w)
 	}
 }
 
-sf::Vector2f SpaceShip::getpos()
+sf::Vector2f SpaceShip::getpos() const
 {
 	return pos;
 }
 
-sf::Vector2f SpaceShip::getvel()
+sf::Vector2f SpaceShip::getvel() const
 {
 	return speed;
 }
 
-float SpaceShip::getAngle()
+float SpaceShip::getAngle() const
 {
 	return angle;
 }
 
 bool SpaceShip::pullofGravity(Planet forcer, SpaceShip &ship, int timeStep, bool gravity_enabled)
 {
-	double dist = sqrt((forcer.getx() - ship.getpos().x)*(forcer.getx() - ship.getpos().x) + (forcer.gety() - ship.getpos().y) * (forcer.gety() - ship.getpos().y));
+	DistanceCalculationResult distRes = PhysicsUtils::calculateDistance(ship, forcer);
 
     // Simple gravity + destruction check
-	if (dist < forcer.getRadius())
+	if (distRes.dist < forcer.getRadius())
 	{
 		destroy();
 		return false;
 	}
 	else if (gravity_enabled)
 	{
-		double angle = atan2(forcer.gety() - ship.getpos().y, forcer.getx() - ship.getpos().x);
-		double xf = G * forcer.getMass() / (dist*dist) * cos(angle);
-		double yf = G * forcer.getMass() / (dist*dist)* sin(angle);
+		Acceleration2D acc_sum;
+		PhysicsUtils::accumulate_acceleration(distRes, acc_sum, forcer);
 
-		speed.x += xf * timeStep / mass;
-		speed.y += yf * timeStep / mass;
+		speed.x += acc_sum.x * timeStep / mass;
+		speed.y += acc_sum.y * timeStep / mass;
 	}
 
 	return true;
@@ -350,7 +349,7 @@ void SpaceShip::updateGrapple(double dt, Space& space)
         sf::Vector2f planetPos(planet.getx(), planet.gety());
         sf::Vector2f intersection;
 
-        if (segmentIntersectsCircle(start, end, planetPos, planet.getRadius(), intersection))
+        if (PhysicsUtils::segmentIntersectsCircle(start, end, planetPos, planet.getRadius(), intersection))
         {
             // HIT!
             grapple.flying = false;
@@ -482,36 +481,6 @@ void SpaceShip::renderProjectiles(sf::RenderWindow& window)
     }
 }
 
-// Helper for segment-circle intersection
-bool segmentIntersectsCircle(sf::Vector2f start, sf::Vector2f end, sf::Vector2f circlePos, float radius, sf::Vector2f& intersection)
-{
-    sf::Vector2f d = end - start;
-    sf::Vector2f f = start - circlePos;
-    
-    float a = d.x*d.x + d.y*d.y;
-    float b = 2*(f.x*d.x + f.y*d.y);
-    float c = f.x*f.x + f.y*f.y - radius*radius;
-
-    float discriminant = b*b - 4*a*c;
-    if(discriminant < 0) return false;
-
-    discriminant = sqrt(discriminant);
-    float t1 = (-b - discriminant)/(2*a);
-    float t2 = (-b + discriminant)/(2*a);
-
-    if(t1 >= 0 && t1 <= 1)
-    {
-        intersection = start + t1*d;
-        return true;
-    }
-    if(t2 >= 0 && t2 <= 1)
-    {
-        intersection = start + t2*d;
-        return true;
-    }
-    return false;
-}
-
 void SpaceShip::checkProjectileCollisions(Space& space, double dt)
 {
     for (auto it = projectiles.begin(); it != projectiles.end(); )
@@ -539,7 +508,7 @@ void SpaceShip::checkProjectileCollisions(Space& space, double dt)
             
             if (distSq > maxReach * maxReach) continue;
 
-            if (segmentIntersectsCircle(start, end, planetPos, planet.getRadius() + p_radius, intersection))
+            if (PhysicsUtils::segmentIntersectsCircle(start, end, planetPos, planet.getRadius() + p_radius, intersection))
             {
                 // Hit! Scale explosion by power
                 space.addExplosion(intersection, 12 * it->power, {0,0}, 15 * it->power);

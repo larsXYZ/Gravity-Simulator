@@ -1,6 +1,7 @@
 #include "user_functions.h"
 
 #include "space.h"
+#include "physics_utils.h"
 #include <algorithm>
 
 
@@ -51,76 +52,7 @@ namespace PredictionConfig
 	constexpr float PREDICTION_STEP_SIZE = 50.0f;
 }
 
-namespace {
-struct DistanceCalculationResult
-{
-	double dx{ 0.0 };
-	double dy{ 0.0 };
-	double dist{ 0.0 };
-	double rad_dist{ 0.0 };
-};
-
-DistanceCalculationResult calculateDistance(const Planet & planet, const Planet & other_planet)
-{
-	DistanceCalculationResult result;
-	result.dx = other_planet.getPosition().x - planet.getPosition().x;
-	result.dy = other_planet.getPosition().y - planet.getPosition().y;
-	result.dist = std::hypot(result.dx, result.dy);
-	result.rad_dist = planet.getRadius() + other_planet.getRadius();
-	return result;
-}
-
-struct Acceleration2D
-{
-	float x{ 0.0 };
-	float y{ 0.0 };
-};
-
-double accumulate_acceleration(const DistanceCalculationResult & distance_info, 
-						Acceleration2D & acceleration,
-						const Planet & other_planet)
-{
-	const auto A = G * other_planet.getMass() / std::max(distance_info.dist * distance_info.dist, 0.01);
-	const auto angle = atan2(distance_info.dy, distance_info.dx);
-
-	acceleration.x += cos(angle) * A;
-	acceleration.y += sin(angle) * A;
-
-	return A;
-}
-
-struct PhysicsBody
-{
-	sf::Vector2f position;
-	sf::Vector2f velocity;
-	double mass;
-	double radius;
-};
-
-DistanceCalculationResult calculateDistance(const PhysicsBody& planet, const PhysicsBody& other_planet)
-{
-	DistanceCalculationResult result;
-	result.dx = other_planet.position.x - planet.position.x;
-	result.dy = other_planet.position.y - planet.position.y;
-	result.dist = std::hypot(result.dx, result.dy);
-	result.rad_dist = planet.radius + other_planet.radius;
-	return result;
-}
-
-double accumulate_acceleration(const DistanceCalculationResult& distance_info,
-	Acceleration2D& acceleration,
-	const PhysicsBody& other_planet)
-{
-	const auto A = G * other_planet.mass / std::max(distance_info.dist * distance_info.dist, 0.01);
-	const auto angle = atan2(distance_info.dy, distance_info.dx);
-
-	acceleration.x += cos(angle) * A;
-	acceleration.y += sin(angle) * A;
-
-	return A;
-}
-
-}
+using PhysicsBody = PhysicsUtils::PhysicsBody;
 
 PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, const Planet& subject, int steps)
 {
@@ -160,8 +92,8 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 				if (planets[k].mass < mass_threshold) continue;
 				if (planets[k].mass < subject_mass * ratio_threshold) continue;
 
-				auto dist = calculateDistance(planets[j], planets[k]);
-				accumulate_acceleration(dist, acc_1[j], planets[k]);
+				auto dist = PhysicsUtils::calculateDistance(planets[j], planets[k]);
+				PhysicsUtils::accumulate_acceleration_body(dist, acc_1[j], planets[k].mass);
 			}
 		}
 
@@ -181,7 +113,7 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 		{
 			if (planets[k].mass <= 0) continue; // Skip already absorbed planets
 
-			auto distRes = calculateDistance(pSub, planets[k]); 
+			auto distRes = PhysicsUtils::calculateDistance(pSub, planets[k]); 
 
 			// Roche
 			if (pSub.mass >= MINIMUMBREAKUPSIZE &&
@@ -248,8 +180,8 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 				if (planets[k].mass < mass_threshold) continue;
 				if (planets[k].mass < subject_mass * ratio_threshold) continue;
 
-				auto dist = calculateDistance(planets[j], planets[k]);
-				accumulate_acceleration(dist, acc_2[j], planets[k]);
+				auto dist = PhysicsUtils::calculateDistance(planets[j], planets[k]);
+				PhysicsUtils::accumulate_acceleration_body(dist, acc_2[j], planets[k].mass);
 			}
 		}
 

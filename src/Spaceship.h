@@ -81,15 +81,18 @@ public:
     std::string getToolName() const;
 
 	bool pullofGravity(Planet forcer, SpaceShip &ship, int timeStep, bool gravity_enabled);
-	sf::Vector2f getpos();
-	sf::Vector2f getvel();
+	sf::Vector2f getpos() const;
+    sf::Vector2f getPosition() const { return pos; }
+	sf::Vector2f getvel() const;
+    double getMass() const { return mass; }
+    double getRadius() const { return 0.0; }
 	void reset(sf::Vector2f p);
     // Removed landing getters/setters
 	void destroy();
 	double getMaxCollisionSpeed();
     double getShieldEnergy() const { return shield_energy; }
 	bool isExist();
-	float getAngle();
+	float getAngle() const;
     void missileHit(Space& space);
 	
 	void draw(sf::RenderWindow &w);

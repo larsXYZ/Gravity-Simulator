@@ -19,9 +19,7 @@ private:
 	double atmoPot = modernRandomWithLimits(0, maxAtmo);
 	int numAtmoLines;
 	std::vector<int> atmoLinesBrightness;
-	double atmoCol_r = modernRandomWithLimits(0, 170);
-	double atmoCol_g = modernRandomWithLimits(0, 170);
-	double atmoCol_b = modernRandomWithLimits(0, 170);
+	sf::Color atmoColor = sf::Color(modernRandomWithLimits(0, 170), modernRandomWithLimits(0, 170), modernRandomWithLimits(0, 170));
 
 	//LIFE
 	Life life;
@@ -29,8 +27,8 @@ private:
 
 	//OTHER
 	int id;
-	int ID_strongest_attractor;
-	double STRENGTH_strongest_attractor = 0;
+	int strongestAttractorId = -1;
+	double strongestAttractorStrength = 0;
 	bool marked_for_removal = false;
 
 	//FOR DISINTEGRATION AND IGNORING
@@ -49,23 +47,20 @@ public:
 	};
 
 	// Constructors
-	Planet();
-	Planet(double m);
-	Planet(double m, double xx, double yy);
-	Planet(double m, double xx, double yy, double xvv, double yvv);
+	explicit Planet(double m = 6.0, double xx = 0.0, double yy = 0.0, double xvv = 0.0, double yvv = 0.0);
 
 	// Getters
 	[[nodiscard]] pType getType() const noexcept { return planetType; }
 	[[nodiscard]] static std::string getTypeString(pType type) noexcept;
 	[[nodiscard]] int getId() const noexcept override { return id; }
-	[[nodiscard]] int getStrongestAttractorId() const noexcept;
-	[[nodiscard]] int getStrongestAttractorIdRef() const noexcept;
+	[[nodiscard]] int getStrongestAttractorId() const noexcept { return strongestAttractorId; }
+	[[nodiscard]] int getStrongestAttractorIdRef() const noexcept { return strongestAttractorId; }
 	[[nodiscard]] const std::string& getName() const noexcept;
 	[[nodiscard]] bool emitsHeat() const noexcept;
 	[[nodiscard]] std::string getFlavorTextLife() const;
 	[[nodiscard]] sf::Color getStarCol() const noexcept;
 	[[nodiscard]] bool isMarkedForRemoval() const noexcept { return marked_for_removal; }
-	[[nodiscard]] double getStrongestAttractorStrength() const noexcept { return STRENGTH_strongest_attractor; }
+	[[nodiscard]] double getStrongestAttractorStrength() const noexcept { return strongestAttractorStrength; }
 	[[nodiscard]] double fusionEnergy() const noexcept;
 	[[nodiscard]] double thermalEnergy() const noexcept;
 	[[nodiscard]] double giveThermalEnergy(int t) const noexcept;
@@ -77,9 +72,9 @@ public:
 
 	// Setters
 	void setName(const std::string& n) noexcept { name = n; }
-	void setStrongestAttractorIdRef(int id) noexcept;
+	void setStrongestAttractorIdRef(int id) noexcept { strongestAttractorId = id; }
 	void markForRemoval() noexcept { marked_for_removal = true; }
-	void setStrongestAttractorStrength(double strength) noexcept { STRENGTH_strongest_attractor = strength; }
+	void setStrongestAttractorStrength(double strength) noexcept { strongestAttractorStrength = strength; }
 	void setMass(double m) noexcept override { SimObject::setMass(m); }
 	void setAtmosphere(double a) noexcept { atmoCur = a; }
 	void setAtmospherePotensial(double a) noexcept { atmoPot = a; }
@@ -96,7 +91,7 @@ public:
 	void clearIgnores() noexcept { ignore_ids.clear(); }
 	void becomeAbsorbedBy(Planet& absorbing_planet);
 	void updateRadiAndType() noexcept;
-	void resetAttractorMeasure() noexcept { STRENGTH_strongest_attractor = 0; }
+	void resetAttractorMeasure() noexcept { strongestAttractorStrength = 0; }
 	void incMass(double m) noexcept;
 	void collision(const Planet& p);
 	void giveID(int i) noexcept;

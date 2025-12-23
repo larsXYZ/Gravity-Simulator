@@ -79,6 +79,8 @@ class Space
 	ObjectTracker object_tracker;
 	ObjectInfo object_info;
 
+	void renderMST(sf::RenderWindow& window, const std::vector<size_t>& members);
+
 public:
 
 	explicit Space();
