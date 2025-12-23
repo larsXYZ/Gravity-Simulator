@@ -10,7 +10,8 @@ class ClickAndDragHandler
 public:
 	void update(sf::View & view,
 				sf::RenderWindow& window,
-				const sf::Event& new_event)
+				const sf::Event& new_event,
+				bool zoom_towards_mouse = true)
 	{
 		switch (new_event.type)
 		{
@@ -53,18 +54,26 @@ public:
 			}
 		case sf::Event::MouseWheelScrolled:
 			{
-				auto delta_zoom = 1.15 * new_event.mouseWheelScroll.delta / std::abs(new_event.mouseWheelScroll.delta);
-				if (delta_zoom < 0)
+				if (new_event.mouseWheelScroll.delta == 0)
+					break;
+
+				float delta_zoom_factor = (new_event.mouseWheelScroll.delta > 0) ? (1.f / 1.15f) : 1.15f;
+
+				if (zoom_towards_mouse)
 				{
-					delta_zoom = std::abs(delta_zoom);
-					zoom *= delta_zoom;
-					view.zoom(delta_zoom);
+					sf::Vector2i mouse_pos{ new_event.mouseWheelScroll.x, new_event.mouseWheelScroll.y };
+					sf::Vector2f before_zoom = window.mapPixelToCoords(mouse_pos, view);
+
+					view.zoom(delta_zoom_factor);
+					zoom *= delta_zoom_factor;
+
+					sf::Vector2f after_zoom = window.mapPixelToCoords(mouse_pos, view);
+					view.move(before_zoom - after_zoom);
 				}
-				else if (delta_zoom > 0)
+				else
 				{
-					delta_zoom = std::abs(delta_zoom);
-					zoom /= delta_zoom;
-					view.zoom(1 / delta_zoom);
+					view.zoom(delta_zoom_factor);
+					zoom *= delta_zoom_factor;
 				}
 				break;
 			}
