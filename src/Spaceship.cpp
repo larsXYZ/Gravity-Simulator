@@ -525,6 +525,8 @@ void SpaceShip::checkProjectileCollisions(Space& space, double dt)
         // Iterating over planets to check collision
         for (const auto& planet : space.planets)
         {
+            if (planet.isMarkedForRemoval() || planet.disintegrationGraceTimeIsActive(space.curr_time)) continue;
+
             sf::Vector2f planetPos(planet.getx(), planet.gety());
             sf::Vector2f intersection;
             
