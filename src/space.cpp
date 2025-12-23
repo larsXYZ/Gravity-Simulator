@@ -623,6 +623,19 @@ void Space::explodePlanet(Planet planet)
 
 	addExplosion(original_position, size, original_velocity, lifetime);
 
+	const int particle_count = static_cast<int>(planet.getRadius() * 10.0);
+	for (int i = 0; i < particle_count; i++)
+	{
+		const auto scatter_pos = original_position + random_vector(planet.getRadius());
+		const auto scatter_vel = original_velocity + random_vector(1.5);
+		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
+
+		// Hot particles
+		double p_temp = std::max(planet.getTemp() * 3.0, 3000.0);
+
+		addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+	}
+
 	const auto fragment_ids = disintegratePlanet(planet);
 	for (auto id : fragment_ids)
 	{
