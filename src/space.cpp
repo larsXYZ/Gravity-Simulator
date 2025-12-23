@@ -123,7 +123,7 @@ void Space::update()
 
 	update_spaceship();
 
-	particles->update(planets, bound, timestep, curr_time, gravity_enabled);
+	particles->update(planets, bound, timestep, curr_time, gravity_enabled, heat_enabled);
 
 	for (int i = 0; i < planets.size(); i++)
 	{
@@ -198,7 +198,7 @@ void Space::update()
 				}
 			}
 
-			if (otherPlanet.emitsHeat())
+			if (heat_enabled && otherPlanet.emitsHeat())
 			{
 				const auto heat = tempConstTwo * thisPlanet->getRadius() * thisPlanet->getRadius() * otherPlanet.giveThermalEnergy(timestep) / std::max(distance.dist, 1.0);
 				thisPlanet->absorbHeat(heat, timestep);
@@ -250,7 +250,7 @@ void Space::update()
 	std::erase_if(planets, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
 	
 	for (auto & planet : planets)
-		planet.update_planet_sim(timestep);
+		planet.update_planet_sim(timestep, heat_enabled);
 
 	//COLONIZATION
 	for (size_t i = 0; i < planets.size(); i++)
@@ -980,7 +980,12 @@ void Space::initSetup()
 	gravityCheckBox->onChange([this](bool checked) { gravity_enabled = checked; });
 	optionsMenu->add(gravityCheckBox);
 
-	renderLifeAlwaysCheckBox->setPosition(10, 40);
+	heatCheckBox->setPosition(10, 40);
+	heatCheckBox->setChecked(heat_enabled);
+	heatCheckBox->onChange([this](bool checked) { heat_enabled = checked; });
+	optionsMenu->add(heatCheckBox);
+
+	renderLifeAlwaysCheckBox->setPosition(10, 70);
 	renderLifeAlwaysCheckBox->setChecked(true);
 	optionsMenu->add(renderLifeAlwaysCheckBox);
 }
@@ -1232,6 +1237,8 @@ void Space::drawMissiles(sf::RenderWindow& window)
 
 double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 {
+	if (!heat_enabled) return 0.0;
+
 	double tEnergyFromOutside = 0;
 
 	for(size_t i = 0; i < planets.size(); i++)

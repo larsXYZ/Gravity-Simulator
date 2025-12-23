@@ -151,12 +151,13 @@ double Planet::giveThermalEnergy(int t) const noexcept
 
 void Planet::update(double timestep)
 {
-	update_planet_sim(timestep);
+	update_planet_sim(timestep, true);
 }
 
-void Planet::update_planet_sim(double timestep)
+void Planet::update_planet_sim(double timestep, bool heat_enabled)
 {
-	coolDown(timestep);
+	if (heat_enabled)
+		coolDown(timestep);
 	setColor();
 	updateAtmosphere(timestep);
 	updateLife(timestep);

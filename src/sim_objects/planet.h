@@ -103,7 +103,7 @@ public:
 
 	// Simulation and rendering
 	void update(double timestep) override;
-	void update_planet_sim(double timestep);
+	void update_planet_sim(double timestep, bool heat_enabled = true);
 	void updateLife(int t);
 	void render(sf::RenderWindow& window) const override;
 	[[nodiscard]] double getDist(const Planet& forcer) const noexcept;

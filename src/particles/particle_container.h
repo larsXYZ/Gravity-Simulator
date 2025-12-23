@@ -7,7 +7,7 @@ class IParticleContainer
 {
 public:
 	~IParticleContainer() = default;
-	virtual void update(const std::vector<Planet> & planets, const Bound &bound, double timestep, double curr_time, bool gravity_enabled) = 0;
+	virtual void update(const std::vector<Planet> & planets, const Bound &bound, double timestep, double curr_time, bool gravity_enabled, bool heat_enabled) = 0;
 	virtual void render_all(sf::RenderWindow &w) = 0;
 	virtual void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp) = 0;
 	virtual void clear() = 0;
@@ -40,7 +40,7 @@ class DecimatedLegacyParticleContainer : public IParticleContainer
 
 public:
 
-	void update(const std::vector<Planet>& planets, const Bound& bound, double timestep, double curr_time, bool gravity_enabled) override
+	void update(const std::vector<Planet>& planets, const Bound& bound, double timestep, double curr_time, bool gravity_enabled, bool heat_enabled) override
 	{
 		next_dec_simulation_target();
 
@@ -57,7 +57,7 @@ public:
 				const auto dy = planet.gety() - curr_pos.y;
 				const auto distanceSquared = dx * dx + dy * dy;
 
-				if (planet.emitsHeat())
+				if (heat_enabled && planet.emitsHeat())
 				{
 					double dist = std::sqrt(distanceSquared);
 					double emitted = planet.giveThermalEnergy(timestep * decimation_factor);

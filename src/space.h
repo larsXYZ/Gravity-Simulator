@@ -42,6 +42,7 @@ class Space
 	int next_id{0};
 	bool paused{ false };
 	bool gravity_enabled{ true };
+	bool heat_enabled{ true };
 	float timestep{ TIMESTEP_VALUE_START };
 	double curr_time{ 0.0 };
 	int iteration{0};
@@ -73,6 +74,7 @@ class Space
 	tgui::BitmapButton::Ptr optionsButton = tgui::BitmapButton::create();
 	sf::Texture optionsButtonTexture;
 	tgui::CheckBox::Ptr gravityCheckBox = tgui::CheckBox::create("Gravity Enabled");
+	tgui::CheckBox::Ptr heatCheckBox = tgui::CheckBox::create("Heat Enabled");
 	tgui::CheckBox::Ptr renderLifeAlwaysCheckBox = tgui::CheckBox::create("Always Render Life");
 
 	ClickAndDragHandler click_and_drag_handler;
