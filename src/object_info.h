@@ -23,9 +23,11 @@ class ObjectInfo
 	tgui::EditBox::Ptr vyBox;
 	tgui::EditBox::Ptr atmoBox;
 	tgui::EditBox::Ptr atmoPotBox;
+	tgui::ComboBox::Ptr lifeLevelSelector;
 	
 	bool ignore_change_signals{ false };
 	Space* m_space{ nullptr };
+	mutable sf::Clock m_lastInteractionClock;
 
 public:
 	ObjectInfo();
@@ -38,7 +40,7 @@ public:
 	void render(Space& space, sf::RenderWindow & window);
 	
 	void setup(Space& space, tgui::Gui& gui);
-	void update_ui_values(Space& space);
+	void update_ui_values(Space& space, sf::RenderWindow& window);
 	
-	bool is_focused() const;
+	bool is_focused(sf::RenderWindow& window) const;
 };

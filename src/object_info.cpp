@@ -25,6 +25,7 @@ bool ObjectInfo::is_active() const
 void ObjectInfo::deactivate()
 {
 	target_id = -1;
+	if (m_space) m_space->trail.clear();
 	if (panel)
 		panel->setVisible(false);
 }
@@ -32,12 +33,17 @@ void ObjectInfo::deactivate()
 void ObjectInfo::activate(int new_target_id)
 {
 	target_id = new_target_id;
+	if (m_space) m_space->trail.clear();
 }
 
 void ObjectInfo::set_visible(bool visible)
 {
 	if (panel)
+	{
 		panel->setVisible(visible && target_id != -1);
+		if (!panel->isVisible() && m_space)
+			m_space->trail.clear();
+	}
 }
 
 void ObjectInfo::setup(Space& space, tgui::Gui& gui)
@@ -182,13 +188,52 @@ void ObjectInfo::setup(Space& space, tgui::Gui& gui)
 		}
 	});
 
+	auto lifeLabel = tgui::Label::create("Life Level:");
+	lifeLabel->setPosition(5, y + 4);
+	lifeLabel->setSize(labelWidth, 22);
+	lifeLabel->getRenderer()->setTextColor(sf::Color::Black);
+	lifeLabel->setTextSize(13);
+	panel->add(lifeLabel);
+
+	lifeLevelSelector = tgui::ComboBox::create();
+	lifeLevelSelector->setPosition(boxX, y);
+	lifeLevelSelector->setSize(boxWidth, 24);
+	lifeLevelSelector->setTextSize(13);
+	lifeLevelSelector->addItem("Lifeless");
+	lifeLevelSelector->addItem("Unicellular");
+	lifeLevelSelector->addItem("Multicellular (S)");
+	lifeLevelSelector->addItem("Multicellular (C)");
+	lifeLevelSelector->addItem("Tribal");
+	lifeLevelSelector->addItem("Global");
+	lifeLevelSelector->addItem("Interplanetary");
+	lifeLevelSelector->addItem("Colony");
+	lifeLevelSelector->onItemSelect([this](const tgui::String& item) {
+		if (m_space && target_id != -1 && !ignore_change_signals) {
+			if (auto* p = m_space->findPlanetPtr(target_id)) {
+				if (item == "Lifeless") p->setLifeLevel(lType::NONE);
+				else if (item == "Unicellular") p->setLifeLevel(lType::SINGLECELL);
+				else if (item == "Multicellular (S)") p->setLifeLevel(lType::MULTICELL_SIMPLE);
+				else if (item == "Multicellular (C)") p->setLifeLevel(lType::MULTICELL_COMPLEX);
+				else if (item == "Tribal") p->setLifeLevel(lType::INTELLIGENT_TRIBAL);
+				else if (item == "Global") p->setLifeLevel(lType::INTELLIGENT_GLOBAL);
+				else if (item == "Interplanetary") p->setLifeLevel(lType::INTELLIGENT_INTERPLANETARY);
+				else if (item == "Colony") p->setLifeLevel(lType::COLONY);
+			}
+		}
+	});
+	panel->add(lifeLevelSelector);
+	y += rowHeight;
+
 	panel->setSize(220, y + 5);
 }
 
-bool ObjectInfo::is_focused() const
+bool ObjectInfo::is_focused(sf::RenderWindow& window) const
 {
 	if (!panel || !panel->isVisible()) return false;
-	
+
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		m_lastInteractionClock.restart();
+
 	if (nameBox && nameBox->isFocused()) return true;
 	if (massBox && massBox->isFocused()) return true;
 	if (tempBox && tempBox->isFocused()) return true;
@@ -199,10 +244,20 @@ bool ObjectInfo::is_focused() const
 	if (atmoBox && atmoBox->isFocused()) return true;
 	if (atmoPotBox && atmoPotBox->isFocused()) return true;
 	
+	if (lifeLevelSelector) {
+		if (lifeLevelSelector->isFocused()) return true;
+		
+		// Fallback: if isFocused() doesn't work well for ComboBox in this version of TGUI
+		// we check if mouse is over it while the panel is visible.
+		sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+		if (lifeLevelSelector->isMouseOnWidget(sf::Vector2f(mousePos.x, mousePos.y)))
+			return true;
+	}
+	
 	return false;
 }
 
-void ObjectInfo::update_ui_values(Space& space)
+void ObjectInfo::update_ui_values(Space& space, sf::RenderWindow& window)
 {
 	if (target_id == -1 || !panel || !panel->isVisible()) return;
 
@@ -221,6 +276,19 @@ void ObjectInfo::update_ui_values(Space& space)
 	if (!vyBox->isFocused()) vyBox->setText(d2s(target->getyv(), 4));
 	if (!atmoBox->isFocused()) atmoBox->setText(d2s(target->getCurrentAtmosphere()));
 	if (!atmoPotBox->isFocused()) atmoPotBox->setText(d2s(target->getAtmospherePotensial()));
+
+	const auto curr_val = lifeLevelSelector->getSelectedItemIndex();
+	const auto new_val = static_cast<int>(target->getLife().getTypeEnum());
+	
+	// Ugly fix: If the user has interacted with the mouse in the last second, don't update the box
+	bool recentlyInteracted = m_lastInteractionClock.getElapsedTime().asSeconds() < 1.0f;
+
+	if (lifeLevelSelector && !is_focused(window) && !recentlyInteracted && curr_val != new_val)
+	{
+		ignore_change_signals = true;
+		lifeLevelSelector->setSelectedItemByIndex(new_val);
+		ignore_change_signals = false;
+	}
 }
 
 void ObjectInfo::render(Space& space, sf::RenderWindow& window)
@@ -232,7 +300,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		return;
 	}
 
-	update_ui_values(space);
+	update_ui_values(space, window);
 	
 	sf::Vector2f pos(target->getx(), target->gety());
 	

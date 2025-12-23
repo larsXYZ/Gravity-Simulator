@@ -104,7 +104,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			if (event.type == sf::Event::Closed)
 				window.close();
 
-			if (!object_info.is_focused())
+			if (!object_info.is_focused(window))
 				hotkeys(event, mainView, window);
 
 			if (event.type == sf::Event::MouseWheelScrolled || !object_tracker.is_active())

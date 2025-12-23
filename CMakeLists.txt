@@ -13,9 +13,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(TGUI_BUILD_GUI_BUILDER False)
 
-set(CMAKE_EXE_LINKER_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
-
 set(SFML_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SFML/Include)
 set(TGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/TGUI/Include)
 set(SFML_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SFML/)
@@ -56,9 +53,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${SFML_INCLUDE_DIR} ${TGUI_INCLU
 # Add executable with conditional subsystem
 add_executable(Gravity-Simulator ${SOURCE} ${CMAKE_SOURCE_DIR}/resources/resources.rc)
 
-set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_DEBUG "/DEBUG /SUBSYSTEM:CONSOLE")
 set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
-set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:WINDOWS")
+set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/DEBUG /SUBSYSTEM:WINDOWS")
 set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:WINDOWS")
 
 target_link_libraries(Gravity-Simulator sfml-graphics 

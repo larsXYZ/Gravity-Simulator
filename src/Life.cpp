@@ -45,6 +45,37 @@ void Life::giveCivName(std::string cn) {
     civName = cn;
 }
 
+void Life::setLifeLevel(lType level) {
+    if (level < 0) level = lType::NONE;
+    if (level > 7) level = lType::COLONY;
+    
+    lifeLevel = level;
+    type = static_cast<lType>(lifeLevel);
+    
+    // Ensure some biomass for the level
+    double minBiomass = 0;
+    if (level == 1) minBiomass = 100;
+    else if (level == 2) minBiomass = 500;
+    else if (level == 3) minBiomass = 1000;
+    else if (level == 4) minBiomass = 2000;
+    else if (level == 5) minBiomass = 5000;
+    else if (level == 6) minBiomass = 10000;
+    else if (level == 7) minBiomass = 100; // Colony starts small
+
+    if (biomass < minBiomass) biomass = minBiomass;
+
+    if (lifeLevel >= 4) {
+        if (description.empty()) genDesc();
+        if (civName.empty()) genCivName();
+    }
+
+    if (lifeLevel == 0) {
+        biomass = 0;
+        description = "";
+        civName = "";
+    }
+}
+
 void Life::update(double supportedBM, int t, double rad) {
     expand = false;
 

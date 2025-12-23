@@ -34,6 +34,9 @@ public:
 	void genDesc();
 	void genCivName();
 
+	// Setters
+	void setLifeLevel(lType level);
+
 	// Getters
 	[[nodiscard]] lType getTypeEnum() const;
 	[[nodiscard]] double getBmass() const;

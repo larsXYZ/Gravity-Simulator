@@ -78,6 +78,7 @@ public:
 	void setMass(double m) noexcept override { SimObject::setMass(m); }
 	void setAtmosphere(double a) noexcept { atmoCur = a; }
 	void setAtmospherePotensial(double a) noexcept { atmoPot = a; }
+	void setLifeLevel(lType level) noexcept { life.setLifeLevel(level); }
 
 	// State checks
 	[[nodiscard]] bool canDisintegrate(double curr_time) const noexcept;
