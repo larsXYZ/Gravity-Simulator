@@ -137,11 +137,13 @@ void Planet::coolDown(int t) noexcept
 	
 	// Add energy from fusion
 	tEnergy += t * fusionEnergy();
+	clampTemperature();
 }
 
 void Planet::absorbHeat(double e, int t) noexcept
 {
 	tEnergy += (e * (1 + greenHouseEffectMult * atmoCur));
+	clampTemperature();
 }
 
 double Planet::giveThermalEnergy(int t) const noexcept

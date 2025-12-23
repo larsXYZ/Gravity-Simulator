@@ -59,7 +59,7 @@ public:
 
 				if (heat_enabled && planet.emitsHeat())
 				{
-					double dist = std::sqrt(distanceSquared);
+					double dist = std::max(static_cast<double>(std::sqrt(distanceSquared)), 1.0);
 					double emitted = planet.giveThermalEnergy(timestep * decimation_factor);
 					double heat = calculate_heating(particle.get_radius(), emitted, dist);
 					particle.absorb_heat(heat);

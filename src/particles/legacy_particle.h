@@ -61,6 +61,7 @@ public:
         double mass = radius * radius * radius; 
         if (mass < 1.0) mass = 1.0; 
         temp += heat / mass;
+		if (temp > MAX_TEMP) temp = MAX_TEMP;
 	}
 
 	void cool_down(double timestep)
