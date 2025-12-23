@@ -872,8 +872,9 @@ public:
 	{
 		IUserFunction::on_selection(context);
 		context.mass_slider->setVisible(true);
+		context.object_type_selector->setVisible(true);
 		context.new_object_info->setVisible(true);
-        context.new_object_info->setText("Select objects, then Ctrl-Click to place in orbit.");
+        context.new_object_info->setText("Select type/mass, select objects, then Ctrl-Click to place in orbit.");
         updateGuiSize(context.new_object_info, 1);
 	}
 
@@ -939,6 +940,9 @@ public:
 
 	void execute(FunctionContext& context) override
 	{
+		fillTextBox(context.new_object_info, context.mass_slider->getValue());
+		updateGuiSize(context.new_object_info, 1);
+
 		std::erase_if(object_ids,
 			[&context](auto id)
 			{
@@ -967,7 +971,6 @@ public:
 			const auto massCenterVelocity = context.space.centerOfMassVelocity(object_ids);
 			const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x,
 				context.mouse_pos_world.y - massCenterInfoVector.y);
-
 			//DRAWING NEW PLANET AND ORBIT
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{
