@@ -35,7 +35,7 @@ void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
 	explosions.push_back(Explosion(p, s, 0, v, l));
 }
 
-void Space::addSmoke(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan, double initial_temp)
+void Space::addParticle(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan, double initial_temp)
 {
 	particles->add_particle(p, v, s, curr_time+lifespan, initial_temp);
 }
@@ -191,7 +191,7 @@ void Space::update()
 						double p_temp = collision_temp;
 						if (uniform_random(0, 100) < 15) p_temp *= 2.5; // 15% of particles are much hotter/glowing
 
-						addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+						addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
 					}
 
 					break;
@@ -571,7 +571,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 		double p_temp = planet.getTemp();
 		if (uniform_random(0, 100) < 15) p_temp *= 2.5; // 15% of particles are much hotter/glowing
 
-		addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+		addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
 	}
 
 	const auto n_planets{ std::floor(planet.getMass() / MINIMUMBREAKUPSIZE) };
@@ -618,12 +618,13 @@ void Space::explodePlanet(Planet planet)
 	const sf::Vector2f original_velocity = { static_cast<float>(planet.getVelocity().x),
 										static_cast<float>(planet.getVelocity().y) };
 
-	const auto lifetime = 0.5 * planet.getRadius();
+	const auto lifetime = 2.5 * planet.getRadius();
 	const auto size = 15.0 * planet.getRadius();
 
 	addExplosion(original_position, size, original_velocity, lifetime);
 
-	const int particle_count = static_cast<int>(planet.getRadius() * 10.0);
+	//Fast fragments
+	int particle_count = static_cast<int>(planet.getRadius() * 10.0);
 	for (int i = 0; i < particle_count; i++)
 	{
 		const auto scatter_pos = original_position + random_vector(planet.getRadius());
@@ -631,9 +632,23 @@ void Space::explodePlanet(Planet planet)
 		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
 
 		// Hot particles
-		double p_temp = std::max(planet.getTemp() * 3.0, 3000.0);
+		double p_temp = std::max(planet.getTemp() * 3.0, 20000.0);
 
-		addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+		addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+	}
+
+	//Slow fragments
+	particle_count = static_cast<int>(planet.getMass() * 5.0);
+	for (int i = 0; i < particle_count; i++)
+	{
+		const auto scatter_pos = original_position + random_vector(planet.getRadius());
+		const auto scatter_vel = original_velocity + random_vector(0.15);
+		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
+
+		// Hot particles
+		double p_temp = std::max(planet.getTemp() * 3.0, 20000.0);
+
+		addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
 	}
 
 	const auto fragment_ids = disintegratePlanet(planet);
@@ -774,13 +789,13 @@ void Space::update_spaceship()
 
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
+		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
 
         // Extra smoke
 		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(150.0, 250.0));
+		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(150.0, 250.0));
 	}
 	else if (mode == -1)
 	{
@@ -794,7 +809,7 @@ void Space::update_spaceship()
 
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
+		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
 	}
 
 	for (const auto & planet : planets)

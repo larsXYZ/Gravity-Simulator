@@ -314,7 +314,7 @@ void SpaceShip::updateProjectiles(double dt, Space& space)
              sf::Vector2f smoke_pos = p.pos + perp * (float)offset;
              sf::Vector2f smoke_vel = p.vel * 0.1f + sf::Vector2f(space.uniform_random(-0.5, 0.5), space.uniform_random(-0.5, 0.5));
 
-             space.addSmoke(smoke_pos, smoke_vel, p.power * 0.6, space.uniform_random(150, 300));
+             space.addParticle(smoke_pos, smoke_vel, p.power * 0.6, space.uniform_random(150, 300));
         }
     }
     std::erase_if(projectiles, [](const Projectile& p) { return p.life <= 0; });
@@ -521,7 +521,7 @@ void SpaceShip::checkProjectileCollisions(Space& space, double dt)
                     // Add planet's velocity to shrapnel
                     shrapnel_vel += planet.getVelocity();
                     
-                    space.addSmoke(intersection, shrapnel_vel, 
+                    space.addParticle(intersection, shrapnel_vel, 
                                    space.uniform_random(1.0, 2.5), 
                                    space.uniform_random(1500.0, 3000.0), 
                                    planet.getTemp() + 1000);
