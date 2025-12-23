@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include "../CONSTANTS.h"
 
 class SimObject {
 protected:
@@ -31,16 +32,29 @@ public:
     float getxv() const { return velocity.x; }
     float getyv() const { return velocity.y; }
 
+    void clampTemperature() noexcept {
+        if (mass <= 0) return;
+        double max_energy = MAX_TEMP * mass * tCapacity;
+        if (tEnergy > max_energy) tEnergy = max_energy;
+        else if (tEnergy < 0) tEnergy = 0;
+    }
+
     virtual void setPosition(sf::Vector2f pos) { position = pos; }
     virtual void setVelocity(sf::Vector2f vel) { velocity = vel; }
     virtual void setId(int id_) { id = id_; }
     virtual void setMass(double m) { mass = m; }
     virtual void setRadius(double r) { radius = r; }
     virtual void setDensity(double d) { density = d; }
-    virtual void setTemp(double t) noexcept { tEnergy = getMass() * t * tCapacity; }
+    virtual void setTemp(double t) noexcept { 
+        tEnergy = getMass() * t * tCapacity; 
+        clampTemperature();
+    }
     virtual void increaseThermalEnergy(double e) noexcept { setTemp(getTemp() + e / (getMass() * getTCap())); }
     virtual void setTCap(double cap) noexcept { tCapacity = cap; }
-    virtual void setThermalEnergy(double e) noexcept { tEnergy = e; }
+    virtual void setThermalEnergy(double e) noexcept { 
+        tEnergy = e; 
+        clampTemperature();
+    }
 
     virtual void update(double timestep) = 0;
     virtual void render(sf::RenderWindow& window) const = 0;

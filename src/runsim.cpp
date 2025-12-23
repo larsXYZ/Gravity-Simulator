@@ -108,7 +108,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 				hotkeys(event, mainView, window);
 
 			if (event.type == sf::Event::MouseWheelScrolled || !object_tracker.is_active())
-				click_and_drag_handler.update(mainView, window, event);
+				click_and_drag_handler.update(mainView, window, event, !object_tracker.is_active());
 
 			gui.handleEvent(event);
 

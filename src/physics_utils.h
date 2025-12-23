@@ -38,10 +38,12 @@ struct PhysicsBody
 	sf::Vector2f velocity;
 	double mass;
 	double radius;
+	pType type;
 
     sf::Vector2f getPosition() const { return position; }
     double getRadius() const { return radius; }
     double getMass() const { return mass; }
+	pType getType() const { return type; }
 };
 
 template <typename T>

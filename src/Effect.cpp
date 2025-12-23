@@ -64,7 +64,7 @@ void Effect::move(int t)
 	setpos(sf::Vector2f(getpos().x + vel.x*t, getpos().y + vel.y*t));
 }
 
-int Effect::levetidmax()
+int Effect::maxLifeTime()
 {
 	return levetid;
 }

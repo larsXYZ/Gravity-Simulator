@@ -1,5 +1,6 @@
 #include "Planet.h"
 #include "../HeatSim.h"
+#include "../roche_limit.h"
 
 #include <sstream>
 
@@ -137,11 +138,13 @@ void Planet::coolDown(int t) noexcept
 	
 	// Add energy from fusion
 	tEnergy += t * fusionEnergy();
+	clampTemperature();
 }
 
 void Planet::absorbHeat(double e, int t) noexcept
 {
 	tEnergy += (e * (1 + greenHouseEffectMult * atmoCur));
+	clampTemperature();
 }
 
 double Planet::giveThermalEnergy(int t) const noexcept
@@ -168,7 +171,7 @@ bool Planet::canDisintegrate(double curr_time) const noexcept
 	if (getType() == BLACKHOLE)
 		return false;
 
-	if (getMass() < MINIMUMBREAKUPSIZE)
+	if (!RocheLimit::hasMinimumBreakupSize(getMass()))
 		return false;
 
 	if (!ignore_ids.empty())

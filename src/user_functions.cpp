@@ -2,6 +2,7 @@
 
 #include "space.h"
 #include "physics_utils.h"
+#include "roche_limit.h"
 #include <algorithm>
 
 
@@ -63,8 +64,8 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 	std::vector<PhysicsBody> planets;
 	planets.reserve(planets_orig.size() + 1);
 	for (const auto& p : planets_orig)
-		planets.push_back({ p.getPosition(), p.getVelocity(), p.getMass(), p.getRadius() });
-	planets.push_back({ subject.getPosition(), subject.getVelocity(), subject.getMass(), subject.getRadius() });
+		planets.push_back({ p.getPosition(), p.getVelocity(), p.getMass(), p.getRadius(), p.getType() });
+	planets.push_back({ subject.getPosition(), subject.getVelocity(), subject.getMass(), subject.getRadius(), subject.getType() });
 
 	const size_t subject_index = planets.size() - 1;
 	const double subject_mass = subject.getMass();
@@ -116,9 +117,8 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 			auto distRes = PhysicsUtils::calculateDistance(pSub, planets[k]); 
 
 			// Roche
-			if (pSub.mass >= MINIMUMBREAKUPSIZE &&
-				distRes.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distRes.rad_dist &&
-				pSub.mass / planets[k].mass < ROCHE_LIMIT_SIZE_DIFFERENCE)
+			if (RocheLimit::hasMinimumBreakupSize(pSub.mass) &&
+				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].getType() == pType::BLACKHOLE))
 			{
 				disintegration = true;
 				break;
@@ -435,10 +435,10 @@ public:
 				context.window.draw(center_point);
 
 				//DRAWING ROCHE LIMIT
-				if (context.mass_slider->getValue() > MINIMUMBREAKUPSIZE 
-					&& context.mass_slider->getValue() / target->getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+				if (RocheLimit::hasMinimumBreakupSize(context.mass_slider->getValue()) 
+					&& RocheLimit::checkMassRatio(context.mass_slider->getValue(), target->getMass(), target->getType() == pType::BLACKHOLE))
 				{
-					double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (temp_planet.getRadius() + target->getRadius());
+					double rocheRad = RocheLimit::calculateLimitRadius(temp_planet.getRadius() + target->getRadius());
 
 					sf::CircleShape viz(rocheRad);
 					viz.setPosition(sf::Vector2f(target->getx(), target->gety()));
@@ -872,8 +872,9 @@ public:
 	{
 		IUserFunction::on_selection(context);
 		context.mass_slider->setVisible(true);
+		context.object_type_selector->setVisible(true);
 		context.new_object_info->setVisible(true);
-        context.new_object_info->setText("Select objects, then Ctrl-Click to place in orbit.");
+        context.new_object_info->setText("Select type/mass, select objects, then Ctrl-Click to place in orbit.");
         updateGuiSize(context.new_object_info, 1);
 	}
 
@@ -939,6 +940,9 @@ public:
 
 	void execute(FunctionContext& context) override
 	{
+		fillTextBox(context.new_object_info, context.mass_slider->getValue());
+		updateGuiSize(context.new_object_info, 1);
+
 		std::erase_if(object_ids,
 			[&context](auto id)
 			{
@@ -967,7 +971,6 @@ public:
 			const auto massCenterVelocity = context.space.centerOfMassVelocity(object_ids);
 			const auto rad = std::hypot(context.mouse_pos_world.x - massCenterInfoVector.x,
 				context.mouse_pos_world.y - massCenterInfoVector.y);
-
 			//DRAWING NEW PLANET AND ORBIT
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{

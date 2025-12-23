@@ -1,6 +1,7 @@
 #include "object_info.h"
 
 #include "Space.h"
+#include "roche_limit.h"
 #include <iomanip>
 #include <sstream>
 
@@ -342,7 +343,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		};
 		window.draw(g, 2, sf::Lines);
 
-		double rocheRad = ROCHE_LIMIT_DIST_MULTIPLIER * (target_parent->getRadius() + target->getRadius());
+		double rocheRad = RocheLimit::calculateLimitRadius(target_parent->getRadius() + target->getRadius());
 		sf::CircleShape omr(rocheRad);
 		omr.setPosition(sf::Vector2f(target_parent->getx(), target_parent->gety()));
 		omr.setOrigin(rocheRad, rocheRad);

@@ -3,6 +3,7 @@
 #include "particles/particle_container.h"
 #include "user_functions.h"
 #include "physics_utils.h"
+#include "roche_limit.h"
 
 Space::Space()
 	: particles(std::make_unique<DecimatedLegacyParticleContainer>())
@@ -35,7 +36,12 @@ void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
 	explosions.push_back(Explosion(p, s, 0, v, l));
 }
 
-void Space::addSmoke(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan, double initial_temp)
+void Space::addStarshineFade(sf::Vector2f p, sf::Vector2f v, sf::Color col, double lr_lum, double sr_lum, int l)
+{
+	starshine_fades.push_back(StarshineFade(p, v, col, lr_lum, sr_lum, l));
+}
+
+void Space::addParticle(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan, double initial_temp)
 {
 	particles->add_particle(p, v, s, curr_time+lifespan, initial_temp);
 }
@@ -147,14 +153,10 @@ void Space::update()
 			const auto acceleration_magnitude = PhysicsUtils::accumulate_acceleration(distance, acc_sum_1, otherPlanet);
 
 			if (thisPlanet->canDisintegrate(curr_time) &&
-				distance.dist < ROCHE_LIMIT_DIST_MULTIPLIER * distance.rad_dist &&
-				thisPlanet->getMass() / otherPlanet.getMass() < ROCHE_LIMIT_SIZE_DIFFERENCE)
+				RocheLimit::isBreached(distance.dist, distance.rad_dist, thisPlanet->getMass(), otherPlanet.getMass(), otherPlanet.getType() == pType::BLACKHOLE))
 			{
-				const auto rad = thisPlanet->getRadius();
-
 				disintegratePlanet(*thisPlanet);
 				thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
-
 				break;
 			}
 
@@ -191,7 +193,7 @@ void Space::update()
 						double p_temp = collision_temp;
 						if (uniform_random(0, 100) < 15) p_temp *= 2.5; // 15% of particles are much hotter/glowing
 
-						addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+						addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
 					}
 
 					break;
@@ -517,6 +519,15 @@ void Space::removeExplosion(int ind)
 	explosions.pop_back();
 }
 
+void Space::removeStarshineFade(int ind)
+{
+	if (ind >= (int)starshine_fades.size() || ind < 0) return;
+
+	auto it = starshine_fades.begin() + ind;
+	*it = std::move(starshine_fades.back());
+	starshine_fades.pop_back();
+}
+
 void Space::removeSmoke(int ind)
 {
 	particles->clear();
@@ -527,6 +538,7 @@ void Space::full_reset(sf::View& view, const sf::RenderWindow& window)
 	planets.clear();
 	pending_planets.clear();
 	explosions.clear();
+	starshine_fades.clear();
 	particles->clear();
 	trail.clear();
 	bound = Bound();
@@ -547,7 +559,15 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 	if (match == planets.end())
 		return {};
 
-	if (match->getMass() < MINIMUMBREAKUPSIZE)
+	if (planet.getType() == SMALLSTAR || planet.getType() == STAR || planet.getType() == BIGSTAR)
+	{
+		sf::Color col = planet.getStarCol();
+		const auto long_range_luminosity = 30 * sqrt(planet.fusionEnergy());
+		const auto short_range_luminosity = 1.5 * planet.getRadius();
+		addStarshineFade(planet.getPosition(), planet.getVelocity(), col, long_range_luminosity, short_range_luminosity, STARSHINE_FADE_LIFETIME);
+	}
+
+	if (!RocheLimit::hasMinimumBreakupSize(match->getMass()))
 		return {};
 
 	const auto& particles_by_rad = [planet]()
@@ -571,10 +591,10 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 		double p_temp = planet.getTemp();
 		if (uniform_random(0, 100) < 15) p_temp *= 2.5; // 15% of particles are much hotter/glowing
 
-		addSmoke(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+		addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
 	}
 
-	const auto n_planets{ std::floor(planet.getMass() / MINIMUMBREAKUPSIZE) };
+	const auto n_planets{ std::floor(planet.getMass() / RocheLimit::MINIMUM_BREAKUP_SIZE) };
 	const auto mass_per_planet = planet.getMass() / n_planets;
 
 	std::vector<int> generated_ids;
@@ -618,10 +638,46 @@ void Space::explodePlanet(Planet planet)
 	const sf::Vector2f original_velocity = { static_cast<float>(planet.getVelocity().x),
 										static_cast<float>(planet.getVelocity().y) };
 
-	const auto lifetime = 0.5 * planet.getRadius();
+	const auto lifetime = 2.5 * planet.getRadius();
 	const auto size = 15.0 * planet.getRadius();
 
 	addExplosion(original_position, size, original_velocity, lifetime);
+
+	if (planet.getType() == SMALLSTAR || planet.getType() == STAR || planet.getType() == BIGSTAR)
+	{
+		sf::Color col = planet.getStarCol();
+		const auto long_range_luminosity = 30 * sqrt(planet.fusionEnergy());
+		const auto short_range_luminosity = 1.5 * planet.getRadius();
+		addStarshineFade(planet.getPosition(), planet.getVelocity(), col, long_range_luminosity, short_range_luminosity, STARSHINE_FADE_LIFETIME);
+	}
+
+	//Fast fragments
+	int particle_count = static_cast<int>(planet.getRadius() * 10.0);
+	for (int i = 0; i < particle_count; i++)
+	{
+		const auto scatter_pos = original_position + random_vector(planet.getRadius());
+		const auto scatter_vel = original_velocity + random_vector(1.5);
+		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
+
+		// Hot particles
+		double p_temp = std::max(planet.getTemp() * 3.0, 20000.0);
+
+		addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+	}
+
+	//Slow fragments
+	particle_count = static_cast<int>(planet.getMass() * 5.0);
+	for (int i = 0; i < particle_count; i++)
+	{
+		const auto scatter_pos = original_position + random_vector(planet.getRadius());
+		const auto scatter_vel = original_velocity + random_vector(0.15);
+		const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
+
+		// Hot particles
+		double p_temp = std::max(planet.getTemp() * 3.0, 20000.0);
+
+		addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+	}
 
 	const auto fragment_ids = disintegratePlanet(planet);
 	for (auto id : fragment_ids)
@@ -761,13 +817,13 @@ void Space::update_spaceship()
 
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
+		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
 
         // Extra smoke
 		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(150.0, 250.0));
+		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(150.0, 250.0));
 	}
 	else if (mode == -1)
 	{
@@ -781,7 +837,7 @@ void Space::update_spaceship()
 
 		v.x = ship.getvel().x + cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y + sin(angl)*SHIP_GAS_EJECT_SPEED;
-		addSmoke(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
+		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
 	}
 
 	for (const auto & planet : planets)
@@ -1172,14 +1228,33 @@ void Space::drawEffects(sf::RenderWindow &window)
 	int inc = 1;
 	if (timestep == 0) inc = 0;
 
-	for(size_t i = 0; i < explosions.size(); i++)
+	for(size_t i = 0; i < explosions.size(); )
 	{
 		explosions[i].move(timestep);
 
-		if (explosions[i].getAge(inc) < explosions[i].levetidmax()) explosions[i].render(window);
+		if (explosions[i].getAge(inc) < explosions[i].maxLifeTime()) 
+		{
+			explosions[i].render(window);
+			i++;
+		}
 		else
 		{
 			removeExplosion(i);
+		}
+	}
+
+	//STARSHINE FADES
+	for (size_t i = 0; i < starshine_fades.size(); )
+	{
+		starshine_fades[i].move(timestep);
+		if (starshine_fades[i].getAge(inc) < starshine_fades[i].maxLifeTime())
+		{
+			starshine_fades[i].render(window);
+			i++;
+		}
+		else
+		{
+			removeStarshineFade(i);
 		}
 	}
 	
@@ -1187,10 +1262,14 @@ void Space::drawEffects(sf::RenderWindow &window)
 	//particles->render_all(window);
 
 	//TRAILS
-	for(size_t i = 0; i < trail.size(); i++)
+	for(size_t i = 0; i < trail.size(); )
 	{
 		trail[i].move(timestep);
-		if (trail[i].getAge(0) < trail[i].levetidmax() && !trail[i].killMe()) trail[i].render(window);
+		if (trail[i].getAge(0) < trail[i].maxLifeTime() && !trail[i].killMe())
+		{
+			trail[i].render(window);
+			i++;
+		}
 		else
 		{
 			removeTrail(i);
