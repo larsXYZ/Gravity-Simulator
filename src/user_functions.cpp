@@ -725,7 +725,7 @@ public:
 				+ "\nMass: ca " + std::to_string(MASS_MULTIPLIER * cbrt(rad))
 				+ "\nRadius: " + std::to_string(rad));
 			t.setPosition(context.mouse_pos_world.x + 10, context.mouse_pos_world.y);
-			t.setColor(sf::Color::Red);
+			t.setFillColor(sf::Color::Red);
 			t.setFont(font);
 			t.setCharacterSize(10);
 

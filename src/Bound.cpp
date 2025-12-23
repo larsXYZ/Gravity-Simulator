@@ -26,8 +26,8 @@ void Bound::setPos(sf::Vector2f p)
 
 void Bound::setRad(double r)
 { 
-	indicator.setRadius(r);
-	indicator.setOrigin(r, r);
+	indicator.setRadius((float)r);
+	indicator.setOrigin((float)r, (float)r);
 }
 
 double Bound::getRadius() const

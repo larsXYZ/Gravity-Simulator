@@ -159,9 +159,9 @@ void Life::genDesc() {
         "in high-gravity plains"
     };
 
-    description = startAdj[modernRandomWithLimits(0, startAdj.size() - 1)] + " " +
-                 creature[modernRandomWithLimits(0, creature.size() - 1)] + " " +
-                 area[modernRandomWithLimits(0, area.size() - 1)];
+    description = startAdj[modernRandomWithLimits(0, (int)startAdj.size() - 1)] + " " +
+                 creature[modernRandomWithLimits(0, (int)creature.size() - 1)] + " " +
+                 area[modernRandomWithLimits(0, (int)area.size() - 1)];
 }
 
 void Life::genCivName() {
@@ -176,9 +176,9 @@ void Life::genCivName() {
         "ans", "oids", "ish", "ites", "ons", "erons", "alians", "ians", "ids", "ods"
     };
 
-    civName = part1[modernRandomWithLimits(0, part1.size() - 1)] + 
-              part2[modernRandomWithLimits(0, part2.size() - 1)] + 
-              part3[modernRandomWithLimits(0, part3.size() - 1)];
+    civName = part1[modernRandomWithLimits(0, (int)part1.size() - 1)] + 
+              part2[modernRandomWithLimits(0, (int)part2.size() - 1)] + 
+              part3[modernRandomWithLimits(0, (int)part3.size() - 1)];
 }
 
 lType Life::getTypeEnum() const {

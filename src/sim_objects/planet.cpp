@@ -482,27 +482,27 @@ std::string convertDoubleToString(double number)
 
 [[nodiscard]] std::string Planet::generate_name()
 {
-	std::vector<std::string> navn_del_en = {
+	std::vector<std::string> name_first_part = {
 		"Jup", "Jor", "Ear", "Mar", "Ven", "Cer", "Sat", "Pl", "Nep", "Ur", "Ker", "Mer", "Jov", "Qur", "Deb", "Car",
 		"Xet", "Nayt", "Erist", "Hamar", "Bjork", "Deat", "Limus", "Lant", "Hypor", "Hyper", "Tell", "It", "As", "Ka",
 		"Po", "Yt", "Pertat"
 	};
-	std::vector<std::string> navn_del_to = {"it", "enden", "orden", "eptux", "atur", "oper", "uqtor", "axax"};
-	std::vector<std::string> navn_del_tre = {"er", "us", "o", "i", "atara", "ankara", "oxos", "upol", "ol", "eq"};
+	std::vector<std::string> name_second_part = {"it", "enden", "orden", "eptux", "atur", "oper", "uqtor", "axax"};
+	std::vector<std::string> name_third_part = {"er", "us", "o", "i", "atara", "ankara", "oxos", "upol", "ol", "eq"};
 
 
-	int selectorOne = modernRandomWithLimits(0, navn_del_en.size() - 1);
-	int selectorTwo = modernRandomWithLimits(0, navn_del_to.size() - 1);
-	int selectorThree = modernRandomWithLimits(0, navn_del_tre.size() - 1);
+	int selectorOne = modernRandomWithLimits(0, (int)name_first_part.size() - 1);
+	int selectorTwo = modernRandomWithLimits(0, (int)name_second_part.size() - 1);
+	int selectorThree = modernRandomWithLimits(0, (int)name_third_part.size() - 1);
 
 	std::string number = "";
 
 	if (modernRandomWithLimits(0, 100) < 20) number = " " + convertDoubleToString(modernRandomWithLimits(100, 999));
 
 
-	std::string navn = navn_del_en[selectorOne] + navn_del_to[selectorTwo] + navn_del_tre[selectorThree] + number;
+	std::string name = name_first_part[selectorOne] + name_second_part[selectorTwo] + name_third_part[selectorThree] + number;
 
-	return navn;
+	return name;
 }
 
 Planet::GoldilockInfo Planet::getGoldilockInfo() const noexcept

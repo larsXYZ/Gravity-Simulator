@@ -826,7 +826,7 @@ void Space::updateInfoBox()
 
 void Space::initSetup()
 {
-	simInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
+	simInfo->getVerticalScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
 	simInfo->setSize(180, 110);
 	simInfo->setPosition(5, 5);
 	simInfo->setTextSize(14);
@@ -850,7 +850,7 @@ void Space::initSetup()
 	editObjectCheckBox->setSize(14, 14);
 	editObjectCheckBox->setVisible(true);
 
-	newPlanetInfo->setVerticalScrollbarPolicy(tgui::Scrollbar::Policy::Never);
+	newPlanetInfo->getVerticalScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
 	newPlanetInfo->setSize(180, 32);
 	newPlanetInfo->setPosition(5, tgui::bindBottom(functions) + 2 * UI_SEPERATION_DISTANCE);
 	newPlanetInfo->setTextSize(14);
@@ -960,7 +960,9 @@ void Space::initSetup()
 	rt.display();
 	optionsButtonTexture = rt.getTexture();
 
-	optionsButton->setImage(optionsButtonTexture);
+	tgui::Texture t;
+	t.loadFromPixelData(optionsButtonTexture.getSize(), optionsButtonTexture.copyToImage().getPixelsPtr());
+	optionsButton->setImage(t);
 	optionsButton->setSize(21, 21);
 	optionsButton->setPosition("100% - 30", "100% - 30");
 	optionsButton->getRenderer()->setBackgroundColor(sf::Color::Transparent);

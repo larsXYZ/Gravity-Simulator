@@ -14,9 +14,9 @@ private:
 	//PHYSICAL
 	pType planetType;
 
-	//ATMOSPHERE
+		//ATMOSPHERE
 	double atmoCur = 0;
-	double atmoPot = modernRandomWithLimits(0, maxAtmo);
+	double atmoPot = modernRandomWithLimits(0, (int)maxAtmo);
 	int numAtmoLines;
 	std::vector<int> atmoLinesBrightness;
 	sf::Color atmoColor = sf::Color(modernRandomWithLimits(0, 170), modernRandomWithLimits(0, 170), modernRandomWithLimits(0, 170));
