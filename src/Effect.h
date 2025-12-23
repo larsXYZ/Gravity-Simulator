@@ -3,6 +3,7 @@
 #include <random>
 #include "sim_objects/planet.h"
 #include "CONSTANTS.h"
+#include "HeatSim.h"
 
 class Effect
 {
@@ -31,7 +32,7 @@ public:
 	int getID();
 	int getAge(double t);
 	void move(int t);
-	int levetidmax();
+	int maxLifeTime();
 	void setVel(sf::Vector2f a);
 
 	int modernRandomWithLimits(int min, int max)
@@ -80,7 +81,7 @@ public:
 			w.draw(vertexArr);
 		}
 
-        float life_ratio = (float)getAge(0) / levetidmax();
+        float life_ratio = (float)getAge(0) / maxLifeTime();
         float expansion = getsize() * life_ratio;
 
 		// Main Body - Layered
@@ -134,5 +135,37 @@ public:
 	bool killMe()
 	{
 		return destroyme;
+	}
+};
+
+class StarshineFade : public Effect
+{
+private:
+	sf::Color color;
+	double long_range_luminosity;
+	double short_range_luminosity;
+
+public:
+	StarshineFade(sf::Vector2f p, sf::Vector2f v, sf::Color col, double lr_lum, double sr_lum, int l)
+		: Effect(p, 0, 0, v, l), color(col), long_range_luminosity(lr_lum), short_range_luminosity(sr_lum)
+	{}
+
+	void render(sf::RenderWindow& w)
+	{
+		float life_ratio = (float)getAge(0) / maxLifeTime();
+		if (life_ratio >= 1.0f) return;
+
+		sf::Color col = color;
+		float fade = 1.0f - life_ratio;
+
+		// Fading long range light
+		sf::Color lr_col = col;
+		lr_col.a = static_cast<sf::Uint8>(50 * fade);
+		render_shine(w, getpos(), lr_col, long_range_luminosity);
+
+		// Fading short range light
+		sf::Color sr_col = col;
+		sr_col.a = static_cast<sf::Uint8>(250 * std::max(0.f,(1.f - 5.f*life_ratio)));
+		render_shine(w, getpos(), sr_col, short_range_luminosity);
 	}
 };

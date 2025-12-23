@@ -36,6 +36,11 @@ void Space::addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l)
 	explosions.push_back(Explosion(p, s, 0, v, l));
 }
 
+void Space::addStarshineFade(sf::Vector2f p, sf::Vector2f v, sf::Color col, double lr_lum, double sr_lum, int l)
+{
+	starshine_fades.push_back(StarshineFade(p, v, col, lr_lum, sr_lum, l));
+}
+
 void Space::addParticle(sf::Vector2f p,  sf::Vector2f v, double s, double lifespan, double initial_temp)
 {
 	particles->add_particle(p, v, s, curr_time+lifespan, initial_temp);
@@ -514,6 +519,15 @@ void Space::removeExplosion(int ind)
 	explosions.pop_back();
 }
 
+void Space::removeStarshineFade(int ind)
+{
+	if (ind >= (int)starshine_fades.size() || ind < 0) return;
+
+	auto it = starshine_fades.begin() + ind;
+	*it = std::move(starshine_fades.back());
+	starshine_fades.pop_back();
+}
+
 void Space::removeSmoke(int ind)
 {
 	particles->clear();
@@ -524,6 +538,7 @@ void Space::full_reset(sf::View& view, const sf::RenderWindow& window)
 	planets.clear();
 	pending_planets.clear();
 	explosions.clear();
+	starshine_fades.clear();
 	particles->clear();
 	trail.clear();
 	bound = Bound();
@@ -543,6 +558,14 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 
 	if (match == planets.end())
 		return {};
+
+	if (planet.getType() == SMALLSTAR || planet.getType() == STAR || planet.getType() == BIGSTAR)
+	{
+		sf::Color col = planet.getStarCol();
+		const auto long_range_luminosity = 30 * sqrt(planet.fusionEnergy());
+		const auto short_range_luminosity = 1.5 * planet.getRadius();
+		addStarshineFade(planet.getPosition(), planet.getVelocity(), col, long_range_luminosity, short_range_luminosity, STARSHINE_FADE_LIFETIME);
+	}
 
 	if (!RocheLimit::hasMinimumBreakupSize(match->getMass()))
 		return {};
@@ -619,6 +642,14 @@ void Space::explodePlanet(Planet planet)
 	const auto size = 15.0 * planet.getRadius();
 
 	addExplosion(original_position, size, original_velocity, lifetime);
+
+	if (planet.getType() == SMALLSTAR || planet.getType() == STAR || planet.getType() == BIGSTAR)
+	{
+		sf::Color col = planet.getStarCol();
+		const auto long_range_luminosity = 30 * sqrt(planet.fusionEnergy());
+		const auto short_range_luminosity = 1.5 * planet.getRadius();
+		addStarshineFade(planet.getPosition(), planet.getVelocity(), col, long_range_luminosity, short_range_luminosity, STARSHINE_FADE_LIFETIME);
+	}
 
 	//Fast fragments
 	int particle_count = static_cast<int>(planet.getRadius() * 10.0);
@@ -1197,14 +1228,33 @@ void Space::drawEffects(sf::RenderWindow &window)
 	int inc = 1;
 	if (timestep == 0) inc = 0;
 
-	for(size_t i = 0; i < explosions.size(); i++)
+	for(size_t i = 0; i < explosions.size(); )
 	{
 		explosions[i].move(timestep);
 
-		if (explosions[i].getAge(inc) < explosions[i].levetidmax()) explosions[i].render(window);
+		if (explosions[i].getAge(inc) < explosions[i].maxLifeTime()) 
+		{
+			explosions[i].render(window);
+			i++;
+		}
 		else
 		{
 			removeExplosion(i);
+		}
+	}
+
+	//STARSHINE FADES
+	for (size_t i = 0; i < starshine_fades.size(); )
+	{
+		starshine_fades[i].move(timestep);
+		if (starshine_fades[i].getAge(inc) < starshine_fades[i].maxLifeTime())
+		{
+			starshine_fades[i].render(window);
+			i++;
+		}
+		else
+		{
+			removeStarshineFade(i);
 		}
 	}
 	
@@ -1212,10 +1262,14 @@ void Space::drawEffects(sf::RenderWindow &window)
 	//particles->render_all(window);
 
 	//TRAILS
-	for(size_t i = 0; i < trail.size(); i++)
+	for(size_t i = 0; i < trail.size(); )
 	{
 		trail[i].move(timestep);
-		if (trail[i].getAge(0) < trail[i].levetidmax() && !trail[i].killMe()) trail[i].render(window);
+		if (trail[i].getAge(0) < trail[i].maxLifeTime() && !trail[i].killMe())
+		{
+			trail[i].render(window);
+			i++;
+		}
 		else
 		{
 			removeTrail(i);

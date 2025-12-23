@@ -55,6 +55,7 @@ class Space
 	std::vector<Planet> pending_planets;
 	std::unique_ptr<IParticleContainer> particles;
 	std::vector<Explosion> explosions;
+	std::vector<StarshineFade> starshine_fades;
 	std::vector<Trail> trail;
 	std::vector<Missile> missiles;
 	Bound bound;
@@ -91,6 +92,7 @@ public:
 	void flushPlanets();
 	void removePlanet(const int id);
 	void removeExplosion(int ind);
+	void removeStarshineFade(int ind);
 	void removeSmoke(int ind);
 	void removeTrail(int ind);
 	void full_reset(sf::View& view, const sf::RenderWindow & window);
@@ -100,6 +102,7 @@ public:
 
 	void randomPlanets(int totmass, int antall, double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
+	void addStarshineFade(sf::Vector2f p, sf::Vector2f v, sf::Color col, double lr_lum, double sr_lum, int l);
 	void addParticle(sf::Vector2f p, sf::Vector2f v, double s, double lifespan, double initial_temp = 2000.0);
 	void addTrail(sf::Vector2f p, int l);
 	void giveRings(const Planet & planet, int inner, int outer);
