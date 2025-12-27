@@ -1,5 +1,6 @@
 #include "object_info.h"
 
+#include <iostream>
 #include "Space.h"
 #include "roche_limit.h"
 #include <iomanip>
@@ -14,7 +15,12 @@ static std::string d2s(double d, int precision = 2) {
 
 ObjectInfo::ObjectInfo()
 {
-	font.loadFromFile("sansation.ttf");
+    std::cout << "ObjectInfo: Loading font..." << std::endl;
+	if (!font.loadFromFile("sansation.ttf")) {
+        std::cerr << "ObjectInfo: Failed to load sansation.ttf" << std::endl;
+    } else {
+        std::cout << "ObjectInfo: Font loaded successfully" << std::endl;
+    }
 	text.setFont(font);
 }
 

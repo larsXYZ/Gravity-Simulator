@@ -60,6 +60,32 @@ class Space
 	std::vector<Missile> missiles;
 	Bound bound;
 	
+	struct HotPlanet
+	{
+		float x, y;
+		double mass;
+		double radius;
+		int id;
+		pType type;
+		double strongestAttractorMag;
+		int strongestAttractorId;
+		double accumulatedHeat;
+		double thermalEnergyOutput;
+		double g_mass;
+		double radius_sq;
+	};
+	std::vector<HotPlanet> hot_planets;
+	std::vector<sf::Vector2f> accelerations;
+
+	struct CollisionEvent {
+		int planetA_idx;
+		int planetB_idx;
+	};
+
+	struct RocheEvent {
+		int planet_idx;
+	};
+
 	tgui::TextArea::Ptr simInfo = std::make_shared<tgui::TextArea>();
 	tgui::Label::Ptr toolInfo = std::make_shared<tgui::Label>();
 	tgui::TextArea::Ptr newPlanetInfo = std::make_shared<tgui::TextArea>();

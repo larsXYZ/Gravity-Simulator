@@ -19,6 +19,20 @@ set(SFML_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SFML/)
 
 set(TGUI_BACKEND "SFML_GRAPHICS")
 file(GLOB_RECURSE SOURCE "src/*")
+list(FILTER SOURCE EXCLUDE REGEX "src/benchmark.cpp$")
+list(FILTER SOURCE EXCLUDE REGEX "src/debug_heat.cpp$")
+
+find_package(OpenMP)
+
+# Define source for Benchmark
+file(GLOB_RECURSE BENCHMARK_SOURCE "src/*")
+list(FILTER BENCHMARK_SOURCE EXCLUDE REGEX "src/main.cpp$")
+list(FILTER BENCHMARK_SOURCE EXCLUDE REGEX "src/debug_heat.cpp$")
+
+# Define source for HeatDebug
+file(GLOB_RECURSE HEATDEBUG_SOURCE "src/*")
+list(FILTER HEATDEBUG_SOURCE EXCLUDE REGEX "src/main.cpp$")
+list(FILTER HEATDEBUG_SOURCE EXCLUDE REGEX "src/benchmark.cpp$")
 
 if(MSVC)
     add_compile_options($<$<CONFIG:Debug>:/ZI>)
@@ -34,6 +48,11 @@ if(MSVC)
     add_link_options($<$<CONFIG:Release>:/LTCG>)      # Link Time Code Generation
     add_link_options($<$<CONFIG:Release>:/OPT:REF>)   # Eliminate Unreferenced Data
     add_link_options($<$<CONFIG:Release>:/OPT:ICF>)   # Enable COMDAT Folding
+
+    if(OpenMP_CXX_FOUND)
+        add_compile_options($<$<CONFIG:Release>:${OpenMP_CXX_FLAGS}>)
+        add_compile_options($<$<CONFIG:Debug>:${OpenMP_CXX_FLAGS}>)
+    endif()
 endif()
 
 # Detect the target architecture
@@ -64,6 +83,58 @@ target_link_libraries(Gravity-Simulator sfml-graphics
 					sfml-audio
 					tgui
 					${SFML_DEPENDENCIES})
+
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(Gravity-Simulator OpenMP::OpenMP_CXX)
+endif()
+
+# Benchmark executable
+add_executable(Benchmark ${BENCHMARK_SOURCE})
+target_link_libraries(Benchmark sfml-graphics 
+					sfml-window
+					sfml-system
+					sfml-audio
+					tgui
+					${SFML_DEPENDENCIES})
+
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(Benchmark OpenMP::OpenMP_CXX)
+endif()
+
+set_target_properties(Benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# HeatDebug executable
+add_executable(HeatDebug ${HEATDEBUG_SOURCE})
+target_link_libraries(HeatDebug sfml-graphics 
+					sfml-window
+					sfml-system
+					sfml-audio
+					tgui
+					${SFML_DEPENDENCIES})
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(HeatDebug OpenMP::OpenMP_CXX)
+endif()
+set_target_properties(HeatDebug PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_custom_command(TARGET Benchmark POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_BINARY_DIR}/SFML/lib/$<CONFIG> $<TARGET_FILE_DIR:Benchmark>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_BINARY_DIR}/TGUI/lib/$<CONFIG> $<TARGET_FILE_DIR:Benchmark>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:Benchmark>/resources
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resources/sansation.ttf $<TARGET_FILE_DIR:Benchmark>/sansation.ttf
+)
+
+add_custom_command(TARGET HeatDebug POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_BINARY_DIR}/SFML/lib/$<CONFIG> $<TARGET_FILE_DIR:HeatDebug>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_BINARY_DIR}/TGUI/lib/$<CONFIG> $<TARGET_FILE_DIR:HeatDebug>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:HeatDebug>/resources
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resources/sansation.ttf $<TARGET_FILE_DIR:HeatDebug>/sansation.ttf
+)
 
 # Set the output directory for binaries
 set_target_properties(Gravity-Simulator  PROPERTIES

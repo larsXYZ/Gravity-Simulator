@@ -131,122 +131,219 @@ void Space::update()
 
 	particles->update(planets, bound, timestep, curr_time, gravity_enabled, heat_enabled);
 
-	for (int i = 0; i < planets.size(); i++)
+	const size_t n_planets = planets.size();
+	if (n_planets == 0) return;
+
+	// Prepare Hot Data and Accelerations
+	if (hot_planets.size() < n_planets) hot_planets.resize(n_planets);
+	if (accelerations.size() < n_planets) accelerations.resize(n_planets);
+
+	for (size_t i = 0; i < n_planets; ++i)
 	{
-		Planet * thisPlanet = &planets[i];
+		hot_planets[i].x = planets[i].getPosition().x;
+		hot_planets[i].y = planets[i].getPosition().y;
+		hot_planets[i].mass = planets[i].getMass();
+		hot_planets[i].radius = planets[i].getRadius();
+		hot_planets[i].radius_sq = hot_planets[i].radius * hot_planets[i].radius;
+		hot_planets[i].g_mass = G * hot_planets[i].mass;
+		hot_planets[i].id = planets[i].getId();
+		hot_planets[i].type = planets[i].getType();
+		hot_planets[i].thermalEnergyOutput = (heat_enabled && planets[i].emitsHeat()) ? planets[i].giveThermalEnergy(1) : 0.0;
+		hot_planets[i].strongestAttractorMag = 0;
+		hot_planets[i].strongestAttractorId = -1;
+		hot_planets[i].accumulatedHeat = 0;
+		
+		accelerations[i] = planets[i].getAcceleration();
+	}
 
-		if (thisPlanet->isMarkedForRemoval())
-			continue;
+	// --- PHASE 1: FIRST KICK + DRIFT ---
+	const float half_dt = timestep * 0.5f;
+	const float dt = timestep;
 
-		if (thisPlanet->disintegrationGraceTimeOver(curr_time))
-			thisPlanet->clearIgnores();
+	#pragma omp parallel for if(n_planets > 50)
+	for (int i = 0; i < (int)n_planets; ++i)
+	{
+		if (planets[i].isMarkedForRemoval()) continue;
 
-		thisPlanet->resetAttractorMeasure();
-
-		Acceleration2D acc_sum_1;
-		for (auto & otherPlanet : planets)
+		if (gravity_enabled)
 		{
-			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
-				continue;
+			sf::Vector2f vel = planets[i].getVelocity();
+			vel.x += accelerations[i].x * half_dt;
+			vel.y += accelerations[i].y * half_dt;
+			planets[i].setVelocity(vel);
+		}
+		
+		sf::Vector2f pos = planets[i].getPosition();
+		pos.x += planets[i].getVelocity().x * dt;
+		pos.y += planets[i].getVelocity().y * dt;
+		planets[i].setPosition(pos);
 
-			DistanceCalculationResult distance = PhysicsUtils::calculateDistance(*thisPlanet, otherPlanet);
-			const auto acceleration_magnitude = PhysicsUtils::accumulate_acceleration(distance, acc_sum_1, otherPlanet);
+		hot_planets[i].x = pos.x;
+		hot_planets[i].y = pos.y;
+	}
 
-			if (thisPlanet->canDisintegrate(curr_time) &&
-				RocheLimit::isBreached(distance.dist, distance.rad_dist, thisPlanet->getMass(), otherPlanet.getMass(), otherPlanet.getType() == pType::BLACKHOLE))
+	// --- PHASE 2: BIG UNIFIED PASS (Gravity, Heat, Collisions, Roche) ---
+	std::vector<CollisionEvent> collision_events;
+	std::vector<RocheEvent> roche_events;
+
+	#pragma omp parallel if(n_planets > 50)
+	{
+		#pragma omp for schedule(static)
+		for (int i = 0; i < (int)n_planets; ++i)
+		{
+			if (planets[i].isMarkedForRemoval()) continue;
+
+			double ax = 0.0;
+			double ay = 0.0;
+			double max_force = 0.0;
+			int max_id = -1;
+			double total_heat = 0.0;
+
+			const float xi = hot_planets[i].x;
+			const float yi = hot_planets[i].y;
+			const double mi = hot_planets[i].mass;
+			const double ri = hot_planets[i].radius;
+			const double ri2 = hot_planets[i].radius_sq;
+			const int id_i = hot_planets[i].id;
+			const bool can_disintegrate_i = planets[i].canDisintegrate(curr_time);
+			const bool has_ignores_i = !planets[i].ignore_ids.empty();
+
+			for (size_t j = 0; j < n_planets; ++j)
 			{
-				disintegratePlanet(*thisPlanet);
-				thisPlanet = &planets[i]; /* Risking invalidation due to added planets */
-				break;
-			}
+				if (i == (int)j || planets[j].isMarkedForRemoval()) continue;
 
-			if (distance.dist < distance.rad_dist)
-			{
-				if (thisPlanet->getMass() <= otherPlanet.getMass())
-				{
-					const auto collision_pos = sf::Vector2f(thisPlanet->getPosition().x, thisPlanet->getPosition().y);
-					const auto collision_vel = sf::Vector2f(thisPlanet->getVelocity().x, thisPlanet->getVelocity().y);
-					const auto collision_radius = thisPlanet->getRadius();
-					const auto collision_temp = thisPlanet->getTemp();
+				if (has_ignores_i) {
+					if (planets[i].isIgnoring(hot_planets[j].id)) continue;
+				}
 
-					thisPlanet->becomeAbsorbedBy(otherPlanet);
+				const double dx = (double)hot_planets[j].x - xi;
+				const double dy = (double)hot_planets[j].y - yi;
+				const double dist2 = std::max(dx*dx + dy*dy, 0.01);
+				const double dist = std::sqrt(dist2);
+				const double rad_dist = ri + hot_planets[j].radius;
 
-					addExplosion(collision_pos, 
-								4 * collision_radius, 
-								sf::Vector2f(collision_vel.x * 0.5, collision_vel.y * 0.5), 
-								sqrt(otherPlanet.getMass()));
+				// Gravity
+				if (gravity_enabled) {
+					const double g_mj = hot_planets[j].g_mass;
+					const double factor = g_mj / (dist2 * dist);
+					ax += factor * dx;
+					ay += factor * dy;
 
-					// Particle generation
-					// Non-linear relationship: fewer particles for small bodies
-					const size_t n_particles_to_add = static_cast<size_t>(20 * collision_radius * std::sqrt(collision_radius));
-					const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
-						static_cast<size_t>(0), n_particles_to_add);
-
-					for (size_t k = 0; k < n_dust_particles; k++)
-					{
-						const auto scatter_pos = collision_pos + random_vector(collision_radius);
-						sf::Vector2f rnd_vel = random_vector(30.0);
-						rnd_vel *= static_cast<float>(CREATEDUSTSPEEDMULT);
-						const auto scatter_vel = collision_vel + rnd_vel;
-						const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
-						
-						double p_temp = collision_temp;
-						if (uniform_random(0, 100) < 15) p_temp *= 2.5; // 15% of particles are much hotter/glowing
-
-						addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+					const double force_mag = g_mj / dist2;
+					if (force_mag > max_force) {
+						max_force = force_mag;
+						max_id = hot_planets[j].id;
 					}
+				}
 
-					break;
+				// Heat
+				if (heat_enabled && hot_planets[j].thermalEnergyOutput > 0) {
+					const auto heat = tempConstTwo * ri2 * hot_planets[j].thermalEnergyOutput / std::max(dist, 1.0);
+					total_heat += heat;
+				}
+
+				// Roche Limit
+				if (can_disintegrate_i && 
+					RocheLimit::isBreached(dist, rad_dist, mi, hot_planets[j].mass, hot_planets[j].type == pType::BLACKHOLE))
+				{
+					#pragma omp critical(events)
+					roche_events.push_back({i});
+					break; 
+				}
+
+				// Collision
+				if (dist < rad_dist)
+				{
+					if (mi <= hot_planets[j].mass)
+					{
+						#pragma omp critical(events)
+						collision_events.push_back({i, (int)j});
+						break; // Planet i is absorbed
+					}
 				}
 			}
 
-			if (heat_enabled && otherPlanet.emitsHeat())
-			{
-				const auto heat = tempConstTwo * thisPlanet->getRadius() * thisPlanet->getRadius() * otherPlanet.giveThermalEnergy(timestep) / std::max(distance.dist, 1.0);
-				thisPlanet->absorbHeat(heat, timestep);
-			}
-
-			if (acceleration_magnitude > thisPlanet->getStrongestAttractorStrength())
-			{
-				thisPlanet->setStrongestAttractorStrength(acceleration_magnitude);
-				thisPlanet->setStrongestAttractorIdRef(otherPlanet.getId());
-			}
+			accelerations[i].x = static_cast<float>(ax);
+			accelerations[i].y = static_cast<float>(ay);
+			hot_planets[i].strongestAttractorMag = max_force;
+			hot_planets[i].strongestAttractorId = max_id;
+			hot_planets[i].accumulatedHeat = total_heat;
 		}
+	}
 
-		if (thisPlanet->isMarkedForRemoval())
-			continue;
+	// --- PHASE 3: SECOND KICK + SYNC ---
+	#pragma omp parallel for if(n_planets > 50)
+	for (int i = 0; i < (int)n_planets; ++i)
+	{
+		if (planets[i].isMarkedForRemoval()) continue;
 		
-		if (!gravity_enabled)
-		{
-			acc_sum_1.x = 0.f;
-			acc_sum_1.y = 0.f;
+		if (gravity_enabled) {
+			sf::Vector2f vel = planets[i].getVelocity();
+			vel.x += accelerations[i].x * half_dt;
+			vel.y += accelerations[i].y * half_dt;
+			planets[i].setVelocity(vel);
+		}
+		
+		planets[i].setAcceleration(accelerations[i]);
+		planets[i].setStrongestAttractorStrength(hot_planets[i].strongestAttractorMag);
+		planets[i].setStrongestAttractorIdRef(hot_planets[i].strongestAttractorId);
+		
+		if (heat_enabled) {
+			planets[i].absorbHeat(hot_planets[i].accumulatedHeat * timestep, (int)timestep);
 		}
 
-		/* Integrate (first part) (Leapfrog) */
-		/* https://en.wikipedia.org/wiki/Leapfrog_integration */
+		if (planets[i].disintegrationGraceTimeOver(curr_time))
+			planets[i].clearIgnores();
+	}
 
-		thisPlanet->setPosition({ thisPlanet->getPosition().x + thisPlanet->getVelocity().x * timestep + 0.5f * acc_sum_1.x * timestep * timestep,
-									thisPlanet->getPosition().y + thisPlanet->getVelocity().y * timestep + 0.5f * acc_sum_1.y * timestep * timestep });
+	// --- PHASE 4: PROCESS EVENTS (Serial) ---
+	// Sort events by index to avoid duplicate processing if multiple things happened to same planet
+	// Though Roche and Collision both mark for removal, so findPlanetPtr check is enough.
 
-		Acceleration2D acc_sum_2;
-		for (auto& otherPlanet : planets)
-		{
-			if (isIgnoringOtherPlanet(*thisPlanet, otherPlanet))
-				continue;
-
-			DistanceCalculationResult distance = PhysicsUtils::calculateDistance(*thisPlanet, otherPlanet);
-			PhysicsUtils::accumulate_acceleration(distance, acc_sum_2, otherPlanet);
+	for (const auto& ev : roche_events) {
+		if (ev.planet_idx < (int)planets.size() && !planets[ev.planet_idx].isMarkedForRemoval()) {
+			disintegratePlanet(planets[ev.planet_idx]);
 		}
+	}
 
-		if (!gravity_enabled)
+	for (const auto& ev : collision_events) {
+		if (ev.planetA_idx < (int)planets.size() && ev.planetB_idx < (int)planets.size() &&
+			!planets[ev.planetA_idx].isMarkedForRemoval() && !planets[ev.planetB_idx].isMarkedForRemoval()) 
 		{
-			acc_sum_2.x = 0.f;
-			acc_sum_2.y = 0.f;
-		}
+			Planet& pA = planets[ev.planetA_idx];
+			Planet& pB = planets[ev.planetB_idx];
 
-		/* Integrate (second part) (Leapfrog) */
-		thisPlanet->setVelocity({ thisPlanet->getVelocity().x + 0.5f * (acc_sum_1.x + acc_sum_2.x) * timestep,
-									thisPlanet->getVelocity().y + 0.5f * (acc_sum_1.y + acc_sum_2.y) * timestep });
+			const auto collision_pos = pA.getPosition();
+			const auto collision_vel = pA.getVelocity();
+			const auto collision_radius = (float)pA.getRadius();
+			const auto collision_temp = pA.getTemp();
+
+			pA.becomeAbsorbedBy(pB);
+
+			addExplosion(collision_pos, 
+						4 * collision_radius, 
+						sf::Vector2f(collision_vel.x * 0.5f, collision_vel.y * 0.5f), 
+						(int)sqrt(pB.getMass()));
+
+			// Particle generation
+			const size_t n_particles_to_add = static_cast<size_t>(20 * collision_radius * std::sqrt(collision_radius));
+			const auto n_dust_particles = std::clamp(MAX_N_DUST_PARTICLES - particles->size(),
+				static_cast<size_t>(0), n_particles_to_add);
+
+			for (size_t k = 0; k < n_dust_particles; k++)
+			{
+				const auto scatter_pos = collision_pos + random_vector(collision_radius);
+				sf::Vector2f rnd_vel = random_vector(30.0);
+				rnd_vel *= static_cast<float>(CREATEDUSTSPEEDMULT);
+				const auto scatter_vel = collision_vel + rnd_vel;
+				const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
+				
+				double p_temp = collision_temp;
+				if (uniform_random(0, 100) < 15) p_temp *= 2.5; 
+
+				addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
+			}
+		}
 	}
 
 	std::erase_if(planets, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
@@ -259,7 +356,7 @@ void Space::update()
 	{
 		if (planets[i].getLife().willExp())
 		{
-			int index = findBestPlanet(i);
+			int index = findBestPlanet((int)i);
 			if (index != -1) 
 				planets[index].colonize(planets[i].getLife().getId(), planets[i].getLife().getCol(), planets[i].getLife().getDesc(), planets[i].getLife().getCivName());
 		}
@@ -309,7 +406,7 @@ void Space::update()
 											 planet.gety() + sin(angle) * (planet.getRadius() + 2));
 						
 						m.current_speed = MISSILE_START_SPEED;
-						m.vel = sf::Vector2f(cos(angle) * m.current_speed, sin(angle) * m.current_speed);
+						m.vel = sf::Vector2f((float)cos(angle) * (float)m.current_speed, (float)sin(angle) * (float)m.current_speed);
 						m.life = MISSILE_LIFESPAN;
 						m.owner_id = planet.getLife().getId();
 						m.color = planet.getLife().getCol();
@@ -323,7 +420,7 @@ void Space::update()
 	for (auto it = missiles.begin(); it != missiles.end(); )
 	{
 		bool destroyed = false;
-		it->life -= timestep;
+		it->life -= (int)timestep;
 		if (it->life <= 0)
 		{
 			destroyed = true;
@@ -347,13 +444,13 @@ void Space::update()
 
 				double turn = std::clamp(diff, -MISSILE_TURN_SPEED * timestep, MISSILE_TURN_SPEED * timestep);
 				double new_angle = current_angle + turn;
-				it->vel = sf::Vector2f(cos(new_angle) * it->current_speed, sin(new_angle) * it->current_speed);
+				it->vel = sf::Vector2f((float)cos(new_angle) * (float)it->current_speed, (float)sin(new_angle) * (float)it->current_speed);
 			}
 			else
 			{
 				// Maintain velocity if ship is gone
 				double current_angle = atan2(it->vel.y, it->vel.x);
-				it->vel = sf::Vector2f(cos(current_angle) * it->current_speed, sin(current_angle) * it->current_speed);
+				it->vel = sf::Vector2f((float)cos(current_angle) * (float)it->current_speed, (float)sin(current_angle) * (float)it->current_speed);
 			}
 
 			it->pos += it->vel * (float)timestep;
@@ -361,8 +458,8 @@ void Space::update()
 			// Collision with planets
 			for (auto& planet : planets)
 			{
-				double dx = planet.getx() - it->pos.x;
-				double dy = planet.gety() - it->pos.y;
+				double dx = (double)planet.getx() - it->pos.x;
+				double dy = (double)planet.gety() - it->pos.y;
 				if (dx * dx + dy * dy < planet.getRadius() * planet.getRadius())
 				{
 					destroyed = true;
@@ -377,8 +474,8 @@ void Space::update()
 			// Collision with ship
 			if (!destroyed && ship.isExist())
 			{
-				double dx = ship.getpos().x - it->pos.x;
-				double dy = ship.getpos().y - it->pos.y;
+				double dx = (double)ship.getpos().x - it->pos.x;
+				double dy = (double)ship.getpos().y - it->pos.y;
 				if (dx * dx + dy * dy < 15 * 15) // Rough ship hitbox
 				{
 					destroyed = true;
@@ -392,8 +489,8 @@ void Space::update()
 			{
 				for (auto const& proj : ship.projectiles)
 				{
-					double dx = proj.pos.x - it->pos.x;
-					double dy = proj.pos.y - it->pos.y;
+					double dx = (double)proj.pos.x - it->pos.x;
+					double dy = (double)proj.pos.y - it->pos.y;
 					if (dx * dx + dy * dy < 10 * 10)
 					{
 						destroyed = true;

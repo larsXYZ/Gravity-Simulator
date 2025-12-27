@@ -1,0 +1,22 @@
+Work done so far on Gravity-Simulator optimization:
+
+1. Performance Benchmarking:
+   - Created a standalone benchmark utility in `src/benchmark.cpp` to measure the performance of the simulation logic independently of the main GUI.
+   - Implemented CLI parameter parsing for the benchmark:
+     - `--objects` / `-n`: Set the number of planets (default: 250).
+     - `--iterations` / `-i`: Set the number of simulation steps (default: 25).
+   - Added a real-time progress indicator to the benchmark CLI.
+   - Integrated the `Benchmark` target into `CMakeLists.txt`, including automated deployment of SFML/TGUI DLLs and resource files (fonts) for both Debug and Release configurations.
+   - Resolved initialization hurdles (font loading paths and TGUI backend assertions) by providing a dummy SFML context for the benchmark.
+
+2. Infrastructure & Environment:
+   - Configured and verified build pipelines for both Debug and Release modes using CMake.
+   - Successfully ran baseline benchmarks to establish performance metrics (e.g., ~136ms per iteration for 250 objects in Debug mode).
+
+3. Task Analysis:
+   - Reviewed `task.txt` and identified key optimization areas: Leapfrog integration (Kick-Drift-Kick), cache locality (SoA/HotData), branching reduction, and multi-threading (OpenMP).
+
+Next Steps:
+- Implement "Kick-Drift-Kick" single-pass integration in `Space::update`.
+- Introduce "HotData" structures to improve cache locality during the gravity loop.
+- Investigate OpenMP integration for parallelizing the O(N^2) force calculations.

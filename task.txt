@@ -1,0 +1,68 @@
+================================================================================
+N-BODY SIMULATION OPTIMIZATION SUGGESTIONS (FOR N < 500)
+================================================================================
+
+1. RESTRUCTURE INTEGRATION (REDUCE O(N^2) PASSES)
+-------------------------------------------------
+Currently, your update() function performs two full O(N^2) passes to satisfy 
+Leapfrog integration. For 500 objects, the bottleneck isn't just math; 
+it's memory bandwidth. 
+* Suggestion: Use a single-pass "Kick-Drift-Kick" approach. Calculate 
+  accelerations once, update velocities by half-step, update positions, 
+  then update velocities by the remaining half-step. 
+* Impact: Cuts your most expensive loops in half immediately.
+
+2. IMPLEMENT "HOT DATA" EXTRACTION (CACHE LOCALITY)
+---------------------------------------------------
+Your Planet object contains heavy data (strings, GUI state, Life objects) 
+. Iterating over std::vector<Planet> forces the CPU to load "cold" 
+data into the cache just to reach the "hot" physics variables.
+* Suggestion: Before the gravity loop, copy only Position, Velocity, Mass, 
+  and Radius into a contiguous "HotBody" struct or separate arrays (SoA).
+* Implementation:
+    struct HotBody { float x, y, mass, radius; int id; };
+    std::vector<HotBody> hotPlanets; // Reserve 500 entries
+* Impact: Drastically reduces cache misses and allows the CPU to use SIMD 
+  pre-fetching effectively.
+
+3. ELIMINATE BRANCHING IN THE INNER LOOP
+----------------------------------------
+Your inner loop contains Roche limit checks, disintegration logic, and 
+particle spawning. This "branchy" code prevents the CPU from 
+pipelining the gravity math.
+* Suggestion: Separate Physics from Logic. Use the gravity loop ONLY to 
+  accumulate forces. Store collision or disintegration "events" in a 
+  buffer (std::vector<Event>).
+* Impact: Processes the "heavy math" in a tight, predictable loop that 
+  can be easily parallelized.
+
+4. MULTI-THREADING (OPENMP)
+---------------------------
+Since your interactions are symmetric and independent, you can leverage 
+modern multi-core CPUs.
+* Suggestion: Add `#pragma omp parallel for` above your outer gravity loop.
+* Impact: On a 4-core or 8-core CPU, your 500-body simulation will see 
+  near-linear performance gains.
+
+5. FIXED TIMESTEP ACCUMULATOR
+-----------------------------
+Your simulation currently links physics updates directly to the frame rate 
+. If the frame rate drops, timestep increases, which can lead to 
+orbital instability or "tunneling" during collisions.
+* Suggestion: Implement a fixed-delta accumulator in runSim().
+    while (accumulator >= dt) {
+        update(dt);
+        accumulator -= dt;
+    }
+* Impact: Guaranteed orbital stability regardless of rendering performance.
+
+6. AVOID LOOKUP TABLES
+----------------------
+Do not use a lookup table for forces between object IDs. 
+* Reason: At N=500, a memory lookup (especially one that might result in 
+  a cache miss) is significantly slower than calculating gravity using 
+  CPU registers. 
+* Suggestion: Use the `for (j = i + 1; ...)` loop pattern to apply 
+  Newton's Third Law (F12 = -F21) without storing values in RAM.
+
+================================================================================
