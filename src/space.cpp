@@ -871,7 +871,7 @@ void Space::giveRings(const Planet & planet, int inner, int outer)
 		const double speed = sqrt(G*planet.getMass() / rad);
 
 		const auto pos = sf::Vector2f(planet.getPosition().x + cos(angle) * rad, planet.getPosition().y + sin(angle) * rad);
-		const auto vel = sf::Vector2f(speed * cos(angle + PI / 2.0) + planet.getVelocity().x, speed * sin(angle + PI / 2.0));
+		const auto vel = sf::Vector2f(speed * cos(angle + PI / 2.0) + planet.getVelocity().x, speed * sin(angle + PI / 2.0) + planet.getVelocity().y);
 		
 		particles->add_particle(pos, vel, 1, curr_time+2000000, 500.0);
 

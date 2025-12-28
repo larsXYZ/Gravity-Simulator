@@ -1,7 +1,8 @@
 #pragma once
 
 
-#include "SFML/Graphics/RenderWindow.hpp"
+#include <SFML/Graphics.hpp>
+#include <cmath>
 
 class IParticleContainer
 {
@@ -30,6 +31,10 @@ class DecimatedLegacyParticleContainer : public IParticleContainer
 	constexpr static size_t decimation_factor{ 4 };
 
 	std::array<std::vector<LegacyParticle>, decimation_factor> particles;
+	sf::VertexArray body_vertices{ sf::Quads };
+	sf::VertexArray glow_vertices{ sf::Quads };
+	sf::Texture circle_texture;
+	bool texture_initialized{ false };
 
 	size_t current_dec_simulation_target{ 0 };
 	void next_dec_simulation_target()
@@ -37,6 +42,28 @@ class DecimatedLegacyParticleContainer : public IParticleContainer
 		if (++current_dec_simulation_target >= decimation_factor)
 			current_dec_simulation_target = 0;
 	}
+
+    void init_texture()
+    {
+        sf::Image img;
+        img.create(32, 32);
+        for (unsigned int y = 0; y < 32; ++y)
+        {
+            for (unsigned int x = 0; x < 32; ++x)
+            {
+                float dx = x - 15.5f;
+                float dy = y - 15.5f;
+                float dist = std::sqrt(dx * dx + dy * dy);
+                float alpha = std::clamp(255.0f * (1.0f - dist / 16.0f), 0.0f, 255.0f);
+                // Squaring alpha for a nicer radial falloff
+                alpha = (alpha * alpha) / 255.0f;
+                img.setPixel(x, y, sf::Color(255, 255, 255, static_cast<sf::Uint8>(alpha)));
+            }
+        }
+        circle_texture.loadFromImage(img);
+        circle_texture.setSmooth(true);
+        texture_initialized = true;
+    }
 
 public:
 
@@ -137,9 +164,47 @@ public:
 
 	void render_all(sf::RenderWindow& window) override
 	{
-		for (auto& particle_vector : particles)
-			for (auto& particle : particle_vector)
-				particle.render(window);
+        if (!texture_initialized) init_texture();
+
+		body_vertices.clear();
+		glow_vertices.clear();
+
+		for (const auto& particle_vector : particles)
+		{
+			for (const auto& particle : particle_vector)
+			{
+				sf::Vector2f pos = particle.get_position();
+				float r = static_cast<float>(particle.get_radius());
+				sf::Color col = particle.get_color();
+
+				// Body Quad
+				body_vertices.append(sf::Vertex(sf::Vector2f(pos.x - r, pos.y - r), col, sf::Vector2f(0, 0)));
+				body_vertices.append(sf::Vertex(sf::Vector2f(pos.x + r, pos.y - r), col, sf::Vector2f(32, 0)));
+				body_vertices.append(sf::Vertex(sf::Vector2f(pos.x + r, pos.y + r), col, sf::Vector2f(32, 32)));
+				body_vertices.append(sf::Vertex(sf::Vector2f(pos.x - r, pos.y + r), col, sf::Vector2f(0, 32)));
+
+				// Heat Glow
+				double temp = particle.get_temp();
+				if (temp > 500.0)
+				{
+					double glow_scale = std::sqrt(temp - 500.0) / 30.0;
+					if (glow_scale > 0.1)
+					{
+						float gr = static_cast<float>(r * glow_scale);
+                        // Using higher alpha because the texture has falloff now
+						sf::Color glow_col(255, 255, 255, 120);
+
+						glow_vertices.append(sf::Vertex(sf::Vector2f(pos.x - gr, pos.y - gr), glow_col, sf::Vector2f(0, 0)));
+						glow_vertices.append(sf::Vertex(sf::Vector2f(pos.x + gr, pos.y - gr), glow_col, sf::Vector2f(32, 0)));
+						glow_vertices.append(sf::Vertex(sf::Vector2f(pos.x + gr, pos.y + gr), glow_col, sf::Vector2f(32, 32)));
+						glow_vertices.append(sf::Vertex(sf::Vector2f(pos.x - gr, pos.y + gr), glow_col, sf::Vector2f(0, 32)));
+					}
+				}
+			}
+		}
+
+		window.draw(glow_vertices, sf::RenderStates(&circle_texture));
+		window.draw(body_vertices, sf::RenderStates(&circle_texture));
 	}
 
 	void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp) override

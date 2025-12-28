@@ -339,6 +339,20 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		space.drawCivConnections(window, *target, true);
 	}
 
+	if (target->fusionEnergy() > 0)
+	{
+		const auto goldilock_info = target->getGoldilockInfo();
+
+		sf::CircleShape g(goldilock_info.min_rad);
+		g.setPointCount(100);
+		g.setPosition(sf::Vector2f(target->getx(), target->gety()));
+		g.setOrigin(goldilock_info.min_rad, goldilock_info.min_rad);
+		g.setOutlineThickness(goldilock_info.max_rad - goldilock_info.min_rad);
+		g.setFillColor(sf::Color(0, 0, 0, 0));
+		g.setOutlineColor(sf::Color(0, 200, 0, goldi_strength));
+		window.draw(g);
+	}
+
 	Planet* target_parent = space.findPlanetPtr(target->getStrongestAttractorId());
 	if (target_parent)
 	{
@@ -372,26 +386,12 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 			target->gety() + dist * sin(angleb));
 		window.draw(middle);
 		
-		if (target->getType() == SMALLSTAR || target->getType() == STAR || target->getType() == BIGSTAR)
-		{
-			double goldilock_inner_rad = (tempConstTwo * target->getRadius() * target->getRadius() * target->getTemp()) / inner_goldi_temp;
-			double goldilock_outer_rad = (tempConstTwo * target->getRadius() * target->getRadius() * target->getTemp()) / outer_goldi_temp;
-
-			sf::CircleShape g(goldilock_inner_rad);
-			g.setPointCount(60);
-			g.setPosition(sf::Vector2f(target->getx(), target->gety()));
-			g.setOrigin(goldilock_inner_rad, goldilock_inner_rad);
-			g.setOutlineThickness(goldilock_outer_rad - goldilock_inner_rad);
-			g.setFillColor(sf::Color(0, 0, 0, 0));
-			g.setOutlineColor(sf::Color(0, 200, 0, goldi_strength));
-			window.draw(g);
-		}
 		if (target_parent->fusionEnergy() > 0)
 		{
 			const auto goldilock_info = target_parent->getGoldilockInfo();
 
 			sf::CircleShape g(goldilock_info.min_rad);
-			g.setPointCount(60);
+			g.setPointCount(100);
 			g.setPosition(sf::Vector2f(target_parent->getx(), target_parent->gety()));
 			g.setOrigin(goldilock_info.min_rad, goldilock_info.min_rad);
 			g.setOutlineThickness(goldilock_info.max_rad - goldilock_info.min_rad);

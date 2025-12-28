@@ -71,6 +71,22 @@ int main(int argc, char* argv[]) {
         std::cout << "Time elapsed: " << elapsed.count() << " seconds" << std::endl;
         if (iterations > 0)
             std::cout << "Average time per iteration: " << (elapsed.count() / iterations) * 1000.0 << " ms" << std::endl;
+
+        std::cout << "Benchmarking rendering..." << std::endl;
+        auto start_render = std::chrono::high_resolution_clock::now();
+
+        for (int i = 0; i < iterations; ++i) {
+             dummy_window.clear();
+             space.drawDust(dummy_window);
+             dummy_window.display();
+        }
+
+        auto end_render = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed_render = end_render - start_render;
+
+        std::cout << "Render time elapsed: " << elapsed_render.count() << " seconds" << std::endl;
+        if (iterations > 0)
+            std::cout << "Average render time per frame: " << (elapsed_render.count() / iterations) * 1000.0 << " ms" << std::endl;
         
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;
