@@ -44,8 +44,13 @@ public:
 	{
 		next_dec_simulation_target();
 
-		for (auto& particle : particles[current_dec_simulation_target])
+		auto& target_particles = particles[current_dec_simulation_target];
+
+		#pragma omp parallel for if(target_particles.size() > 500)
+		for (int i = 0; i < (int)target_particles.size(); ++i)
 		{
+			auto& particle = target_particles[i];
+
 			for (const auto& planet : planets)
 			{
 				if (planet.getMass() < DUST_MIN_PHYSICS_SIZE)
@@ -57,9 +62,14 @@ public:
 				const auto dy = planet.gety() - curr_pos.y;
 				const auto distanceSquared = dx * dx + dy * dy;
 
+				double dist = 1.0;
+				bool dist_calculated = false;
+
 				if (heat_enabled && planet.emitsHeat())
 				{
-					double dist = std::max(static_cast<double>(std::sqrt(distanceSquared)), 1.0);
+					dist = std::max(static_cast<double>(std::sqrt(distanceSquared)), 1.0);
+					dist_calculated = true;
+
 					double emitted = planet.giveThermalEnergy(timestep * decimation_factor);
 					double heat = calculate_heating(particle.get_radius(), emitted, dist);
 					particle.absorb_heat(heat);
@@ -67,10 +77,25 @@ public:
 
 				if (gravity_enabled)
 				{
-					const auto angle = atan2(planet.gety() - curr_pos.y, planet.getx() - curr_pos.x);
-					const auto A = G * planet.getMass() / distanceSquared;
-					const auto acceleration = sf::Vector2f(A * cos(angle),
-						A * sin(angle));
+					double real_dist;
+					if (dist_calculated)
+						real_dist = dist;
+					else
+						real_dist = std::sqrt(distanceSquared);
+
+					if (real_dist < 0.1) real_dist = 0.1;
+
+					// F = G * M * m / r^2
+					// a = F / m = G * M / r^2
+					// ax = a * (dx / r) = G * M * dx / r^3
+					
+					const double r3 = real_dist * real_dist * real_dist;
+					const double A_div_r3 = (G * planet.getMass()) / r3;
+
+					const auto acceleration = sf::Vector2f(
+						static_cast<float>(A_div_r3 * dx),
+						static_cast<float>(A_div_r3 * dy)
+					);
 
 					const auto dv = static_cast<float>(timestep) * static_cast<float>(decimation_factor) * acceleration;
 					particle.set_velocity(particle.get_velocity() + dv);

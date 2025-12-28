@@ -44,6 +44,13 @@ int main(int argc, char* argv[]) {
         
         space.flushPlanets(); 
 
+        std::cout << "Adding 15000 particles..." << std::endl;
+        for (int i = 0; i < 15000; ++i) {
+            double x = (i % 100) * 50.0 - 2500.0;
+            double y = (i / 100) * 50.0 - 2500.0;
+            space.addParticle(sf::Vector2f(x, y), sf::Vector2f(0, 0), 2.0, 10000.0);
+        }
+
         std::cout << "Running simulation for " << iterations << " iterations..." << std::endl;
         
         auto start = std::chrono::high_resolution_clock::now();
