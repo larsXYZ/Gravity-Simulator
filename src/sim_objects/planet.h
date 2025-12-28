@@ -7,6 +7,8 @@
 #include <string_view>
 #include "../Life.h"
 
+class Space;
+
 class Planet : public SimObject {
 private:
 	std::string name = generate_name();
@@ -41,6 +43,8 @@ private:
 	sf::VertexArray light;
 
 public:
+	friend class Space;
+
 	struct GoldilockInfo {
 		double min_rad;
 		double max_rad;

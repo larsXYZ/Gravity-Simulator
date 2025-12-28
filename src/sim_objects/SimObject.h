@@ -6,6 +6,7 @@ class SimObject {
 protected:
     sf::Vector2f position;
     sf::Vector2f velocity;
+    sf::Vector2f acceleration{0.f, 0.f};
     int id;
     double mass;
     double radius = 0.0;
@@ -19,6 +20,7 @@ public:
 
     virtual sf::Vector2f getPosition() const { return position; }
     virtual sf::Vector2f getVelocity() const { return velocity; }
+    virtual sf::Vector2f getAcceleration() const { return acceleration; }
     virtual int getId() const { return id; }
     virtual double getMass() const { return mass; }
     virtual double getRadius() const { return radius; }
@@ -41,6 +43,7 @@ public:
 
     virtual void setPosition(sf::Vector2f pos) { position = pos; }
     virtual void setVelocity(sf::Vector2f vel) { velocity = vel; }
+    virtual void setAcceleration(sf::Vector2f acc) { acceleration = acc; }
     virtual void setId(int id_) { id = id_; }
     virtual void setMass(double m) { mass = m; }
     virtual void setRadius(double r) { radius = r; }

@@ -12,11 +12,6 @@ public:
 	~IParticle() = default;
 
 	/*
-	 * Render the particle in the window
-	 */
-	virtual void render(sf::RenderWindow& w) const = 0;
-
-	/*
 	 *	Update position of particle
 	 */
 	virtual void move(double timestep) = 0;

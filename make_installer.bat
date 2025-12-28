@@ -1,6 +1,16 @@
 @echo off
 setlocal
 
+set ARCH_PARAM=%1
+
+if "%ARCH_PARAM%"=="1" set ARCH=Win32
+if "%ARCH_PARAM%"=="x86" set ARCH=Win32
+if "%ARCH_PARAM%"=="Win32" set ARCH=Win32
+if "%ARCH_PARAM%"=="2" set ARCH=x64
+if "%ARCH_PARAM%"=="x64" set ARCH=x64
+
+if not "%ARCH%"=="" goto setup
+
 :menu
 echo ===========================================
 echo Select the architecture to build:
@@ -24,15 +34,15 @@ if "%choice%"=="1" (
 :setup
 set PROJECT_DIR=%~dp0
 set BUILD_DIR=%PROJECT_DIR%build_%ARCH%
-if not exist %BUILD_DIR% mkdir %BUILD_DIR%
+if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 
-cd %BUILD_DIR%
-cmake -S %PROJECT_DIR% -B %BUILD_DIR% -DCMAKE_BUILD_TYPE=Release -A %ARCH%
+cd /d "%BUILD_DIR%"
+cmake -S "%PROJECT_DIR%." -B "%BUILD_DIR%" -DCMAKE_BUILD_TYPE=Release -A %ARCH%
 
 REM Build the project
-cmake --build %BUILD_DIR% --config Release
+cmake --build "%BUILD_DIR%" --config Release
 
 cpack -G WIX -C Release
 
-cd %PROJECT_DIR%
+cd /d "%PROJECT_DIR%"
 endlocal
