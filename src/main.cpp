@@ -183,22 +183,22 @@ void start(sf::RenderWindow& settingScreen, tgui::ListBox::Ptr resolutionList, t
 	int x = 640;
 	int y = 480;
 
-	if (resolutionList->getSelectedItem() == ("2560 x 1440"))
+	if (resolutionList->getSelectedItem() == "2560 x 1440")
 	{
 		x = 2560;
 		y = 1440;
 	}
-	else if (resolutionList->getSelectedItem() == ("1920 x 1080"))
+	else if (resolutionList->getSelectedItem() == "1920 x 1080")
 	{
 		x = 1920;
 		y = 1080;
 	}
-	else if (resolutionList->getSelectedItem() == ("1366 x 768"))
+	else if (resolutionList->getSelectedItem() == "1366 x 768")
 	{
 		x = 1366;
 		y = 768;
 	}
-	else if (resolutionList->getSelectedItem() == ("CUSTOM"))
+	else if (resolutionList->getSelectedItem() == "CUSTOM")
 	{
 		x = Space::convertStringToDouble(customResX->getText().toStdString());
 		y = Space::convertStringToDouble(customResY->getText().toStdString());
