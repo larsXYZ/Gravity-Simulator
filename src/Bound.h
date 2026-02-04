@@ -1,29 +1,25 @@
 #pragma once
+
 #include <SFML/Graphics.hpp>
 
 class Bound
 {
-	bool is_active;
-	sf::CircleShape indicator;
+    bool is_active = true;
+    sf::CircleShape indicator;
 
 public:
+    Bound() = default;
 
-	Bound();
+    [[nodiscard]] sf::Vector2f getPos() const;
+    void setPos(const sf::Vector2f& p);
 
-	sf::Vector2f getPos() const;
+    void setRad(float r);
+    [[nodiscard]] float getRadius() const;
 
-	void setPos(sf::Vector2f p);
+    void setActiveState(bool state);
+    [[nodiscard]] bool isActive() const;
 
-	void setRad(double r);
+    [[nodiscard]] bool isOutside(const sf::Vector2f& p) const;
 
-	double getRadius() const;
-
-	void setActiveState(bool state);
-
-	bool isActive() const;
-
-	bool isOutside(sf::Vector2f p) const;
-
-	void render(sf::RenderWindow& window, float zoom);
-
+    void render(sf::RenderWindow& window, float zoom);
 };

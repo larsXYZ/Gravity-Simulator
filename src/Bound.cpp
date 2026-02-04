@@ -4,55 +4,56 @@
 
 Bound::Bound()
 {
-	is_active = true;
-	indicator.setPosition(sf::Vector2f(0, 0));
-	indicator.setOrigin(START_RADIUS, START_RADIUS);
-	indicator.setRadius(START_RADIUS);
-	indicator.setFillColor(sf::Color(0, 0, 0, 0));
-	indicator.setOutlineColor(sf::Color(255, 0, 0, 50));
-	indicator.setOutlineThickness(10);
-	indicator.setPointCount(100);
+    indicator.setPosition(sf::Vector2f(0.0f, 0.0f));
+    indicator.setOrigin(START_RADIUS, START_RADIUS);
+    indicator.setRadius(static_cast<float>(START_RADIUS));
+    indicator.setFillColor(sf::Color::Transparent);
+    indicator.setOutlineColor(sf::Color(255, 0, 0, 50));
+    indicator.setOutlineThickness(10.0f);
+    indicator.setPointCount(100);
 }
 
-sf::Vector2f Bound::getPos() const
+[[nodiscard]] sf::Vector2f Bound::getPos() const
 {
-	return indicator.getPosition();
+    return indicator.getPosition();
 }
 
-void Bound::setPos(sf::Vector2f p)
+void Bound::setPos(const sf::Vector2f& p)
 {
-	indicator.setPosition(p);
+    indicator.setPosition(p);
 }
 
-void Bound::setRad(double r)
-{ 
-	indicator.setRadius(static_cast<float>(r));
-	indicator.setOrigin(static_cast<float>(r), static_cast<float>(r));
-}
-
-double Bound::getRadius() const
+void Bound::setRad(const float r)
 {
-	return indicator.getRadius();
+    indicator.setRadius(r);
+    indicator.setOrigin(r, r);
 }
 
-void Bound::setActiveState(bool state)
-{ 
-	is_active = state;
-}
-
-bool Bound::isActive() const
+[[nodiscard]] float Bound::getRadius() const
 {
-	return is_active;
+    return indicator.getRadius();
 }
 
-bool Bound::isOutside(sf::Vector2f p) const
+void Bound::setActiveState(const bool state)
 {
-	return std::hypot((p.x - getPos().x), (p.y - getPos().y)) > indicator.getRadius();
+    is_active = state;
 }
 
-void Bound::render(sf::RenderWindow& window, float zoom)
+[[nodiscard]] bool Bound::isActive() const
 {
-	indicator.setPosition(getPos());
-	indicator.setOutlineThickness(40 * zoom);
-	window.draw(indicator);
+    return is_active;
+}
+
+[[nodiscard]] bool Bound::isOutside(const sf::Vector2f& p) const
+{
+    const auto pos = getPos();
+    const float dx = p.x - pos.x;
+    const float dy = p.y - pos.y;
+    return std::hypot(dx, dy) > indicator.getRadius();
+}
+
+void Bound::render(sf::RenderWindow& window, const float zoom)
+{
+    indicator.setOutlineThickness(40.0f * zoom);
+    window.draw(indicator);
 }

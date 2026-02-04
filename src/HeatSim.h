@@ -6,19 +6,19 @@
 #include "CONSTANTS.h"
 
 // Returns the color offset for a given temperature (for rocky planets/dust)
-sf::Color temperature_effect(double temp);
+sf::Color temperature_effect(double temp) noexcept;
 
 // Calculates energy lost due to cooling (Stefan-Boltzmann law variant)
-double calculate_cooling(double temp, double radius, double timestep);
+double calculate_cooling(double temp, double radius, double timestep) noexcept;
 
 // Calculates energy absorbed from a source (Inverse distance law variant)
-double calculate_heating(double radius, double source_emitted_energy, double distance);
+double calculate_heating(double radius, double source_emitted_energy, double distance) noexcept;
 
 // Renders a glow/shine effect at a given position
-void render_shine(sf::RenderWindow& window, sf::Vector2f position, const sf::Color& col, double luminosity);
+void render_shine(sf::RenderWindow& window, const sf::Vector2f& position, const sf::Color& col, double luminosity);
 
 // Implementation of the "planet-like" heat glow effect
-void draw_heat_glow(sf::RenderWindow& window, sf::Vector2f position, double temp, double radius);
+void draw_heat_glow(sf::RenderWindow& window, const sf::Vector2f& position, double temp, double radius);
 
 class StarColorInterpolator
 {
