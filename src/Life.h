@@ -40,11 +40,11 @@ public:
 	// Getters
 	[[nodiscard]] lType getTypeEnum() const;
 	[[nodiscard]] double getBmass() const;
-	[[nodiscard]] std::string getType() const;
+	[[nodiscard]] const std::string& getType() const;
 	[[nodiscard]] int getId() const;
 	[[nodiscard]] sf::Color getCol() const;
-	[[nodiscard]] std::string getDesc() const;
-	[[nodiscard]] std::string getCivName() const;
+	[[nodiscard]] const std::string& getDesc() const;
+	[[nodiscard]] const std::string& getCivName() const;
 
 private:
 	static int modernRandomWithLimits(int min, int max);

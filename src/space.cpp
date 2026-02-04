@@ -1242,10 +1242,10 @@ void Space::renderMST(sf::RenderWindow& window, const std::vector<size_t>& membe
 
 void Space::drawPlanets(sf::RenderWindow &window)
 {
-	//DRAWING PLANETS																										
-	for(size_t i = 0; i < planets.size(); i++)
+	//DRAWING PLANETS
+	for (auto& planet : planets)
 	{
-		planets[i].render(window);
+		planet.render(window);
 	}
 
 	if (renderLifeAlwaysCheckBox->isChecked())
@@ -1296,11 +1296,11 @@ void Space::drawCivConnections(sf::RenderWindow& window, const Planet& p, bool d
 	if (p.getLife().getTypeEnum() < 6) return;
 
 	std::vector<size_t> members;
-	for (size_t i = 0; i < planets.size(); i++)
+	for (const auto& planet : planets)
 	{
-		if (planets[i].getLife().getId() == p.getLife().getId())
+		if (planet.getLife().getId() == p.getLife().getId())
 		{
-			members.push_back(i);
+			members.push_back(&planet - &planets[0]);
 		}
 	}
 
@@ -1415,12 +1415,12 @@ double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 
 	double tEnergyFromOutside = 0;
 
-	for(size_t i = 0; i < planets.size(); i++)
+	for (const auto& planet : planets)
 	{
-		if (planets[i].getMass() < BIGSTARLIMIT && planets[i].getMass() >= GASGIANTLIMIT)
+		if (planet.getMass() < BIGSTARLIMIT && planet.getMass() >= GASGIANTLIMIT)
 		{
-			double dist = sqrt((planets[i].getPosition().x - pos.x)*(planets[i].getPosition().x - pos.x) + (planets[i].getPosition().y - pos.y) * (planets[i].getPosition().y - pos.y));
-			tEnergyFromOutside += planets[i].giveThermalEnergy(1)/ std::max(dist, 1.0);
+			double dist = sqrt((planet.getPosition().x - pos.x)*(planet.getPosition().x - pos.x) + (planet.getPosition().y - pos.y) * (planet.getPosition().y - pos.y));
+			tEnergyFromOutside += planet.giveThermalEnergy(1)/ std::max(dist, 1.0);
 		}
 	}
 
