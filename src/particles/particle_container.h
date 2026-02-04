@@ -73,7 +73,7 @@ public:
 
 		auto& target_particles = particles[current_dec_simulation_target];
 
-		#pragma omp parallel for if(target_particles.size() > 500)
+		#pragma omp parallel for if(target_particles.size() > 500u)
 		for (int i = 0; i < (int)target_particles.size(); ++i)
 		{
 			auto& particle = target_particles[i];
@@ -227,7 +227,7 @@ public:
 			vector.clear();
 	}
 
-	size_t size() override
+	size_t size() const override
 	{
 		int total_size = std::accumulate(particles.begin(), particles.end(), 0, [](int sum, const auto& vec) {
 			return sum + vec.size();

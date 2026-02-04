@@ -26,17 +26,17 @@ void Effect::setcol(sf::Color c)
 	col = c;
 }
 
-sf::Vector2f Effect::getpos()
+sf::Vector2f Effect::getpos() const
 {
 	return pos;
 }
 
-double Effect::getsize()
+double Effect::getsize() const
 {
 	return size;
 }
 
-sf::Color Effect::getcol()
+sf::Color Effect::getcol() const
 {
 	return col;
 }
@@ -46,7 +46,7 @@ void Effect::setID(int i)
 	id = i;
 }
 
-int Effect::getID()
+int Effect::getID() const
 {
 	return id;
 }
@@ -64,7 +64,7 @@ void Effect::move(int t)
 	setpos(sf::Vector2f(getpos().x + vel.x*t, getpos().y + vel.y*t));
 }
 
-int Effect::maxLifeTime()
+int Effect::maxLifeTime() const
 {
 	return levetid;
 }

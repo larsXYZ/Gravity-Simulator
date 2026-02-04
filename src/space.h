@@ -145,7 +145,7 @@ public:
 	void giveId(Planet &p);
 	Planet findPlanet(int id);
 	Planet* findPlanetPtr(int id);
-	int findBestPlanet(int q);
+	int findBestPlanetByRef(const Planet& query_planet);
 	void update_spaceship();
 	double thermalEnergyAtPosition(sf::Vector2f pos);
 	sf::Vector3f centerOfMass(const std::vector<int> & object_ids);

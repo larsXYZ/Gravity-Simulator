@@ -1,4 +1,5 @@
 #include "space.h"
+#include "StringConstants.h"
 #include <fstream>
 #include <filesystem>
 #include <cstdlib>
@@ -27,6 +28,18 @@ namespace LauncherConfig
         const int CharacterSize = 25;
         const std::string Text = "v1.2";
         const sf::Color Color = sf::Color(252, 240, 3);
+    }
+
+    namespace Resolution
+    {
+        constexpr int DEFAULT_WIDTH = 640;
+        constexpr int DEFAULT_HEIGHT = 480;
+        constexpr int WIDTH_2560 = 2560;
+        constexpr int HEIGHT_2560 = 1440;
+        constexpr int WIDTH_1920 = 1920;
+        constexpr int HEIGHT_1080 = 1080;
+        constexpr int WIDTH_1366 = 1366;
+        constexpr int HEIGHT_768 = 768;
     }
 }
 
@@ -140,8 +153,8 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	windowModeList->setItemHeight(15);
 	windowModeList->setSize(95, 30);
 	windowModeList->setTextSize(15);
-	windowModeList->addItem("FULLSCREEN");
-	windowModeList->addItem("WINDOWED");
+	windowModeList->addItem(StringConstants::MODE_FULLSCREEN);
+	windowModeList->addItem(StringConstants::MODE_WINDOWED);
 	windowModeList->setSelectedItemByIndex(0);
 
 	//RESOLUTIONS
@@ -150,10 +163,10 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 	resolutionList->setItemHeight(15);
 	resolutionList->setTextSize(15);
 
-	resolutionList->addItem("2560 x 1440");
-	resolutionList->addItem("1920 x 1080");
-	resolutionList->addItem("1366 x 768");
-	resolutionList->addItem("CUSTOM");
+	resolutionList->addItem(StringConstants::RES_2560x1440);
+	resolutionList->addItem(StringConstants::RES_1920x1080);
+	resolutionList->addItem(StringConstants::RES_1366x768);
+	resolutionList->addItem(StringConstants::RES_CUSTOM);
 	resolutionList->setSize(95, resolutionList->getItemCount() * 15);
 	resolutionList->setFocusable(false);
 
@@ -180,25 +193,25 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 
 void start(sf::RenderWindow& settingScreen, tgui::ListBox::Ptr resolutionList, tgui::ListBox::Ptr windowModeList, tgui::EditBox::Ptr customResX, tgui::EditBox::Ptr customResY)
 {
-	int x = 640;
-	int y = 480;
+	int x = LauncherConfig::Resolution::DEFAULT_WIDTH;
+	int y = LauncherConfig::Resolution::DEFAULT_HEIGHT;
 
-	if (resolutionList->getSelectedItem() == "2560 x 1440")
+	if (resolutionList->getSelectedItem() == StringConstants::RES_2560x1440)
 	{
-		x = 2560;
-		y = 1440;
+		x = LauncherConfig::Resolution::WIDTH_2560;
+		y = LauncherConfig::Resolution::HEIGHT_2560;
 	}
-	else if (resolutionList->getSelectedItem() == "1920 x 1080")
+	else if (resolutionList->getSelectedItem() == StringConstants::RES_1920x1080)
 	{
-		x = 1920;
-		y = 1080;
+		x = LauncherConfig::Resolution::WIDTH_1920;
+		y = LauncherConfig::Resolution::HEIGHT_1080;
 	}
-	else if (resolutionList->getSelectedItem() == "1366 x 768")
+	else if (resolutionList->getSelectedItem() == StringConstants::RES_1366x768)
 	{
-		x = 1366;
-		y = 768;
+		x = LauncherConfig::Resolution::WIDTH_1366;
+		y = LauncherConfig::Resolution::HEIGHT_768;
 	}
-	else if (resolutionList->getSelectedItem() == "CUSTOM")
+	else if (resolutionList->getSelectedItem() == StringConstants::RES_CUSTOM)
 	{
 		x = Space::convertStringToDouble(customResX->getText().toStdString());
 		y = Space::convertStringToDouble(customResY->getText().toStdString());
@@ -221,7 +234,7 @@ void evaluateCustomResolutionInputsVisibility(tgui::ListBox::Ptr resSetup,
 {
 	customResX->setVisible(true);
 	customResY->setVisible(true);
-	if (resSetup->getSelectedItem() != "CUSTOM")
+	if (resSetup->getSelectedItem() != StringConstants::RES_CUSTOM)
 	{
 		customResX->setVisible(false);
 		customResY->setVisible(false);
@@ -234,7 +247,7 @@ void evaluateStartButtonVisibility(tgui::ListBox::Ptr resSetup,
 	tgui::Button::Ptr startButton)
 {
 	startButton->setVisible(true);
-	if (resSetup->getSelectedItem() == "" || (resSetup->getSelectedItem() == "CUSTOM" && (customResX->getText() == "" || customResY->getText() == "")))
+	if (resSetup->getSelectedItem() == "" || (resSetup->getSelectedItem() == StringConstants::RES_CUSTOM && (customResX->getText() == "" || customResY->getText() == "")))
 		startButton->setVisible(false);
 }
 

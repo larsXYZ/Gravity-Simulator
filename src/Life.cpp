@@ -220,7 +220,7 @@ double Life::getBmass() const {
     return biomass;
 }
 
-std::string Life::getType() const {
+const std::string& Life::getType() const {
     switch (type) {
         case NONE:
             return "Lifeless";
@@ -251,11 +251,11 @@ sf::Color Life::getCol() const {
     return lifeColor;
 }
 
-std::string Life::getDesc() const {
+const std::string& Life::getDesc() const {
     return description;
 }
 
-std::string Life::getCivName() const {
+const std::string& Life::getCivName() const {
     return civName;
 }
 

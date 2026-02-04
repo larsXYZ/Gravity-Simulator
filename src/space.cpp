@@ -4,6 +4,7 @@
 #include "user_functions.h"
 #include "physics_utils.h"
 #include "roche_limit.h"
+#include "StringConstants.h"
 
 Space::Space()
 	: particles(std::make_unique<DecimatedLegacyParticleContainer>())
@@ -122,7 +123,7 @@ void Space::update()
 	//SETUP & OTHER
 	total_mass = 0;
 
-	if (planets.size() > 0)
+	if (!planets.empty())
 		iteration += 1;
 
 	update_spaceship();
@@ -159,7 +160,7 @@ void Space::update()
 	const float dt = timestep;
 
 	#pragma omp parallel for if(n_planets > 50)
-	for (int i = 0; i < (int)n_planets; ++i)
+	for (int i = 0; i < static_cast<int>(n_planets); ++i)
 	{
 		if (planets[i].isMarkedForRemoval()) continue;
 
@@ -187,7 +188,7 @@ void Space::update()
 	#pragma omp parallel if(n_planets > 50)
 	{
 		#pragma omp for schedule(static)
-		for (int i = 0; i < (int)n_planets; ++i)
+		for (int i = 0; i < static_cast<int>(n_planets); ++i)
 		{
 			if (planets[i].isMarkedForRemoval()) continue;
 
@@ -208,14 +209,14 @@ void Space::update()
 
 			for (size_t j = 0; j < n_planets; ++j)
 			{
-				if (i == (int)j || planets[j].isMarkedForRemoval()) continue;
+				if (i == static_cast<int>(j) || planets[j].isMarkedForRemoval()) continue;
 
 				if (has_ignores_i) {
 					if (planets[i].isIgnoring(hot_planets[j].id)) continue;
 				}
 
-				const double dx = (double)hot_planets[j].x - xi;
-				const double dy = (double)hot_planets[j].y - yi;
+				const double dx = static_cast<double>(hot_planets[j].x) - xi;
+				const double dy = static_cast<double>(hot_planets[j].y) - yi;
 				const double dist2 = std::max(dx*dx + dy*dy, 0.01);
 				const double dist = std::sqrt(dist2);
 				const double rad_dist = ri + hot_planets[j].radius;
@@ -255,7 +256,7 @@ void Space::update()
 					if (mi <= hot_planets[j].mass)
 					{
 						#pragma omp critical(events)
-						collision_events.push_back({i, (int)j});
+						collision_events.push_back({i, static_cast<int>(j)});
 						break; // Planet i is absorbed
 					}
 				}
@@ -271,7 +272,7 @@ void Space::update()
 
 	// --- PHASE 3: SECOND KICK + SYNC ---
 	#pragma omp parallel for if(n_planets > 50)
-	for (int i = 0; i < (int)n_planets; ++i)
+	for (int i = 0; i < static_cast<int>(n_planets); ++i)
 	{
 		if (planets[i].isMarkedForRemoval()) continue;
 		
@@ -287,7 +288,7 @@ void Space::update()
 		planets[i].setStrongestAttractorIdRef(hot_planets[i].strongestAttractorId);
 		
 		if (heat_enabled) {
-			planets[i].absorbHeat(hot_planets[i].accumulatedHeat * timestep, (int)timestep);
+			planets[i].absorbHeat(hot_planets[i].accumulatedHeat * timestep, static_cast<int>(timestep));
 		}
 
 		if (planets[i].disintegrationGraceTimeOver(curr_time))
@@ -313,15 +314,15 @@ void Space::update()
 
 			const auto collision_pos = pA.getPosition();
 			const auto collision_vel = pA.getVelocity();
-			const auto collision_radius = (float)pA.getRadius();
+			const auto collision_radius = static_cast<float>(pA.getRadius());
 			const auto collision_temp = pA.getTemp();
 
 			pA.becomeAbsorbedBy(pB);
 
-			addExplosion(collision_pos, 
-						4 * collision_radius, 
-						sf::Vector2f(collision_vel.x * 0.5f, collision_vel.y * 0.5f), 
-						(int)sqrt(pB.getMass()));
+			addExplosion(collision_pos,
+						4 * collision_radius,
+						sf::Vector2f(collision_vel.x * 0.5f, collision_vel.y * 0.5f),
+						static_cast<int>(sqrt(pB.getMass())));
 
 			// Particle generation
 			const size_t n_particles_to_add = static_cast<size_t>(20 * collision_radius * std::sqrt(collision_radius));
@@ -350,13 +351,13 @@ void Space::update()
 		planet.update_planet_sim(timestep, heat_enabled);
 
 	//COLONIZATION
-	for (size_t i = 0; i < planets.size(); i++)
+	for (auto& planet : planets)
 	{
-		if (planets[i].getLife().willExp())
+		if (planet.getLife().willExp())
 		{
-			int index = findBestPlanet((int)i);
+			int index = findBestPlanetByRef(planet);
 			if (index != -1) 
-				planets[index].colonize(planets[i].getLife().getId(), planets[i].getLife().getCol(), planets[i].getLife().getDesc(), planets[i].getLife().getCivName());
+				planets[index].colonize(planet.getLife().getId(), planet.getLife().getCol(), planet.getLife().getDesc(), planet.getLife().getCivName());
 		}
 	}
 	
@@ -364,10 +365,10 @@ void Space::update()
 	if (bound.isActive())
 	{
 		//PLANETS
-		for (size_t i = 0; i < planets.size(); i++)
+		for (auto& planet : planets)
 		{
-			if (bound.isOutside(sf::Vector2f(planets[i].getPosition().x, planets[i].getPosition().y)))
-				removePlanet(planets[i].getId());
+			if (bound.isOutside(sf::Vector2f(planet.getPosition().x, planet.getPosition().y)))
+				removePlanet(planet.getId());
 		}
 		
 		//SHIP
@@ -400,11 +401,11 @@ void Space::update()
 						Missile m;
 						double angle = atan2(ship.getpos().y - planet.gety(), ship.getpos().x - planet.getx());
 						// Spawn at surface
-						m.pos = sf::Vector2f(planet.getx() + cos(angle) * (planet.getRadius() + 2), 
+						m.pos = sf::Vector2f(planet.getx() + cos(angle) * (planet.getRadius() + 2),
 											 planet.gety() + sin(angle) * (planet.getRadius() + 2));
-						
+
 						m.current_speed = MISSILE_START_SPEED;
-						m.vel = sf::Vector2f((float)cos(angle) * (float)m.current_speed, (float)sin(angle) * (float)m.current_speed);
+						m.vel = sf::Vector2f(static_cast<float>(cos(angle)) * static_cast<float>(m.current_speed), static_cast<float>(sin(angle)) * static_cast<float>(m.current_speed));
 						m.life = MISSILE_LIFESPAN;
 						m.owner_id = planet.getLife().getId();
 						m.color = planet.getLife().getCol();
@@ -418,7 +419,7 @@ void Space::update()
 	for (auto it = missiles.begin(); it != missiles.end(); )
 	{
 		bool destroyed = false;
-		it->life -= (int)timestep;
+		it->life -= static_cast<int>(timestep);
 		if (it->life <= 0)
 		{
 			destroyed = true;
@@ -442,22 +443,22 @@ void Space::update()
 
 				double turn = std::clamp(diff, -MISSILE_TURN_SPEED * timestep, MISSILE_TURN_SPEED * timestep);
 				double new_angle = current_angle + turn;
-				it->vel = sf::Vector2f((float)cos(new_angle) * (float)it->current_speed, (float)sin(new_angle) * (float)it->current_speed);
+				it->vel = sf::Vector2f(static_cast<float>(cos(new_angle)) * static_cast<float>(it->current_speed), static_cast<float>(sin(new_angle)) * static_cast<float>(it->current_speed));
 			}
 			else
 			{
 				// Maintain velocity if ship is gone
 				double current_angle = atan2(it->vel.y, it->vel.x);
-				it->vel = sf::Vector2f((float)cos(current_angle) * (float)it->current_speed, (float)sin(current_angle) * (float)it->current_speed);
+				it->vel = sf::Vector2f(static_cast<float>(cos(current_angle)) * static_cast<float>(it->current_speed), static_cast<float>(sin(current_angle)) * static_cast<float>(it->current_speed));
 			}
 
-			it->pos += it->vel * (float)timestep;
+			it->pos += it->vel * static_cast<float>(timestep);
 
 			// Collision with planets
 			for (auto& planet : planets)
 			{
-				double dx = (double)planet.getx() - it->pos.x;
-				double dy = (double)planet.gety() - it->pos.y;
+				double dx = static_cast<double>(planet.getx()) - it->pos.x;
+				double dy = static_cast<double>(planet.gety()) - it->pos.y;
 				if (dx * dx + dy * dy < planet.getRadius() * planet.getRadius())
 				{
 					destroyed = true;
@@ -472,8 +473,8 @@ void Space::update()
 			// Collision with ship
 			if (!destroyed && ship.isExist())
 			{
-				double dx = (double)ship.getpos().x - it->pos.x;
-				double dy = (double)ship.getpos().y - it->pos.y;
+				double dx = static_cast<double>(ship.getpos().x) - it->pos.x;
+				double dy = static_cast<double>(ship.getpos().y) - it->pos.y;
 				if (dx * dx + dy * dy < 15 * 15) // Rough ship hitbox
 				{
 					destroyed = true;
@@ -487,8 +488,8 @@ void Space::update()
 			{
 				for (auto const& proj : ship.projectiles)
 				{
-					double dx = (double)proj.pos.x - it->pos.x;
-					double dy = (double)proj.pos.y - it->pos.y;
+					double dx = static_cast<double>(proj.pos.x) - it->pos.x;
+					double dy = static_cast<double>(proj.pos.y) - it->pos.y;
 					if (dx * dx + dy * dy < 10 * 10)
 					{
 						destroyed = true;
@@ -597,7 +598,7 @@ void Space::removePlanet(const int id)
 
 void Space::removeTrail(int ind)
 {
-	if (ind >= (int) trail.size() || ind < 0) return;
+	if (ind >= static_cast<int>(trail.size()) || ind < 0) return;
 
 	auto it = trail.begin() + ind;
 	*it = std::move(trail.back());
@@ -607,7 +608,7 @@ void Space::removeTrail(int ind)
 
 void Space::removeExplosion(int ind)
 {
-	if (ind >= (int) explosions.size() || ind < 0) return;
+	if (ind >= static_cast<int>(explosions.size()) || ind < 0) return;
 
 	auto it = explosions.begin() + ind;
 	*it = std::move(explosions.back());
@@ -616,7 +617,7 @@ void Space::removeExplosion(int ind)
 
 void Space::removeStarshineFade(int ind)
 {
-	if (ind >= (int)starshine_fades.size() || ind < 0) return;
+	if (ind >= static_cast<int>(starshine_fades.size()) || ind < 0) return;
 
 	auto it = starshine_fades.begin() + ind;
 	*it = std::move(starshine_fades.back());
@@ -828,12 +829,12 @@ Planet* Space::findPlanetPtr(int id)
 	return nullptr;
 }
 
-int Space::findBestPlanet(int q)
+int Space::findBestPlanetByRef(const Planet& query_planet)
 {
 	int ind = -1;
 	double highest = -1;
 
-	for(size_t i = 0; i < planets.size(); i++)
+	for (size_t i = 0; i < planets.size(); i++)
 	{
 		if (planets[i].getType() == ROCKY || planets[i].getType() == TERRESTIAL)
 		{
@@ -841,7 +842,7 @@ int Space::findBestPlanet(int q)
 			if (nr == 6 || nr == 7 || nr == 5 || nr == 4)
 			{
 			}
-			else if (planets[i].getSupportedBiomass() > highest && (int) i != q)
+			else if (planets[i].getSupportedBiomass() > highest && &planets[i] != &query_planet)
 			{
 				highest = planets[i].getSupportedBiomass();
 				ind = i;
@@ -865,7 +866,7 @@ void Space::giveRings(const Planet & planet, int inner, int outer)
 
 	for (int i = 0; i < particle_count; i++)
 	{
-		const double rad = ((double) uniform_random(inner*1000, outer*1000))/1000;
+		const double rad = static_cast<double>(uniform_random(inner*1000, outer*1000))/1000;
 		const double speed = sqrt(G*planet.getMass() / rad);
 
 		const auto pos = sf::Vector2f(planet.getPosition().x + cos(angle) * rad, planet.getPosition().y + sin(angle) * rad);
@@ -904,7 +905,7 @@ void Space::update_spaceship()
         // For now, just removing the isLanded check.
         
 		sf::Vector2f v;
-		double angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		double angl = static_cast<double>(uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 
 		sf::Vector2f p;
 		p.x = ship.getpos().x - 7 * cos(angl); // Adjusted for new ship length
@@ -915,7 +916,7 @@ void Space::update_spaceship()
 		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
 
         // Extra smoke
-		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		angl = static_cast<double>(uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
 		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(150.0, 250.0));
@@ -924,7 +925,7 @@ void Space::update_spaceship()
 	{
         // Reverse thrust smoke
 		sf::Vector2f v;
-		double angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		double angl = static_cast<double>(uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 
 		sf::Vector2f p;
 		p.x = ship.getpos().x + 5 * cos(angl);
@@ -1006,14 +1007,14 @@ void Space::initSetup()
 	newPlanetInfo->setPosition(5, tgui::bindBottom(functions) + 2 * UI_SEPERATION_DISTANCE);
 	newPlanetInfo->setTextSize(14);
 
-	objectTypeSelector->addItem("Rocky");
-	objectTypeSelector->addItem("Terrestial");
-	objectTypeSelector->addItem("Gas Giant");
-	objectTypeSelector->addItem("Small Star");
-	objectTypeSelector->addItem("Star");
-	objectTypeSelector->addItem("Big Star");
-	objectTypeSelector->addItem("Black Hole");
-	objectTypeSelector->setSelectedItem("Rocky");
+	objectTypeSelector->addItem(StringConstants::PLANET_ROCKY);
+	objectTypeSelector->addItem(StringConstants::PLANET_TERRESTIAL);
+	objectTypeSelector->addItem(StringConstants::PLANET_GAS_GIANT);
+	objectTypeSelector->addItem(StringConstants::PLANET_SMALL_STAR);
+	objectTypeSelector->addItem(StringConstants::PLANET_STAR);
+	objectTypeSelector->addItem(StringConstants::PLANET_BIG_STAR);
+	objectTypeSelector->addItem(StringConstants::PLANET_BLACK_HOLE);
+	objectTypeSelector->setSelectedItem(StringConstants::PLANET_ROCKY);
 	objectTypeSelector->setPosition(5, tgui::bindBottom(newPlanetInfo) + UI_SEPERATION_DISTANCE);
 	objectTypeSelector->setSize(180, 20);
 	objectTypeSelector->setVisible(true);
@@ -1193,7 +1194,7 @@ double Space::convertStringToDouble(std::string string)
 
 void Space::renderMST(sf::RenderWindow& window, const std::vector<size_t>& members)
 {
-	if (members.size() < 2) return;
+	if (members.size() < 2u) return;
 
 	// Prim's algorithm for MST
 	std::vector<bool> inMST(members.size(), false);
@@ -1242,10 +1243,10 @@ void Space::renderMST(sf::RenderWindow& window, const std::vector<size_t>& membe
 
 void Space::drawPlanets(sf::RenderWindow &window)
 {
-	//DRAWING PLANETS																										
-	for(size_t i = 0; i < planets.size(); i++)
+	//DRAWING PLANETS
+	for (auto& planet : planets)
 	{
-		planets[i].render(window);
+		planet.render(window);
 	}
 
 	if (renderLifeAlwaysCheckBox->isChecked())
@@ -1296,11 +1297,11 @@ void Space::drawCivConnections(sf::RenderWindow& window, const Planet& p, bool d
 	if (p.getLife().getTypeEnum() < 6) return;
 
 	std::vector<size_t> members;
-	for (size_t i = 0; i < planets.size(); i++)
+	for (const auto& planet : planets)
 	{
-		if (planets[i].getLife().getId() == p.getLife().getId())
+		if (planet.getLife().getId() == p.getLife().getId())
 		{
-			members.push_back(i);
+			members.push_back(&planet - &planets[0]);
 		}
 	}
 
@@ -1415,12 +1416,12 @@ double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 
 	double tEnergyFromOutside = 0;
 
-	for(size_t i = 0; i < planets.size(); i++)
+	for (const auto& planet : planets)
 	{
-		if (planets[i].getMass() < BIGSTARLIMIT && planets[i].getMass() >= GASGIANTLIMIT)
+		if (planet.getMass() < BIGSTARLIMIT && planet.getMass() >= GASGIANTLIMIT)
 		{
-			double dist = sqrt((planets[i].getPosition().x - pos.x)*(planets[i].getPosition().x - pos.x) + (planets[i].getPosition().y - pos.y) * (planets[i].getPosition().y - pos.y));
-			tEnergyFromOutside += planets[i].giveThermalEnergy(1)/ std::max(dist, 1.0);
+			double dist = sqrt((planet.getPosition().x - pos.x)*(planet.getPosition().x - pos.x) + (planet.getPosition().y - pos.y) * (planet.getPosition().y - pos.y));
+			tEnergyFromOutside += planet.giveThermalEnergy(1)/ std::max(dist, 1.0);
 		}
 	}
 

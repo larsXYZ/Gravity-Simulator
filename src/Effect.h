@@ -24,15 +24,15 @@ public:
 	void setpos(sf::Vector2f p);
 	void setsize(double s);
 	void setcol(sf::Color c);
-	sf::Vector2f getpos();
-	double getsize();
-	sf::Color getcol();
+	sf::Vector2f getpos() const;
+	double getsize() const;
+	sf::Color getcol() const;
 	virtual void render(sf::RenderWindow &w) = 0;
 	void setID(int i);
-	int getID();
+	int getID() const;
 	int getAge(double t);
 	void move(int t);
-	int maxLifeTime();
+	int maxLifeTime() const;
 	void setVel(sf::Vector2f a);
 
 	int modernRandomWithLimits(int min, int max)
