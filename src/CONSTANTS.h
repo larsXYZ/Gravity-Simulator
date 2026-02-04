@@ -11,9 +11,16 @@ double const tempConstTwo = 0.018;
 const double PI = 3.14159265359;
 const double SPEED_OF_LIGHT = 299792458.;
 
+//COMMON MAGIC NUMBERS
+constexpr int COMMON_VALUE_10 = 10;
+constexpr int COMMON_VALUE_100 = 100;
+constexpr int COMMON_VALUE_200 = 200;
+constexpr int COMMON_VALUE_3000 = 3000;
+constexpr int COMMON_VALUE_5000 = 5000;
+
 //SIMULATION
 const int FRAMERATE = 60;
-const int FRAMERATE_CHECK_DELTAFRAME = 10;
+const int FRAMERATE_CHECK_DELTAFRAME = COMMON_VALUE_10;
 
 //DESTRUCTION
 const float CREATEDUSTSPEEDMULT = 0.003f;
@@ -37,7 +44,7 @@ const double MASS_SLIDER_MAX_VALUE = 4000;
 
 //PLANETTHINGS
 const int maxAtmoLayer = 15;
-const int minAtmoLayer = 10;
+const int minAtmoLayer = COMMON_VALUE_10;
 const int brightnessVariance = 8;           //THE VARIANCE OF ATMOSPHERE BRIGHTNESS IN GASGIANTS
 const double greenHouseEffectMult = 0.0008;
 const double maxAtmo = 600;                 //MAX ATMOSPHERE
@@ -47,14 +54,14 @@ const double atmoAlphaMult = 0.3;           //ALPHA OF ATMOSPHERE MULTIPLIER
 // SHIP
 const double SHIP_GAS_EJECT_SPEED = 0.06;
 const double PROJECTILE_SPEED = 1.5;
-const int PROJECTILE_LIFESPAN = 5000;
+const int PROJECTILE_LIFESPAN = COMMON_VALUE_5000;
 const int PROJECTILE_COOLDOWN = 40;
-const double PROJECTILE_DAMAGE_MASS_LIMIT = 100.0;
-const double PROJECTILE_MAX_CHARGE = 200.0;
+const double PROJECTILE_DAMAGE_MASS_LIMIT = COMMON_VALUE_100;
+const double PROJECTILE_MAX_CHARGE = COMMON_VALUE_200;
 const double PROJECTILE_CHARGE_SPEED = 0.04;
 const double TUG_RANGE = 400.0;
 const double TUG_STRENGTH = 0.0005;
-const double TUG_MASS_LIMIT = 200.0;
+const double TUG_MASS_LIMIT = COMMON_VALUE_200;
 const double TUG_PREFERRED_DISTANCE = 80.0;
 
 //DUST
@@ -77,7 +84,7 @@ const float MAX_TIMESTEP = 50.0;
 //TRAIL
 const double TRAILRAD = 1.2;
 const int TRAILLIFE = 10000;
-const int TRAILFREQ = 10;
+const int TRAILFREQ = COMMON_VALUE_10;
 
 //ADV IN ORBIT ADDER
 const double ADV_ORBIT_ADDER_SELECTED_MARKER_RAD_MULT = 1.4;
@@ -106,34 +113,34 @@ const int LIGHT_NUMBER_OF_VERTECES = 50;
 
 //EXPLOSIONLIGHT
 const int EXPLOSION_LIGHT_START_STRENGTH = 50;
-const double EXPLOSION_FLASH_SIZE = 10;
+const double EXPLOSION_FLASH_SIZE = COMMON_VALUE_10;
 
 //RNDM SYSTEM GENERATOR
 const double MASS_MULTIPLIER = 130;
 const double NUMBER_OF_OBJECT_MULTIPLIER = 0.4;
 
 //BOUND
-const int BOUND_MIN_RAD = 200;
+const int BOUND_MIN_RAD = COMMON_VALUE_200;
 const double BOUND_OUTSIDE_INDICATOR_SIZE = 20;
 const double BOUND_THICKNESS = 20;
 const double START_RADIUS = 8000;
-const int BOUND_AUTO_UPDATE_RATE = 10;
+const int BOUND_AUTO_UPDATE_RATE = COMMON_VALUE_10;
 
 //MISSILE
 const double MISSILE_START_SPEED = 0.05;
 const double MISSILE_MAX_SPEED = 0.4;
 const double MISSILE_ACCELERATION = 0.0005;
 const double MISSILE_TURN_SPEED = 0.002;
-const int MISSILE_LIFESPAN = 3000;
+const int MISSILE_LIFESPAN = COMMON_VALUE_3000;
 const int MISSILE_LAUNCH_COOLDOWN = 300;
-const double MISSILE_DETECTION_RANGE = 5000.0;
+const double MISSILE_DETECTION_RANGE = COMMON_VALUE_5000;
 
 //SHIP SHIELD
-const double SHIELD_MAX_ENERGY = 100.0;
+const double SHIELD_MAX_ENERGY = COMMON_VALUE_100;
 const double SHIELD_DRAIN_EXPLOSION = 15.0;
 const double SHIELD_DRAIN_MISSILE = 50.0;
 const double SHIELD_RECOVERY_RATE = 0.05;
-const int SHIELD_RECOVERY_PAUSE = 3000;
+const int SHIELD_RECOVERY_PAUSE = COMMON_VALUE_3000;
 
 //TEMPERATURE LIMITS
 const double MAX_TEMP = 1000000000000.0; // 1 Trillion Kelvin

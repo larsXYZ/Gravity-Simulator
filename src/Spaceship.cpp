@@ -221,7 +221,7 @@ void SpaceShip::reset(sf::Vector2f p)
     is_charging = false;
 }
 
-double SpaceShip::getMaxCollisionSpeed()
+double SpaceShip::getMaxCollisionSpeed() const
 {
 	return maxCollisionSpeed;
 }
@@ -232,7 +232,7 @@ void SpaceShip::destroy()
 	isFiring = 0;
 }
 
-bool SpaceShip::isExist()
+bool SpaceShip::isExist() const
 {
 	return exist;
 }
@@ -299,7 +299,7 @@ void SpaceShip::updateProjectiles(double dt, Space& space)
         if (p.power > 2.0)
         {
             p.trail.push_front(p.pos);
-            if (p.trail.size() > 20) p.trail.pop_back();
+            if (p.trail.size() > 20u) p.trail.pop_back();
         }
 
         // Smoke emission scaling with power

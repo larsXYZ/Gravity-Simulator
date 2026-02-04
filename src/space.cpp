@@ -4,6 +4,7 @@
 #include "user_functions.h"
 #include "physics_utils.h"
 #include "roche_limit.h"
+#include "StringConstants.h"
 
 Space::Space()
 	: particles(std::make_unique<DecimatedLegacyParticleContainer>())
@@ -122,7 +123,7 @@ void Space::update()
 	//SETUP & OTHER
 	total_mass = 0;
 
-	if (planets.size() > 0)
+	if (!planets.empty())
 		iteration += 1;
 
 	update_spaceship();
@@ -159,7 +160,7 @@ void Space::update()
 	const float dt = timestep;
 
 	#pragma omp parallel for if(n_planets > 50)
-	for (int i = 0; i < (int)n_planets; ++i)
+	for (int i = 0; i < static_cast<int>(n_planets); ++i)
 	{
 		if (planets[i].isMarkedForRemoval()) continue;
 
@@ -187,7 +188,7 @@ void Space::update()
 	#pragma omp parallel if(n_planets > 50)
 	{
 		#pragma omp for schedule(static)
-		for (int i = 0; i < (int)n_planets; ++i)
+		for (int i = 0; i < static_cast<int>(n_planets); ++i)
 		{
 			if (planets[i].isMarkedForRemoval()) continue;
 
@@ -271,7 +272,7 @@ void Space::update()
 
 	// --- PHASE 3: SECOND KICK + SYNC ---
 	#pragma omp parallel for if(n_planets > 50)
-	for (int i = 0; i < (int)n_planets; ++i)
+	for (int i = 0; i < static_cast<int>(n_planets); ++i)
 	{
 		if (planets[i].isMarkedForRemoval()) continue;
 		
@@ -904,7 +905,7 @@ void Space::update_spaceship()
         // For now, just removing the isLanded check.
         
 		sf::Vector2f v;
-		double angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		double angl = static_cast<double>(uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 
 		sf::Vector2f p;
 		p.x = ship.getpos().x - 7 * cos(angl); // Adjusted for new ship length
@@ -1006,14 +1007,14 @@ void Space::initSetup()
 	newPlanetInfo->setPosition(5, tgui::bindBottom(functions) + 2 * UI_SEPERATION_DISTANCE);
 	newPlanetInfo->setTextSize(14);
 
-	objectTypeSelector->addItem("Rocky");
-	objectTypeSelector->addItem("Terrestial");
-	objectTypeSelector->addItem("Gas Giant");
-	objectTypeSelector->addItem("Small Star");
-	objectTypeSelector->addItem("Star");
-	objectTypeSelector->addItem("Big Star");
-	objectTypeSelector->addItem("Black Hole");
-	objectTypeSelector->setSelectedItem("Rocky");
+	objectTypeSelector->addItem(StringConstants::PLANET_ROCKY);
+	objectTypeSelector->addItem(StringConstants::PLANET_TERRESTIAL);
+	objectTypeSelector->addItem(StringConstants::PLANET_GAS_GIANT);
+	objectTypeSelector->addItem(StringConstants::PLANET_SMALL_STAR);
+	objectTypeSelector->addItem(StringConstants::PLANET_STAR);
+	objectTypeSelector->addItem(StringConstants::PLANET_BIG_STAR);
+	objectTypeSelector->addItem(StringConstants::PLANET_BLACK_HOLE);
+	objectTypeSelector->setSelectedItem(StringConstants::PLANET_ROCKY);
 	objectTypeSelector->setPosition(5, tgui::bindBottom(newPlanetInfo) + UI_SEPERATION_DISTANCE);
 	objectTypeSelector->setSize(180, 20);
 	objectTypeSelector->setVisible(true);
@@ -1193,7 +1194,7 @@ double Space::convertStringToDouble(std::string string)
 
 void Space::renderMST(sf::RenderWindow& window, const std::vector<size_t>& members)
 {
-	if (members.size() < 2) return;
+	if (members.size() < 2u) return;
 
 	// Prim's algorithm for MST
 	std::vector<bool> inMST(members.size(), false);

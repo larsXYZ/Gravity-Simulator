@@ -41,9 +41,9 @@ public:
         else if (tEnergy < 0) tEnergy = 0;
     }
 
-    virtual void setPosition(sf::Vector2f pos) { position = pos; }
-    virtual void setVelocity(sf::Vector2f vel) { velocity = vel; }
-    virtual void setAcceleration(sf::Vector2f acc) { acceleration = acc; }
+    virtual void setPosition(const sf::Vector2f& pos) { position = pos; }
+    virtual void setVelocity(const sf::Vector2f& vel) { velocity = vel; }
+    virtual void setAcceleration(const sf::Vector2f& acc) { acceleration = acc; }
     virtual void setId(int id_) { id = id_; }
     virtual void setMass(double m) { mass = m; }
     virtual void setRadius(double r) { radius = r; }

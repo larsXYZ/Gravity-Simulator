@@ -89,9 +89,9 @@ public:
 	void reset(sf::Vector2f p);
     // Removed landing getters/setters
 	void destroy();
-	double getMaxCollisionSpeed();
+	double getMaxCollisionSpeed() const;
     double getShieldEnergy() const { return shield_energy; }
-	bool isExist();
+	bool isExist() const;
 	float getAngle() const;
     void missileHit(Space& space);
 	
