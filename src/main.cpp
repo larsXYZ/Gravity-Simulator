@@ -28,6 +28,18 @@ namespace LauncherConfig
         const std::string Text = "v1.2";
         const sf::Color Color = sf::Color(252, 240, 3);
     }
+
+    namespace Resolution
+    {
+        constexpr int DEFAULT_WIDTH = 640;
+        constexpr int DEFAULT_HEIGHT = 480;
+        constexpr int WIDTH_2560 = 2560;
+        constexpr int HEIGHT_2560 = 1440;
+        constexpr int WIDTH_1920 = 1920;
+        constexpr int HEIGHT_1080 = 1080;
+        constexpr int WIDTH_1366 = 1366;
+        constexpr int HEIGHT_768 = 768;
+    }
 }
 
 
@@ -180,23 +192,23 @@ void setup(sf::RenderWindow& s, sf::Text& t, sf::Font& tf, sf::Text& v, tgui::Li
 
 void start(sf::RenderWindow& settingScreen, tgui::ListBox::Ptr resolutionList, tgui::ListBox::Ptr windowModeList, tgui::EditBox::Ptr customResX, tgui::EditBox::Ptr customResY)
 {
-	int x = 640;
-	int y = 480;
+	int x = LauncherConfig::Resolution::DEFAULT_WIDTH;
+	int y = LauncherConfig::Resolution::DEFAULT_HEIGHT;
 
 	if (resolutionList->getSelectedItem() == "2560 x 1440")
 	{
-		x = 2560;
-		y = 1440;
+		x = LauncherConfig::Resolution::WIDTH_2560;
+		y = LauncherConfig::Resolution::HEIGHT_2560;
 	}
 	else if (resolutionList->getSelectedItem() == "1920 x 1080")
 	{
-		x = 1920;
-		y = 1080;
+		x = LauncherConfig::Resolution::WIDTH_1920;
+		y = LauncherConfig::Resolution::HEIGHT_1080;
 	}
 	else if (resolutionList->getSelectedItem() == "1366 x 768")
 	{
-		x = 1366;
-		y = 768;
+		x = LauncherConfig::Resolution::WIDTH_1366;
+		y = LauncherConfig::Resolution::HEIGHT_768;
 	}
 	else if (resolutionList->getSelectedItem() == "CUSTOM")
 	{
