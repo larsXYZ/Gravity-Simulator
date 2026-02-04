@@ -33,8 +33,7 @@ struct Function
 	FunctionType type;
 };
 
-const std::vector<Function> function_info
-{
+inline constexpr std::array<Function, 11> function_info{{
 	{sf::Keyboard::N, "New Object (N)", FunctionType::NEW_OBJECT},
 	{sf::Keyboard::O, "New Object in orbit (O)", FunctionType::OBJECT_IN_ORBIT},
 	{sf::Keyboard::A, "Adv Object in orbit (A)", FunctionType::ADVANCED_OBJECT_IN_ORBIT},
@@ -46,7 +45,7 @@ const std::vector<Function> function_info
 	{sf::Keyboard::I, "Info (I)", FunctionType::SHOW_INFO},
 	{sf::Keyboard::F, "Follow object (F)", FunctionType::FOLLOW_OBJECT},
 	{sf::Keyboard::B, "Bound (B)", FunctionType::ADD_BOUND}
-};
+}};
 
 FunctionType getSelectedFunction(tgui::ListBox::Ptr listbox);
 
@@ -61,12 +60,12 @@ class Bound;
 struct FunctionContext
 {
 	const FunctionType type;
-	Space & space;
-	SpaceShip & spaceship;
-	sf::View & view;
-	sf::RenderWindow & window;
-	const sf::Vector2i & mouse_pos_window;
-	const sf::Vector2f & mouse_pos_world;
+	Space& space;
+	SpaceShip& spaceship;
+	sf::View& view;
+	sf::RenderWindow& window;
+	const sf::Vector2i& mouse_pos_window;
+	const sf::Vector2f& mouse_pos_world;
 	const bool is_mouse_on_widgets;
 	tgui::Slider::Ptr mass_slider;
 	tgui::ComboBox::Ptr object_type_selector;

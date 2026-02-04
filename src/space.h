@@ -112,7 +112,7 @@ class Space
 
 public:
 
-	explicit Space();
+	explicit Space() = default;
 	
 	int addPlanet(Planet&& p);
 	void flushPlanets();
@@ -143,16 +143,16 @@ public:
 	void drawMissiles(sf::RenderWindow& window);
 	void drawDust(sf::RenderWindow &window);
 	void giveId(Planet &p);
-	Planet findPlanet(int id);
-	Planet* findPlanetPtr(int id);
-	int findBestPlanetByRef(const Planet& query_planet);
+	[[nodiscard]] Planet findPlanet(int id);
+	[[nodiscard]] Planet* findPlanetPtr(int id);
+	[[nodiscard]] int findBestPlanetByRef(const Planet& query_planet);
 	void update_spaceship();
-	double thermalEnergyAtPosition(sf::Vector2f pos);
-	sf::Vector3f centerOfMass(const std::vector<int> & object_ids);
-	sf::Vector2f centerOfMassVelocity(const std::vector<int> & object_ids);
-	sf::Vector2f centerOfMassAll();
-	int get_iteration() const;
-	bool auto_bound_active() const;
+	[[nodiscard]] double thermalEnergyAtPosition(sf::Vector2f pos);
+	[[nodiscard]] sf::Vector3f centerOfMass(const std::vector<int>& object_ids);
+	[[nodiscard]] sf::Vector2f centerOfMassVelocity(const std::vector<int>& object_ids);
+	[[nodiscard]] sf::Vector2f centerOfMassAll();
+	[[nodiscard]] int get_iteration() const;
+	[[nodiscard]] bool auto_bound_active() const;
 	void set_ambient_temperature(Planet& planet);
 	
 	tgui::CheckBox::Ptr editObjectCheckBox = std::make_shared<tgui::CheckBox>();
@@ -166,7 +166,7 @@ public:
 	double uniform_random(double min, double max);
 	sf::Vector2f random_vector(double magn);
 	static double convertStringToDouble(std::string string);
-	static std::string temperature_info_string(double temperature_kelvin, TemperatureUnit unit);
+	[[nodiscard]] static std::string temperature_info_string(double temperature_kelvin, TemperatureUnit unit);
 
 	friend class ObjectInfo;
 	friend class NewObjectFunction;

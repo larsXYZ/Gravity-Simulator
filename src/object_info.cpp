@@ -268,7 +268,7 @@ void ObjectInfo::update_ui_values(Space& space, sf::RenderWindow& window)
 {
 	if (target_id == -1 || !panel || !panel->isVisible()) return;
 
-	Planet* target = space.findPlanetPtr(target_id);
+	const Planet* const target = space.findPlanetPtr(target_id);
 	if (!target) {
 		deactivate();
 		return;
@@ -288,7 +288,7 @@ void ObjectInfo::update_ui_values(Space& space, sf::RenderWindow& window)
 	const auto new_val = static_cast<int>(target->getLife().getTypeEnum());
 	
 	// Ugly fix: If the user has interacted with the mouse in the last second, don't update the box
-	bool recentlyInteracted = m_lastInteractionClock.getElapsedTime().asSeconds() < 1.0f;
+	const bool recentlyInteracted = m_lastInteractionClock.getElapsedTime().asSeconds() < 1.0f;
 
 	if (lifeLevelSelector && !is_focused(window) && !recentlyInteracted && curr_val != new_val)
 	{
