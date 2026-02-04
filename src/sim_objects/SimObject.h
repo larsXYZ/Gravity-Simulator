@@ -18,16 +18,16 @@ public:
         : position(pos), velocity(vel), id(id_), mass(0.0) {}
     virtual ~SimObject() = default;
 
-    virtual sf::Vector2f getPosition() const { return position; }
-    virtual sf::Vector2f getVelocity() const { return velocity; }
-    virtual sf::Vector2f getAcceleration() const { return acceleration; }
-    virtual int getId() const { return id; }
-    virtual double getMass() const { return mass; }
-    virtual double getRadius() const { return radius; }
-    virtual double getDensity() const { return density; }
-    virtual double getTemp() const noexcept { return tEnergy / (getMass() * getTCap()); }
-    virtual double getTCap() const noexcept { return tCapacity; }
-    virtual double getThermalEnergy() const noexcept { return getTemp() * getMass() * getTCap(); }
+    [[nodiscard]] virtual sf::Vector2f getPosition() const { return position; }
+    [[nodiscard]] virtual sf::Vector2f getVelocity() const { return velocity; }
+    [[nodiscard]] virtual sf::Vector2f getAcceleration() const { return acceleration; }
+    [[nodiscard]] virtual int getId() const { return id; }
+    [[nodiscard]] virtual double getMass() const { return mass; }
+    [[nodiscard]] virtual double getRadius() const { return radius; }
+    [[nodiscard]] virtual double getDensity() const { return density; }
+    [[nodiscard]] virtual double getTemp() const noexcept { return tEnergy / (getMass() * getTCap()); }
+    [[nodiscard]] virtual double getTCap() const noexcept { return tCapacity; }
+    [[nodiscard]] virtual double getThermalEnergy() const noexcept { return getTemp() * getMass() * getTCap(); }
     
     float getx() const { return position.x; }
     float gety() const { return position.y; }

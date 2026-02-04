@@ -495,9 +495,9 @@ std::string convertDoubleToString(double number)
 	std::vector<std::string> name_third_part = {"er", "us", "o", "i", "atara", "ankara", "oxos", "upol", "ol", "eq"};
 
 
-	int selectorOne = modernRandomWithLimits(0, (int)name_first_part.size() - 1);
-	int selectorTwo = modernRandomWithLimits(0, (int)name_second_part.size() - 1);
-	int selectorThree = modernRandomWithLimits(0, (int)name_third_part.size() - 1);
+	int selectorOne = modernRandomWithLimits(0, static_cast<int>(name_first_part.size()) - 1);
+	int selectorTwo = modernRandomWithLimits(0, static_cast<int>(name_second_part.size()) - 1);
+	int selectorThree = modernRandomWithLimits(0, static_cast<int>(name_third_part.size()) - 1);
 
 	std::string number = "";
 

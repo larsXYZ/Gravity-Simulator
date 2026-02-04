@@ -91,21 +91,19 @@ sf::Vector2f Space::centerOfMassAll()
 	double xCont = 0;
 	double yCont = 0;
 
-	for (size_t i = 0; i < planets.size(); i++)
+	for (const auto& planet : planets)
 	{
-
-		Planet p = planets[i];
-		if (p.getMass() != -1)
+		if (planet.getMass() != -1)
 		{
-			double pMass = p.getMass();
+			double pMass = planet.getMass();
 
 			tMass += pMass;
-			xCont += pMass*p.getPosition().x;
-			yCont += pMass*p.getPosition().y;
+			xCont += pMass * planet.getPosition().x;
+			yCont += pMass * planet.getPosition().y;
 		}
-
 	}
 
+	if (tMass == 0) return {0, 0};
 	return sf::Vector2f(xCont / tMass, yCont / tMass);
 }
 
