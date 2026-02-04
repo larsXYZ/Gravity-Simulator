@@ -865,7 +865,7 @@ void Space::giveRings(const Planet & planet, int inner, int outer)
 
 	for (int i = 0; i < particle_count; i++)
 	{
-		const double rad = ((double) uniform_random(inner*1000, outer*1000))/1000;
+		const double rad = static_cast<double>(uniform_random(inner*1000, outer*1000))/1000;
 		const double speed = sqrt(G*planet.getMass() / rad);
 
 		const auto pos = sf::Vector2f(planet.getPosition().x + cos(angle) * rad, planet.getPosition().y + sin(angle) * rad);
@@ -915,7 +915,7 @@ void Space::update_spaceship()
 		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(300.0, 500.0));
 
         // Extra smoke
-		angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		angl = static_cast<double>(uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 		v.x = ship.getvel().x - cos(angl)*SHIP_GAS_EJECT_SPEED;
 		v.y = ship.getvel().y - sin(angl)*SHIP_GAS_EJECT_SPEED;
 		addParticle(p, v, uniform_random(1.3, 1.5), uniform_random(150.0, 250.0));
@@ -924,7 +924,7 @@ void Space::update_spaceship()
 	{
         // Reverse thrust smoke
 		sf::Vector2f v;
-		double angl = ((double)uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
+		double angl = static_cast<double>(uniform_random(-50, 50)) / 150 + 2 * PI*ship.getAngle() / 360;
 
 		sf::Vector2f p;
 		p.x = ship.getpos().x + 5 * cos(angl);
