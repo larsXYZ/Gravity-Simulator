@@ -12,7 +12,7 @@ public:
 	virtual void render_all(sf::RenderWindow &w) = 0;
 	virtual void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp) = 0;
 	virtual void clear() = 0;
-	virtual size_t size() = 0;
+	virtual size_t size() const = 0;
 };
 
 
