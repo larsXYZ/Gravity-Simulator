@@ -1144,8 +1144,8 @@ void Space::initSetup()
 
 template<typename T>
 T generate_uniform(T min, T max) {
-	std::random_device seeder;
-	std::default_random_engine generator(seeder());
+	thread_local static std::random_device seeder;
+	thread_local static std::default_random_engine generator(seeder());
 
 	if constexpr (std::is_integral_v<T>) {
 		std::uniform_int_distribution<T> uniform(min, max);
