@@ -184,6 +184,8 @@ void Space::update()
 	// --- PHASE 2: BIG UNIFIED PASS (Gravity, Heat, Collisions, Roche) ---
 	std::vector<CollisionEvent> collision_events;
 	std::vector<RocheEvent> roche_events;
+	collision_events.reserve(16);
+	roche_events.reserve(16);
 
 	#pragma omp parallel if(n_planets > 50)
 	{
