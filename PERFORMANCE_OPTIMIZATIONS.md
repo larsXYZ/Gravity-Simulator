@@ -1,46 +1,47 @@
 # Performance Optimizations
 
-## 1. O(n^2) Gravity - Barnes-Hut Algorithm (Biggest Win)
+## Completed
 
-The nested loop in `space.cpp:210-263` computes all pairwise interactions. For large planet counts, replace this with a **Barnes-Hut tree** (quadtree-based approximation), reducing complexity from O(n^2) to O(n log n). For distant clusters of bodies, you approximate their combined gravity as a single node. This is the standard approach for N-body simulators.
+### Static RNG (thread_local static generators)
 
-## 2. Random Number Generator Reuse
+**Status: DONE - ~40% speedup at 500 planets, ~28% at 1000**
 
-In `planet.cpp:474-478` and `space.cpp:1145-1158`, a new `std::random_device` and `std::mt19937` are created **every call**. `random_device` is especially expensive (may hit OS entropy pool). Fix: use a `thread_local static` generator:
+In `planet.cpp`, `Effect.h`, and `space.cpp`, `std::random_device` and engine were recreated on every call, hitting the OS entropy pool repeatedly. Fixed by making them `thread_local static`.
 
-```cpp
-thread_local static std::mt19937 gen(std::random_device{}());
-```
+### Newton's Third Law Optimization
 
-This is a quick, high-impact fix.
+**Status: TESTED - No improvement due to OpenMP overhead**
 
-## 3. Spatial Indexing for Collisions & Particles
+Computing each pair once (j > i) and applying symmetrically halves the gravity calculations, but requires thread-local accumulation buffers and a critical-section reduction. The overhead of allocating per-thread arrays and serializing the merge negated the gains. Splitting into separate gravity and collision passes also didn't help — the cost of iterating N^2 pairs twice outweighed the sqrt savings. Not worth pursuing without a fundamentally different parallelization strategy.
 
-Particle-planet interactions (`particle_container.h:70-163`) check every particle against every planet. A **spatial hash grid** or quadtree would let you skip distant pairs entirely, turning O(p * n) into something much closer to O(p).
+## Remaining Opportunities
 
-## 4. Planet Lookup - Use a HashMap
+### 1. O(n^2) Gravity - Barnes-Hut Algorithm (Biggest Win)
 
-`findPlanetPtr()` at `space.cpp:818-830` does O(n) linear search by ID. Replace with an `std::unordered_map<int, size_t>` mapping ID to index for O(1) lookups.
+The nested loop in `space.cpp` computes all pairwise interactions. Replace with a **Barnes-Hut tree** (quadtree-based approximation), reducing complexity from O(n^2) to O(n log n). For distant clusters of bodies, approximate their combined gravity as a single node.
 
-## 5. Vertex Array Caching for Particles
+### 2. Spatial Indexing for Collisions & Particles
 
-`particle_container.h:165-208` rebuilds the entire `sf::VertexArray` from scratch every frame. Instead, maintain a persistent vertex array and only update vertices for particles that moved (the decimation system already tracks which bucket is active).
+Particle-planet interactions (`particle_container.h`) check every particle against every planet. A **spatial hash grid** or quadtree would skip distant pairs, turning O(p * n) into closer to O(p).
 
-## 6. MST Recalculation Caching
+### 3. Planet Lookup - Use a HashMap
 
-The Prim's MST algorithm at `space.cpp:1195-1242` runs every frame when life rendering is enabled. Cache the result and only recalculate when the colony set changes.
+`findPlanetPtr()` at `space.cpp` does O(n) linear search by ID. Replace with `std::unordered_map<int, size_t>` for O(1) lookups.
 
-## 7. Newton's Third Law Optimization
+### 4. Vertex Array Caching for Particles
 
-In the Phase 2 loop, you compute force of j on i, but also later compute force of i on j. Since F_ij = -F_ji, you can compute each pair only once (loop `j` from `i+1` to `n`) and apply the force symmetrically. This halves the work. Note: requires care with OpenMP to avoid race conditions on the acceleration array.
+`particle_container.h` rebuilds the entire `sf::VertexArray` from scratch every frame. Maintain a persistent vertex array and only update moved particles.
 
-## Quick Wins Summary
+### 5. MST Recalculation Caching
 
-| Change | Effort | Impact |
-|--------|--------|--------|
-| Static RNG | 5 min | Medium - removes OS calls per particle spawn |
-| Newton's 3rd law (half pairs) | 30 min | ~2x speedup on gravity |
-| HashMap for planet lookup | 15 min | Small-medium, depends on call frequency |
-| Cache MST | 15 min | Small, only when life rendering on |
-| Barnes-Hut tree | Hours | Massive for large N (100+ bodies) |
-| Spatial hash for particles | Hours | Large when many particles + planets |
+Prim's MST algorithm in `space.cpp` runs every frame when life rendering is enabled. Cache the result and only recalculate when the colony set changes.
+
+## Benchmark Results
+
+| Planets | Baseline | After Static RNG | Speedup |
+|---------|----------|-------------------|---------|
+| 100     | 0.26 ms  | 0.27 ms           | ~same   |
+| 500     | 28.7 ms  | 17.1 ms           | 1.68x   |
+| 1000    | 44.5 ms  | 32.2 ms           | 1.38x   |
+
+Full reports with graphs are in `benchmark_reports/`.
