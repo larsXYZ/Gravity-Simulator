@@ -1,42 +1,42 @@
 #pragma once
 
-#include <string_view>
+#include <string>
 
 namespace StringConstants {
 
     // Resolution strings
-    inline constexpr std::string_view RES_2560x1440 = "2560 x 1440";
-    inline constexpr std::string_view RES_1920x1080 = "1920 x 1080";
-    inline constexpr std::string_view RES_1366x768 = "1366 x 768";
-    inline constexpr std::string_view RES_CUSTOM = "CUSTOM";
+    inline const std::string RES_2560x1440 = "2560 x 1440";
+    inline const std::string RES_1920x1080 = "1920 x 1080";
+    inline const std::string RES_1366x768 = "1366 x 768";
+    inline const std::string RES_CUSTOM = "CUSTOM";
 
     // Window mode strings
-    inline constexpr std::string_view MODE_FULLSCREEN = "FULLSCREEN";
-    inline constexpr std::string_view MODE_WINDOWED = "WINDOWED";
+    inline const std::string MODE_FULLSCREEN = "FULLSCREEN";
+    inline const std::string MODE_WINDOWED = "WINDOWED";
 
     // Planet type strings
-    inline constexpr std::string_view PLANET_ROCKY = "Rocky";
-    inline constexpr std::string_view PLANET_TERRESTIAL = "Terrestial";
-    inline constexpr std::string_view PLANET_GAS_GIANT = "Gas Giant";
-    inline constexpr std::string_view PLANET_SMALL_STAR = "Small Star";
-    inline constexpr std::string_view PLANET_STAR = "Star";
-    inline constexpr std::string_view PLANET_BIG_STAR = "Big Star";
-    inline constexpr std::string_view PLANET_BLACK_HOLE = "Black Hole";
+    inline const std::string PLANET_ROCKY = "Rocky";
+    inline const std::string PLANET_TERRESTIAL = "Terrestial";
+    inline const std::string PLANET_GAS_GIANT = "Gas Giant";
+    inline const std::string PLANET_SMALL_STAR = "Small Star";
+    inline const std::string PLANET_STAR = "Star";
+    inline const std::string PLANET_BIG_STAR = "Big Star";
+    inline const std::string PLANET_BLACK_HOLE = "Black Hole";
 
     // Life level strings
-    inline constexpr std::string_view LIFE_LIFELESS = "Lifeless";
-    inline constexpr std::string_view LIFE_UNICELLULAR = "Unicellular";
-    inline constexpr std::string_view LIFE_MULTICELLULAR_S = "Multicellular (S)";
-    inline constexpr std::string_view LIFE_MULTICELLULAR_C = "Multicellular (C)";
-    inline constexpr std::string_view LIFE_TRIBAL = "Tribal";
-    inline constexpr std::string_view LIFE_GLOBAL = "Global";
-    inline constexpr std::string_view LIFE_INTERPLANETARY = "Interplanetary";
-    inline constexpr std::string_view LIFE_COLONY = "Colony";
+    inline const std::string LIFE_LIFELESS = "Lifeless";
+    inline const std::string LIFE_UNICELLULAR = "Unicellular";
+    inline const std::string LIFE_MULTICELLULAR_S = "Multicellular (S)";
+    inline const std::string LIFE_MULTICELLULAR_C = "Multicellular (C)";
+    inline const std::string LIFE_TRIBAL = "Tribal";
+    inline const std::string LIFE_GLOBAL = "Global";
+    inline const std::string LIFE_INTERPLANETARY = "Interplanetary";
+    inline const std::string LIFE_COLONY = "Colony";
 
     // Command line argument strings
-    inline constexpr std::string_view ARG_OBJECTS_LONG = "--objects";
-    inline constexpr std::string_view ARG_OBJECTS_SHORT_N = "-n";
-    inline constexpr std::string_view ARG_OBJECTS_SHORT_O = "-o";
-    inline constexpr std::string_view ARG_ITERATIONS_LONG = "--iterations";
-    inline constexpr std::string_view ARG_ITERATIONS_SHORT = "-i";
+    inline const std::string ARG_OBJECTS_LONG = "--objects";
+    inline const std::string ARG_OBJECTS_SHORT_N = "-n";
+    inline const std::string ARG_OBJECTS_SHORT_O = "-o";
+    inline const std::string ARG_ITERATIONS_LONG = "--iterations";
+    inline const std::string ARG_ITERATIONS_SHORT = "-i";
 }
