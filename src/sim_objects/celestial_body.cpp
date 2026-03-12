@@ -248,55 +248,136 @@ void CelestialBody::becomeAbsorbedBy(CelestialBody& absorbing_planet)
 
 void CelestialBody::updateRadiAndType() noexcept
 {
-	// Mass ladder for non-evolved types
+	if (isEvolved)
+		updateEvolvedType();
+	else
+		updateMainSequenceType();
+	updateVisualProperties();
+	updateRadius();
+}
+
+void CelestialBody::updateMainSequenceType() noexcept
+{
 	if (getMass() < ROCKYLIMIT)
-	{
 		planetType = ROCKY;
+	else if (getMass() < TERRESTIALLIMIT)
+		planetType = TERRESTIAL;
+	else if (getMass() < BROWNDWARFLIMIT)
+		planetType = GASGIANT;
+	else if (getMass() < GASGIANTLIMIT)
+		planetType = BROWNDWARF;
+	else if (getMass() < STARLIMIT)
+		planetType = STAR;
+	else
+		planetType = BLACKHOLE;
+}
+
+void CelestialBody::updateEvolvedType() noexcept
+{
+	switch (planetType)
+	{
+	case WHITEDWARF:
+		if (getMass() > CHANDRASEKHAR_LIMIT)
+		{
+			// Type Ia supernova placeholder — stay as-is for now
+			// Future: trigger supernova event
+		}
+		break;
+	case NEUTRONSTAR:
+		if (getMass() > TOV_LIMIT)
+		{
+			planetType = BLACKHOLE;
+			isEvolved = false;
+		}
+		break;
+	case BROWNDWARF:
+		if (getMass() >= GASGIANTLIMIT)
+		{
+			// Fusion ignites — becomes a main sequence star
+			planetType = STAR;
+			isEvolved = false;
+			if (fuel <= 0.0)
+				fuel = getMass() * INITIAL_FUEL_PER_MASS;
+		}
+		break;
+	case REDGIANT:
+	case REDSUPERGIANT:
+		// Evolved giants stay as-is (evolution logic will handle transitions)
+		break;
+	case BLACKHOLE:
+		// Black holes are forever
+		isEvolved = false;
+		break;
+	default:
+		// If somehow an evolved object has a non-evolved type, fall back to mass ladder
+		isEvolved = false;
+		updateMainSequenceType();
+		break;
+	}
+}
+
+void CelestialBody::updateVisualProperties() noexcept
+{
+	switch (planetType)
+	{
+	case ROCKY:
 		density = 0.5;
 		circle.setOutlineThickness(0);
 		circle.setPointCount(30);
-	}
-	else if (getMass() < TERRESTIALLIMIT)
-	{
-		planetType = TERRESTIAL;
+		break;
+	case TERRESTIAL:
 		density = 0.5;
 		circle.setPointCount(40);
-	}
-	else if (getMass() < BROWNDWARFLIMIT)
-	{
-		planetType = GASGIANT;
+		break;
+	case GASGIANT:
 		density = 0.3;
 		circle.setPointCount(50);
-	}
-	else if (getMass() < GASGIANTLIMIT)
-	{
-		planetType = BROWNDWARF;
+		break;
+	case BROWNDWARF:
 		density = DENSITY_BROWNDWARF;
 		circle.setOutlineColor(sf::Color(180, 80, 50, 60));
 		circle.setOutlineThickness(2);
 		circle.setPointCount(60);
-	}
-	else if (getMass() < STARLIMIT)
-	{
-		planetType = STAR;
-		// Continuous density: 0.2 at low mass, 0.1 at high mass
+		break;
+	case STAR:
 		density = interpolate(0.2, 0.1, getMass(), GASGIANTLIMIT, STARLIMIT);
-		// Continuous visual properties based on mass
-		int pointCount = static_cast<int>(interpolate(90, 150, getMass(), GASGIANTLIMIT, STARLIMIT));
-		circle.setPointCount(pointCount);
-		double thickness = interpolate(3, 10, getMass(), GASGIANTLIMIT, STARLIMIT);
-		circle.setOutlineThickness(static_cast<float>(thickness));
-	}
-	else
-	{
-		planetType = BLACKHOLE;
+		circle.setPointCount(static_cast<int>(interpolate(90, 150, getMass(), GASGIANTLIMIT, STARLIMIT)));
+		circle.setOutlineThickness(static_cast<float>(interpolate(3, 10, getMass(), GASGIANTLIMIT, STARLIMIT)));
+		break;
+	case REDGIANT:
+		density = DENSITY_REDGIANT;
+		circle.setOutlineThickness(8);
+		circle.setPointCount(120);
+		break;
+	case REDSUPERGIANT:
+		density = DENSITY_REDSUPERGIANT;
+		circle.setOutlineThickness(12);
+		circle.setPointCount(150);
+		break;
+	case WHITEDWARF:
+		density = DENSITY_WHITEDWARF;
+		circle.setOutlineColor(sf::Color(220, 220, 255, 40));
+		circle.setOutlineThickness(1);
+		circle.setPointCount(30);
+		break;
+	case NEUTRONSTAR:
+		density = DENSITY_NEUTRONSTAR;
+		circle.setOutlineColor(sf::Color(200, 200, 220, 40));
+		circle.setOutlineThickness(1);
+		circle.setPointCount(20);
+		break;
+	case BLACKHOLE:
 		density = INFINITY;
 		circle.setOutlineColor(sf::Color(255, 255, 255, 255));
 		circle.setFillColor(sf::Color(20, 20, 20));
 		circle.setOutlineThickness(2);
 		circle.setPointCount(20);
+		break;
 	}
+}
 
+void CelestialBody::updateRadius() noexcept
+{
 	if (planetType == BLACKHOLE)
 	{
 		// Schwarzschild radius

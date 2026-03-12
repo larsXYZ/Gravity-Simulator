@@ -131,6 +131,11 @@ public:
 	void setColor() noexcept;
 
 private:
+	void updateMainSequenceType() noexcept;
+	void updateEvolvedType() noexcept;
+	void updateVisualProperties() noexcept;
+	void updateRadius() noexcept;
+
 	[[nodiscard]] int modernRandomWithLimits(int min, int max) const;
 	[[nodiscard]] std::string generate_name();
 };
