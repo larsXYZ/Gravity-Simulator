@@ -118,7 +118,7 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 
 			// Roche
 			if (RocheLimit::hasMinimumBreakupSize(pSub.mass) &&
-				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].getType() == BLACKHOLE || planets[k].getType() == NEUTRONSTAR))
+				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].canTidallyDisrupt()))
 			{
 				disintegration = true;
 				break;
@@ -434,7 +434,7 @@ public:
 
 				//DRAWING ROCHE LIMIT
 				if (RocheLimit::hasMinimumBreakupSize(context.mass_slider->getValue())
-					&& RocheLimit::checkMassRatio(context.mass_slider->getValue(), target->getMass(), target->getType() == BLACKHOLE || target->getType() == NEUTRONSTAR))
+					&& RocheLimit::checkMassRatio(context.mass_slider->getValue(), target->getMass(), target->canTidallyDisrupt()))
 				{
 					double rocheRad = RocheLimit::calculateLimitRadius(temp_planet.getRadius() + target->getRadius());
 

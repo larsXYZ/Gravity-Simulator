@@ -98,6 +98,12 @@ public:
 	void setIsEvolved(bool evolved) noexcept { isEvolved = evolved; }
 	void setSubType(StellarSubType st) noexcept { subType = st; }
 
+	// Type classification helpers
+	[[nodiscard]] bool isMainSequenceStar() const noexcept { return planetType == STAR; }
+	[[nodiscard]] bool isAnyStarType() const noexcept;
+	[[nodiscard]] bool isCompactRemnant() const noexcept;
+	[[nodiscard]] bool canTidallyDisrupt() const noexcept { return planetType == BLACKHOLE || planetType == NEUTRONSTAR; }
+
 	// State checks
 	[[nodiscard]] bool canDisintegrate(double curr_time) const noexcept;
 	[[nodiscard]] bool disintegrationGraceTimeIsActive(double curr_time) const noexcept;

@@ -354,13 +354,8 @@ void SpaceShip::updateGrapple(double dt, Space& space)
             // HIT!
             grapple.flying = false;
             
-            // Check if supported (Not stars, not black holes)
-            bool supported = (planet.getType() != STAR &&
-                             planet.getType() != REDGIANT &&
-                             planet.getType() != REDSUPERGIANT &&
-                             planet.getType() != WHITEDWARF &&
-                             planet.getType() != NEUTRONSTAR &&
-                             planet.getType() != BLACKHOLE);
+            // Check if supported (Not stars or compact remnants)
+            bool supported = !planet.isAnyStarType() && !planet.isCompactRemnant();
 
             if (supported)
             {

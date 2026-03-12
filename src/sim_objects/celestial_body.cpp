@@ -101,6 +101,33 @@ bool CelestialBody::emitsHeat() const noexcept
 	}
 }
 
+bool CelestialBody::isAnyStarType() const noexcept
+{
+	switch (planetType)
+	{
+	case STAR:
+	case BROWNDWARF:
+	case REDGIANT:
+	case REDSUPERGIANT:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool CelestialBody::isCompactRemnant() const noexcept
+{
+	switch (planetType)
+	{
+	case WHITEDWARF:
+	case NEUTRONSTAR:
+	case BLACKHOLE:
+		return true;
+	default:
+		return false;
+	}
+}
+
 std::string CelestialBody::getFlavorTextLife() const
 {
 	std::string baseText = "";
@@ -200,7 +227,7 @@ void CelestialBody::update_planet_sim(double timestep, bool heat_enabled)
 
 bool CelestialBody::canDisintegrate(double curr_time) const noexcept
 {
-	if (getType() == BLACKHOLE || getType() == NEUTRONSTAR)
+	if (canTidallyDisrupt())
 		return false;
 
 	if (!RocheLimit::hasMinimumBreakupSize(getMass()))
