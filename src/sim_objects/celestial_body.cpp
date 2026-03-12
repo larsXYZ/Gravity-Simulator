@@ -40,6 +40,10 @@ CelestialBody::CelestialBody(double m, double xx, double yy, double xvv, double 
 	updateRadiAndType();
 	circle.setPosition(position);
 
+	// Initialize fuel for stars
+	if (planetType == STAR)
+		fuel = m * INITIAL_FUEL_PER_MASS;
+
 	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
 	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
 	for (int i = 0; i < numAtmoLines; i++) atmoLinesBrightness.push_back(
@@ -186,6 +190,7 @@ void CelestialBody::update(double timestep)
 
 void CelestialBody::update_planet_sim(double timestep, bool heat_enabled)
 {
+	age += timestep;
 	if (heat_enabled)
 		coolDown(timestep);
 	setColor();
@@ -308,8 +313,12 @@ void CelestialBody::updateRadiAndType() noexcept
 
 void CelestialBody::incMass(double m) noexcept
 {
+	const bool wasNotStar = (planetType != STAR);
 	setMass(getMass() + m);
 	updateRadiAndType();
+	// Initialize fuel if mass pushes into star range
+	if (wasNotStar && planetType == STAR && fuel <= 0.0)
+		fuel = getMass() * INITIAL_FUEL_PER_MASS;
 }
 
 void CelestialBody::collision(const CelestialBody& p)

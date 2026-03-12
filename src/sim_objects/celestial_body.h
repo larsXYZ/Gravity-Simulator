@@ -33,6 +33,13 @@ private:
 	double strongestAttractorStrength = 0;
 	bool marked_for_removal = false;
 
+	//STELLAR EVOLUTION
+	double fuel = 0.0;                         // hydrogen fuel reserve
+	double age = 0.0;                          // accumulated simulation time
+	StellarSubType subType = SUBTYPE_NONE;     // pulsar/magnetar variant
+	double subTypeTimer = 0.0;                 // countdown for subtype phase
+	bool isEvolved = false;                    // true = type set by evolution, not mass ladder
+
 	//FOR DISINTEGRATION AND IGNORING
 	double disintegrate_grace_end_time = 0;
 	std::vector<int> ignore_ids;
@@ -73,6 +80,10 @@ public:
 	[[nodiscard]] const Life& getLife() const noexcept { return life; }
 	[[nodiscard]] double getSupportedBiomass() const noexcept { return supportedBiomass; }
 	[[nodiscard]] GoldilockInfo getGoldilockInfo() const noexcept;
+	[[nodiscard]] double getFuel() const noexcept { return fuel; }
+	[[nodiscard]] double getAge() const noexcept { return age; }
+	[[nodiscard]] StellarSubType getSubType() const noexcept { return subType; }
+	[[nodiscard]] bool getIsEvolved() const noexcept { return isEvolved; }
 
 	// Setters
 	void setName(const std::string& n) noexcept { name = n; }
@@ -83,6 +94,9 @@ public:
 	void setAtmosphere(double a) noexcept { atmoCur = a; }
 	void setAtmospherePotensial(double a) noexcept { atmoPot = a; }
 	void setLifeLevel(lType level) noexcept { life.setLifeLevel(level); }
+	void setFuel(double f) noexcept { fuel = f; }
+	void setIsEvolved(bool evolved) noexcept { isEvolved = evolved; }
+	void setSubType(StellarSubType st) noexcept { subType = st; }
 
 	// State checks
 	[[nodiscard]] bool canDisintegrate(double curr_time) const noexcept;
