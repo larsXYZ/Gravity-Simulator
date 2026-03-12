@@ -18,9 +18,12 @@ namespace StringConstants {
     inline const std::string PLANET_ROCKY = "Rocky";
     inline const std::string PLANET_TERRESTIAL = "Terrestial";
     inline const std::string PLANET_GAS_GIANT = "Gas Giant";
-    inline const std::string PLANET_SMALL_STAR = "Small Star";
+    inline const std::string PLANET_BROWN_DWARF = "Brown Dwarf";
     inline const std::string PLANET_STAR = "Star";
-    inline const std::string PLANET_BIG_STAR = "Big Star";
+    inline const std::string PLANET_RED_GIANT = "Red Giant";
+    inline const std::string PLANET_RED_SUPERGIANT = "Red Supergiant";
+    inline const std::string PLANET_WHITE_DWARF = "White Dwarf";
+    inline const std::string PLANET_NEUTRON_STAR = "Neutron Star";
     inline const std::string PLANET_BLACK_HOLE = "Black Hole";
 
     // Life level strings

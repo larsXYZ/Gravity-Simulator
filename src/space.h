@@ -66,7 +66,7 @@ class Space
 		double mass;
 		double radius;
 		int id;
-		pType type;
+		BodyType type;
 		double strongestAttractorMag;
 		int strongestAttractorId;
 		double accumulatedHeat;

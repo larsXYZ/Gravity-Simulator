@@ -1,7 +1,16 @@
 #pragma once
 
 //STATES
-enum BodyType { ROCKY, TERRESTIAL, GASGIANT, SMALLSTAR, STAR, BIGSTAR, BLACKHOLE };
+enum BodyType {
+	ROCKY, TERRESTIAL, GASGIANT,
+	BROWNDWARF,
+	STAR,                               // single main sequence type (was SMALLSTAR/STAR/BIGSTAR)
+	REDGIANT, REDSUPERGIANT,            // evolved giants
+	WHITEDWARF, NEUTRONSTAR,            // compact remnants
+	BLACKHOLE
+};
+
+enum StellarSubType { SUBTYPE_NONE, PULSAR, MAGNETAR };
 
 // Type alias for backward compatibility during transition
 using pType = BodyType;
@@ -31,15 +40,32 @@ const float CREATEDUSTSPEEDMULT = 0.003f;
 //OBJECT-TYPE LIMITS
 const double ROCKYLIMIT = 15;
 const double TERRESTIALLIMIT = 100;
-const double GASGIANTLIMIT = 600;
-const double SMALLSTARLIMIT = 900;
-const double STARLIMIT = 1800;
-const double BIGSTARLIMIT = 4000;
+const double BROWNDWARFLIMIT = 400;     // gas giant ends, brown dwarf begins
+const double GASGIANTLIMIT = 600;       // brown dwarf ends, star begins
+const double STARLIMIT = 4000;          // star ends, black hole begins
 
-//STAR HEAT MULTIPLIERS
-const double HEAT_SMALL_STAR_MULT = 0.8;
-const double HEAT_STAR_MULT = 1.85;
-const double HEAT_BIG_STAR_MULT = 6;
+// Evolution limits (for future stellar evolution)
+const double CHANDRASEKHAR_LIMIT = 2800; // white dwarf + mass -> Type Ia supernova
+const double TOV_LIMIT = 3200;           // neutron star + mass -> black hole
+
+//STAR HEAT MULTIPLIERS (used for interpolation across star mass range)
+const double HEAT_STAR_LOW_MULT = 0.8;   // at GASGIANTLIMIT (600)
+const double HEAT_STAR_HIGH_MULT = 6.0;  // at STARLIMIT (4000)
+
+//EVOLVED TYPE HEAT MULTIPLIERS
+const double HEAT_BROWNDWARF_MULT = 0.1;
+const double HEAT_REDGIANT_MULT = 1.0;
+const double HEAT_REDSUPERGIANT_MULT = 3.0;
+
+//EVOLVED TYPE DENSITIES
+const double DENSITY_BROWNDWARF = 0.25;
+const double DENSITY_REDGIANT = 0.05;
+const double DENSITY_REDSUPERGIANT = 0.03;
+const double DENSITY_WHITEDWARF = 2.0;
+const double DENSITY_NEUTRONSTAR = 5.0;
+
+//FUEL CONSTANTS (for future stellar evolution)
+const double INITIAL_FUEL_PER_MASS = 100.0;
 
 //NEW OBJECT MASS SLIDER
 const double MASS_SLIDER_MIN_VALUE = 1;

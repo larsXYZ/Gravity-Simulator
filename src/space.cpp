@@ -242,8 +242,8 @@ void Space::update()
 				}
 
 				// Roche Limit
-				if (can_disintegrate_i && 
-					RocheLimit::isBreached(dist, rad_dist, mi, hot_planets[j].mass, hot_planets[j].type == pType::BLACKHOLE))
+				if (can_disintegrate_i &&
+					RocheLimit::isBreached(dist, rad_dist, mi, hot_planets[j].mass, hot_planets[j].type == BLACKHOLE || hot_planets[j].type == NEUTRONSTAR))
 				{
 					#pragma omp critical(events)
 					roche_events.push_back({i});
@@ -655,7 +655,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 	if (match == planets.end())
 		return {};
 
-	if (planet.getType() == SMALLSTAR || planet.getType() == STAR || planet.getType() == BIGSTAR)
+	if (planet.getType() == STAR || planet.getType() == REDGIANT || planet.getType() == REDSUPERGIANT)
 	{
 		sf::Color col = planet.getStarCol();
 		const auto long_range_luminosity = 30 * sqrt(planet.fusionEnergy());
@@ -739,7 +739,7 @@ void Space::explodePlanet(Planet planet)
 
 	addExplosion(original_position, size, original_velocity, lifetime);
 
-	if (planet.getType() == SMALLSTAR || planet.getType() == STAR || planet.getType() == BIGSTAR)
+	if (planet.getType() == STAR || planet.getType() == REDGIANT || planet.getType() == REDSUPERGIANT)
 	{
 		sf::Color col = planet.getStarCol();
 		const auto long_range_luminosity = 30 * sqrt(planet.fusionEnergy());
@@ -1010,10 +1010,8 @@ void Space::initSetup()
 	objectTypeSelector->addItem(StringConstants::PLANET_ROCKY);
 	objectTypeSelector->addItem(StringConstants::PLANET_TERRESTIAL);
 	objectTypeSelector->addItem(StringConstants::PLANET_GAS_GIANT);
-	objectTypeSelector->addItem(StringConstants::PLANET_SMALL_STAR);
+	objectTypeSelector->addItem(StringConstants::PLANET_BROWN_DWARF);
 	objectTypeSelector->addItem(StringConstants::PLANET_STAR);
-	objectTypeSelector->addItem(StringConstants::PLANET_BIG_STAR);
-	objectTypeSelector->addItem(StringConstants::PLANET_BLACK_HOLE);
 	objectTypeSelector->setSelectedItem(StringConstants::PLANET_ROCKY);
 	objectTypeSelector->setPosition(5, tgui::bindBottom(newPlanetInfo) + UI_SEPERATION_DISTANCE);
 	objectTypeSelector->setSize(180, 20);
@@ -1030,23 +1028,15 @@ void Space::initSetup()
 		}
 		else if (item == "Gas Giant") {
 			massSlider->setMinimum(TERRESTIALLIMIT);
+			massSlider->setMaximum(BROWNDWARFLIMIT - 1);
+		}
+		else if (item == "Brown Dwarf") {
+			massSlider->setMinimum(BROWNDWARFLIMIT);
 			massSlider->setMaximum(GASGIANTLIMIT - 1);
 		}
-		else if (item == "Small Star") {
-			massSlider->setMinimum(GASGIANTLIMIT);
-			massSlider->setMaximum(SMALLSTARLIMIT - 1);
-		}
 		else if (item == "Star") {
-			massSlider->setMinimum(SMALLSTARLIMIT);
+			massSlider->setMinimum(GASGIANTLIMIT);
 			massSlider->setMaximum(STARLIMIT - 1);
-		}
-		else if (item == "Big Star") {
-			massSlider->setMinimum(STARLIMIT);
-			massSlider->setMaximum(BIGSTARLIMIT - 1);
-		}
-		else if (item == "Black Hole") {
-			massSlider->setMinimum(BIGSTARLIMIT);
-			massSlider->setMaximum(40000); // 10x Big Star
 		}
 		massSlider->setValue(massSlider->getMinimum());
 	});
@@ -1418,7 +1408,7 @@ double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 
 	for (const auto& planet : planets)
 	{
-		if (planet.getMass() < BIGSTARLIMIT && planet.getMass() >= GASGIANTLIMIT)
+		if (planet.emitsHeat())
 		{
 			double dist = sqrt((planet.getPosition().x - pos.x)*(planet.getPosition().x - pos.x) + (planet.getPosition().y - pos.y) * (planet.getPosition().y - pos.y));
 			tEnergyFromOutside += planet.giveThermalEnergy(1)/ std::max(dist, 1.0);

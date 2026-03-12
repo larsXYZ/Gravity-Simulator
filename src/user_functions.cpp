@@ -118,7 +118,7 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 
 			// Roche
 			if (RocheLimit::hasMinimumBreakupSize(pSub.mass) &&
-				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].getType() == pType::BLACKHOLE))
+				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].getType() == BLACKHOLE || planets[k].getType() == NEUTRONSTAR))
 			{
 				disintegration = true;
 				break;
@@ -397,9 +397,7 @@ public:
 
 				Planet temp_planet(context.mass_slider->getValue());
 				
-				if (target->getType() == SMALLSTAR 
-					|| target->getType() == STAR 
-					|| target->getType() == BIGSTAR)
+				if (target->getType() == STAR)
 				{
 					const auto goldilock_info = target->getGoldilockInfo();
 
@@ -435,8 +433,8 @@ public:
 				context.window.draw(center_point);
 
 				//DRAWING ROCHE LIMIT
-				if (RocheLimit::hasMinimumBreakupSize(context.mass_slider->getValue()) 
-					&& RocheLimit::checkMassRatio(context.mass_slider->getValue(), target->getMass(), target->getType() == pType::BLACKHOLE))
+				if (RocheLimit::hasMinimumBreakupSize(context.mass_slider->getValue())
+					&& RocheLimit::checkMassRatio(context.mass_slider->getValue(), target->getMass(), target->getType() == BLACKHOLE || target->getType() == NEUTRONSTAR))
 				{
 					double rocheRad = RocheLimit::calculateLimitRadius(temp_planet.getRadius() + target->getRadius());
 

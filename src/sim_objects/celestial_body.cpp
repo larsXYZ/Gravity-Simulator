@@ -4,6 +4,33 @@
 
 #include <sstream>
 
+namespace {
+	// Linear interpolation helper
+	double interpolate(double low_val, double high_val, double mass, double low_mass, double high_mass)
+	{
+		double t = std::clamp((mass - low_mass) / (high_mass - low_mass), 0.0, 1.0);
+		return low_val + t * (high_val - low_val);
+	}
+
+	// Spectral class display name for STAR type based on mass
+	std::string getStarSpectralName(double mass)
+	{
+		if (mass < 800) return "Red dwarf";
+		if (mass < 1200) return "Orange dwarf";
+		if (mass < 1600) return "Yellow dwarf";
+		if (mass < 2200) return "White star";
+		if (mass < 3000) return "Blue giant";
+		return "Blue supergiant";
+	}
+
+	// Continuous fusion energy for STAR type
+	double calculateStarFusionEnergy(double mass)
+	{
+		double mult = interpolate(HEAT_STAR_LOW_MULT, HEAT_STAR_HIGH_MULT, mass, GASGIANTLIMIT, STARLIMIT);
+		return mult * mass;
+	}
+}
+
 CelestialBody::CelestialBody(double m, double xx, double yy, double xvv, double yvv)
 	: SimObject({static_cast<float>(xx), static_cast<float>(yy)}, {static_cast<float>(xvv), static_cast<float>(yvv)})
 {
@@ -33,9 +60,12 @@ std::string CelestialBody::getTypeString(BodyType type) noexcept
 	case ROCKY: return "Rocky";
 	case TERRESTIAL: return "Terrestial";
 	case GASGIANT: return "Gas giant";
-	case SMALLSTAR: return "Small star";
+	case BROWNDWARF: return "Brown dwarf";
 	case STAR: return "Star";
-	case BIGSTAR: return "Big star";
+	case REDGIANT: return "Red giant";
+	case REDSUPERGIANT: return "Red supergiant";
+	case WHITEDWARF: return "White dwarf";
+	case NEUTRONSTAR: return "Neutron star";
 	case BLACKHOLE: return "Black hole";
 	default: return "Unknown";
 	}
@@ -56,9 +86,10 @@ bool CelestialBody::emitsHeat() const noexcept
 {
 	switch (getType())
 	{
-	case SMALLSTAR:
 	case STAR:
-	case BIGSTAR:
+	case REDGIANT:
+	case REDSUPERGIANT:
+	case WHITEDWARF:
 	case BLACKHOLE:
 		return true;
 	default:
@@ -109,18 +140,14 @@ double CelestialBody::fusionEnergy() const noexcept
 {
 	switch (planetType)
 	{
-	case ROCKY:
-		return 0;
-	case TERRESTIAL:
-		return 0;
-	case GASGIANT:
-		return 0;
-	case SMALLSTAR:
-		return HEAT_SMALL_STAR_MULT * getMass();
 	case STAR:
-		return HEAT_STAR_MULT * getMass();
-	case BIGSTAR:
-		return HEAT_BIG_STAR_MULT * getMass();
+		return calculateStarFusionEnergy(getMass());
+	case BROWNDWARF:
+		return HEAT_BROWNDWARF_MULT * getMass();
+	case REDGIANT:
+		return HEAT_REDGIANT_MULT * getMass();
+	case REDSUPERGIANT:
+		return HEAT_REDSUPERGIANT_MULT * getMass();
 	default:
 		return 0;
 	}
@@ -168,7 +195,7 @@ void CelestialBody::update_planet_sim(double timestep, bool heat_enabled)
 
 bool CelestialBody::canDisintegrate(double curr_time) const noexcept
 {
-	if (getType() == BLACKHOLE)
+	if (getType() == BLACKHOLE || getType() == NEUTRONSTAR)
 		return false;
 
 	if (!RocheLimit::hasMinimumBreakupSize(getMass()))
@@ -216,6 +243,7 @@ void CelestialBody::becomeAbsorbedBy(CelestialBody& absorbing_planet)
 
 void CelestialBody::updateRadiAndType() noexcept
 {
+	// Mass ladder for non-evolved types
 	if (getMass() < ROCKYLIMIT)
 	{
 		planetType = ROCKY;
@@ -229,34 +257,30 @@ void CelestialBody::updateRadiAndType() noexcept
 		density = 0.5;
 		circle.setPointCount(40);
 	}
-	else if (getMass() < GASGIANTLIMIT)
+	else if (getMass() < BROWNDWARFLIMIT)
 	{
 		planetType = GASGIANT;
 		density = 0.3;
 		circle.setPointCount(50);
 	}
-	else if (getMass() < SMALLSTARLIMIT)
+	else if (getMass() < GASGIANTLIMIT)
 	{
-		planetType = SMALLSTAR;
-		density = 0.2;
-		circle.setOutlineColor(sf::Color(255, 0, 0, 60));
-		circle.setOutlineThickness(3);
-		circle.setPointCount(90);
+		planetType = BROWNDWARF;
+		density = DENSITY_BROWNDWARF;
+		circle.setOutlineColor(sf::Color(180, 80, 50, 60));
+		circle.setOutlineThickness(2);
+		circle.setPointCount(60);
 	}
 	else if (getMass() < STARLIMIT)
 	{
 		planetType = STAR;
-		density = 0.15;
-		circle.setOutlineThickness(7);
-		circle.setPointCount(90);
-	}
-	else if (getMass() < BIGSTARLIMIT)
-	{
-		planetType = BIGSTAR;
-		density = 0.1;
-		circle.setOutlineColor(sf::Color(150, 150, 255, 60));
-		circle.setOutlineThickness(10);
-		circle.setPointCount(150);
+		// Continuous density: 0.2 at low mass, 0.1 at high mass
+		density = interpolate(0.2, 0.1, getMass(), GASGIANTLIMIT, STARLIMIT);
+		// Continuous visual properties based on mass
+		int pointCount = static_cast<int>(interpolate(90, 150, getMass(), GASGIANTLIMIT, STARLIMIT));
+		circle.setPointCount(pointCount);
+		double thickness = interpolate(3, 10, getMass(), GASGIANTLIMIT, STARLIMIT);
+		circle.setOutlineThickness(static_cast<float>(thickness));
 	}
 	else
 	{
@@ -374,11 +398,25 @@ void CelestialBody::render(sf::RenderWindow& window) const
 		draw_gas_planet_atmosphere(window);
 		break;
 
-	case SMALLSTAR:
+	case BROWNDWARF:
+		draw_planetshine(window);
+		window.draw(circle);
+		break;
+
 	case STAR:
-	case BIGSTAR:
+	case REDGIANT:
+	case REDSUPERGIANT:
 		window.draw(circle);
 		draw_starshine(window);
+		break;
+
+	case WHITEDWARF:
+		window.draw(circle);
+		draw_planetshine(window);
+		break;
+
+	case NEUTRONSTAR:
+		window.draw(circle);
 		break;
 
 	case BLACKHOLE:
@@ -406,14 +444,27 @@ void CelestialBody::setColor() noexcept
 	case GASGIANT:
 		circle.setOutlineThickness(0);
 		circle.setFillColor(sf::Color::Transparent);
-		/* Handled in draw() */
 		break;
-	case SMALLSTAR:
+	case BROWNDWARF:
+		circle.setFillColor(sf::Color(180, 80, 50));
+		circle.setOutlineColor(sf::Color(180, 80, 50, 30));
+		break;
 	case STAR:
-	case BIGSTAR:
+	case REDGIANT:
+	case REDSUPERGIANT:
 		circle.setFillColor(getStarCol());
 		circle.setOutlineColor(sf::Color(circle.getFillColor().r, circle.getFillColor().g, circle.getFillColor().b,
 			20));
+		break;
+	case WHITEDWARF:
+		circle.setFillColor(sf::Color(220, 220, 255));
+		circle.setOutlineColor(sf::Color(220, 220, 255, 40));
+		break;
+	case NEUTRONSTAR:
+		circle.setFillColor(sf::Color(200, 200, 220));
+		circle.setOutlineColor(sf::Color(200, 200, 220, 40));
+		break;
+	case BLACKHOLE:
 		break;
 	}
 }
