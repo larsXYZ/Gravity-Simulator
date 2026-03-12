@@ -1,10 +1,10 @@
-#include "Planet.h"
+#include "celestial_body.h"
 #include "../HeatSim.h"
 #include "../roche_limit.h"
 
 #include <sstream>
 
-Planet::Planet(double m, double xx, double yy, double xvv, double yvv)
+CelestialBody::CelestialBody(double m, double xx, double yy, double xvv, double yvv)
 	: SimObject({static_cast<float>(xx), static_cast<float>(yy)}, {static_cast<float>(xvv), static_cast<float>(yvv)})
 {
 	setMass(m);
@@ -19,14 +19,14 @@ Planet::Planet(double m, double xx, double yy, double xvv, double yvv)
 		modernRandomWithLimits(-brightnessVariance, brightnessVariance));
 }
 
-double Planet::getDist(const Planet& forcer) const noexcept
+double CelestialBody::getDist(const CelestialBody& forcer) const noexcept
 {
 	const auto& otherPos = forcer.getPosition();
 	return sqrt(
 		(otherPos.x - position.x) * (otherPos.x - position.x) + (otherPos.y - position.y) * (otherPos.y - position.y));
 }
 
-std::string Planet::getTypeString(pType type) noexcept
+std::string CelestialBody::getTypeString(BodyType type) noexcept
 {
 	switch (type)
 	{
@@ -41,18 +41,18 @@ std::string Planet::getTypeString(pType type) noexcept
 	}
 }
 
-const std::string& Planet::getName() const noexcept
+const std::string& CelestialBody::getName() const noexcept
 {
 	return name;
 }
 
-void Planet::giveID(int i) noexcept
+void CelestialBody::giveID(int i) noexcept
 {
 	id = i;
 	life.giveId(i);
 }
 
-bool Planet::emitsHeat() const noexcept
+bool CelestialBody::emitsHeat() const noexcept
 {
 	switch (getType())
 	{
@@ -66,7 +66,7 @@ bool Planet::emitsHeat() const noexcept
 	}
 }
 
-std::string Planet::getFlavorTextLife() const
+std::string CelestialBody::getFlavorTextLife() const
 {
 	std::string baseText = "";
 	if (life.getTypeEnum() >= 4 && !life.getCivName().empty())
@@ -99,13 +99,13 @@ std::string Planet::getFlavorTextLife() const
 	}
 }
 
-sf::Color Planet::getStarCol() const noexcept
+sf::Color CelestialBody::getStarCol() const noexcept
 {
 	const static StarColorInterpolator interpolator;
 	return interpolator.getStarColor(getTemp());	
 }
 
-double Planet::fusionEnergy() const noexcept
+double CelestialBody::fusionEnergy() const noexcept
 {
 	switch (planetType)
 	{
@@ -126,12 +126,12 @@ double Planet::fusionEnergy() const noexcept
 	}
 }
 
-double Planet::thermalEnergy() const noexcept
+double CelestialBody::thermalEnergy() const noexcept
 {
 	return tEnergy;
 }
 
-void Planet::coolDown(int t) noexcept
+void CelestialBody::coolDown(int t) noexcept
 {
 	// Thermal radiation loss (Stefan-Boltzmann law)
 	tEnergy -= calculate_cooling(getTemp(), radius, t);
@@ -141,23 +141,23 @@ void Planet::coolDown(int t) noexcept
 	clampTemperature();
 }
 
-void Planet::absorbHeat(double e, int t) noexcept
+void CelestialBody::absorbHeat(double e, int t) noexcept
 {
 	tEnergy += (e * (1 + greenHouseEffectMult * atmoCur));
 	clampTemperature();
 }
 
-double Planet::giveThermalEnergy(int t) const noexcept
+double CelestialBody::giveThermalEnergy(int t) const noexcept
 {
 	return t * (SBconst * (radius * radius * getTemp()));
 }
 
-void Planet::update(double timestep)
+void CelestialBody::update(double timestep)
 {
 	update_planet_sim(timestep, true);
 }
 
-void Planet::update_planet_sim(double timestep, bool heat_enabled)
+void CelestialBody::update_planet_sim(double timestep, bool heat_enabled)
 {
 	if (heat_enabled)
 		coolDown(timestep);
@@ -166,7 +166,7 @@ void Planet::update_planet_sim(double timestep, bool heat_enabled)
 	updateLife(timestep);
 }
 
-bool Planet::canDisintegrate(double curr_time) const noexcept
+bool CelestialBody::canDisintegrate(double curr_time) const noexcept
 {
 	if (getType() == BLACKHOLE)
 		return false;
@@ -180,41 +180,41 @@ bool Planet::canDisintegrate(double curr_time) const noexcept
 	return true;
 }
 
-void Planet::setDisintegrationGraceTime(double grace_time, double curr_time) noexcept
+void CelestialBody::setDisintegrationGraceTime(double grace_time, double curr_time) noexcept
 {
 	disintegrate_grace_end_time = curr_time + grace_time;
 }
 
-bool Planet::disintegrationGraceTimeIsActive(double curr_time) const noexcept
+bool CelestialBody::disintegrationGraceTimeIsActive(double curr_time) const noexcept
 {
 	return curr_time < disintegrate_grace_end_time;
 }
 
-bool Planet::disintegrationGraceTimeOver(double curr_time) const noexcept
+bool CelestialBody::disintegrationGraceTimeOver(double curr_time) const noexcept
 {
 	return curr_time >= disintegrate_grace_end_time;
 }
 
-void Planet::registerIgnoredId(int ignored_id)
+void CelestialBody::registerIgnoredId(int ignored_id)
 {
 	if (std::find(ignore_ids.begin(), ignore_ids.end(), ignored_id) == ignore_ids.end()) {
 		ignore_ids.push_back(ignored_id);
 	}
 }
 
-bool Planet::isIgnoring(int check_id) const noexcept
+bool CelestialBody::isIgnoring(int check_id) const noexcept
 {
 	return std::find(ignore_ids.begin(), ignore_ids.end(), check_id) != ignore_ids.end();
 }
 
-void Planet::becomeAbsorbedBy(Planet& absorbing_planet)
+void CelestialBody::becomeAbsorbedBy(CelestialBody& absorbing_planet)
 {
 	markForRemoval();
 	absorbing_planet.collision(*this);
 	absorbing_planet.incMass(getMass());
 }
 
-void Planet::updateRadiAndType() noexcept
+void CelestialBody::updateRadiAndType() noexcept
 {
 	if (getMass() < ROCKYLIMIT)
 	{
@@ -282,13 +282,13 @@ void Planet::updateRadiAndType() noexcept
 	circle.setOrigin(radius, radius);
 }
 
-void Planet::incMass(double m) noexcept
+void CelestialBody::incMass(double m) noexcept
 {
 	setMass(getMass() + m);
 	updateRadiAndType();
 }
 
-void Planet::collision(const Planet& p)
+void CelestialBody::collision(const CelestialBody& p)
 {
 	// Conservation of momentum
 	velocity.x = (getMass() * velocity.x + p.getMass() * p.getVelocity().x) / (getMass() + p.getMass());
@@ -305,7 +305,7 @@ void Planet::collision(const Planet& p)
 	increaseThermalEnergy(p.thermalEnergy() * mass_ratio);
 }
 
-void Planet::draw_starshine(sf::RenderWindow& window) const
+void CelestialBody::draw_starshine(sf::RenderWindow& window) const
 {
 	sf::Color col = getStarCol();
 
@@ -320,7 +320,7 @@ void Planet::draw_starshine(sf::RenderWindow& window) const
 	render_shine(window, position, col, short_range_luminosity);
 }
 
-void Planet::draw_planetshine(sf::RenderWindow& window) const
+void CelestialBody::draw_planetshine(sf::RenderWindow& window) const
 {
 	/*
 	 *	Caused by very hot temperatures
@@ -328,7 +328,7 @@ void Planet::draw_planetshine(sf::RenderWindow& window) const
 	draw_heat_glow(window, position, getTemp(), radius);
 }
 
-void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
+void CelestialBody::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
 {
 	for (size_t i = 0; i < atmoLinesBrightness.size(); i++)
 	{
@@ -357,7 +357,7 @@ void Planet::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
 	}
 }
 
-void Planet::render(sf::RenderWindow& window) const
+void CelestialBody::render(sf::RenderWindow& window) const
 {
 	circle.setPosition(position);
 
@@ -387,7 +387,7 @@ void Planet::render(sf::RenderWindow& window) const
 	}
 }
 
-void Planet::setColor() noexcept
+void CelestialBody::setColor() noexcept
 {
 	switch (getType())
 	{
@@ -418,7 +418,7 @@ void Planet::setColor() noexcept
 	}
 }
 
-void Planet::updateAtmosphere(int t) noexcept
+void CelestialBody::updateAtmosphere(int t) noexcept
 {
 	if (planetType != TERRESTIAL)
 	{
@@ -446,7 +446,7 @@ void Planet::updateAtmosphere(int t) noexcept
 	circle.setOutlineThickness(sqrt(atmoCur) * atmoThicknessMult);
 }
 
-void Planet::updateLife(int t)
+void CelestialBody::updateLife(int t)
 {
 	if (planetType == ROCKY || planetType == TERRESTIAL)
 	{
@@ -463,7 +463,7 @@ void Planet::updateLife(int t)
 	}
 }
 
-void Planet::colonize(int i, const sf::Color& c, std::string_view d, std::string_view cn)
+void CelestialBody::colonize(int i, const sf::Color& c, std::string_view d, std::string_view cn)
 {
 	life = Life(i);
 	life.giveCol(c);
@@ -471,7 +471,7 @@ void Planet::colonize(int i, const sf::Color& c, std::string_view d, std::string
 	life.giveCivName(std::string(cn));
 }
 
-int Planet::modernRandomWithLimits(int min, int max) const
+int CelestialBody::modernRandomWithLimits(int min, int max) const
 {
 	std::random_device seeder;
 	std::default_random_engine generator(seeder());
@@ -484,7 +484,7 @@ std::string convertDoubleToString(double number)
 	return std::to_string(static_cast<int>(number));
 }
 
-[[nodiscard]] std::string Planet::generate_name()
+[[nodiscard]] std::string CelestialBody::generate_name()
 {
 	std::vector<std::string> name_first_part = {
 		"Jup", "Jor", "Ear", "Mar", "Ven", "Cer", "Sat", "Pl", "Nep", "Ur", "Ker", "Mer", "Jov", "Qur", "Deb", "Car",
@@ -509,7 +509,7 @@ std::string convertDoubleToString(double number)
 	return name;
 }
 
-Planet::GoldilockInfo Planet::getGoldilockInfo() const noexcept
+CelestialBody::GoldilockInfo CelestialBody::getGoldilockInfo() const noexcept
 {
 	const auto goldilock_inner_rad = (tempConstTwo * getRadius() * getRadius() * getTemp()) / inner_goldi_temp;
 	const auto goldilock_outer_rad = (tempConstTwo * getRadius() * getRadius() * getTemp()) / outer_goldi_temp;

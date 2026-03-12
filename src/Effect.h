@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <random>
-#include "sim_objects/planet.h"
+#include "sim_objects/celestial_body.h"
 #include "CONSTANTS.h"
 #include "HeatSim.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "sim_objects/planet.h"
+#include "sim_objects/celestial_body.h"
 #include "user_functions.h"
 #include <deque>
 

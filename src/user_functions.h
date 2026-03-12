@@ -89,7 +89,7 @@ struct PredictionResult {
 	std::vector<CollisionMarker> collisionMarkers;
 };
 
-PredictionResult predict_trajectory(const std::vector<class Planet>& planets_orig, const class Planet& subject, int steps = 200);
+PredictionResult predict_trajectory(const std::vector<class CelestialBody>& planets_orig, const class CelestialBody& subject, int steps = 200);
 
 void executeFunction(FunctionContext& context);
 void giveFunctionEvent(FunctionContext& context, sf::Event event);

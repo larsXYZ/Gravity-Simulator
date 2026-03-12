@@ -9,12 +9,12 @@
 
 class Space;
 
-class Planet : public SimObject {
+class CelestialBody : public SimObject {
 private:
 	std::string name = generate_name();
 
 	//PHYSICAL
-	pType planetType;
+	BodyType planetType;
 
 		//ATMOSPHERE
 	double atmoCur = 0;
@@ -51,11 +51,11 @@ public:
 	};
 
 	// Constructors
-	explicit Planet(double m = 6.0, double xx = 0.0, double yy = 0.0, double xvv = 0.0, double yvv = 0.0);
+	explicit CelestialBody(double m = 6.0, double xx = 0.0, double yy = 0.0, double xvv = 0.0, double yvv = 0.0);
 
 	// Getters
-	[[nodiscard]] pType getType() const noexcept { return planetType; }
-	[[nodiscard]] static std::string getTypeString(pType type) noexcept;
+	[[nodiscard]] BodyType getType() const noexcept { return planetType; }
+	[[nodiscard]] static std::string getTypeString(BodyType type) noexcept;
 	[[nodiscard]] int getId() const noexcept override { return id; }
 	[[nodiscard]] int getStrongestAttractorId() const noexcept { return strongestAttractorId; }
 	[[nodiscard]] int getStrongestAttractorIdRef() const noexcept { return strongestAttractorId; }
@@ -94,11 +94,11 @@ public:
 	void setDisintegrationGraceTime(double grace_time, double curr_time) noexcept;
 	void registerIgnoredId(int id);
 	void clearIgnores() noexcept { ignore_ids.clear(); }
-	void becomeAbsorbedBy(Planet& absorbing_planet);
+	void becomeAbsorbedBy(CelestialBody& absorbing_planet);
 	void updateRadiAndType() noexcept;
 	void resetAttractorMeasure() noexcept { strongestAttractorStrength = 0; }
 	void incMass(double m) noexcept;
-	void collision(const Planet& p);
+	void collision(const CelestialBody& p);
 	void giveID(int i) noexcept;
 	void coolDown(int t) noexcept;
 	void absorbHeat(double e, int t) noexcept;
@@ -110,7 +110,7 @@ public:
 	void update_planet_sim(double timestep, bool heat_enabled = true);
 	void updateLife(int t);
 	void render(sf::RenderWindow& window) const override;
-	[[nodiscard]] double getDist(const Planet& forcer) const noexcept;
+	[[nodiscard]] double getDist(const CelestialBody& forcer) const noexcept;
 	void draw_starshine(sf::RenderWindow& window) const;
 	void draw_planetshine(sf::RenderWindow& window) const;
 	void draw_gas_planet_atmosphere(sf::RenderWindow& window) const;
@@ -120,3 +120,6 @@ private:
 	[[nodiscard]] int modernRandomWithLimits(int min, int max) const;
 	[[nodiscard]] std::string generate_name();
 };
+
+// Type alias for backward compatibility during transition
+using Planet = CelestialBody;
