@@ -35,6 +35,10 @@ void ObjectInfo::deactivate()
 	if (m_space) m_space->trail.clear();
 	if (panel)
 		panel->setVisible(false);
+	if (m_infoTextBox)
+		m_infoTextBox->setVisible(false);
+	if (m_infoCloseButton)
+		m_infoCloseButton->setVisible(false);
 }
 
 void ObjectInfo::activate(int new_target_id)
@@ -53,9 +57,18 @@ void ObjectInfo::set_visible(bool visible)
 	}
 }
 
-void ObjectInfo::setup(Space& space, tgui::Gui& gui)
+void ObjectInfo::setup(Space& space, tgui::Gui& gui, tgui::TextArea::Ptr infoTextBox)
 {
 	m_space = &space;
+	m_infoTextBox = infoTextBox;
+
+	m_infoCloseButton = tgui::Button::create("X");
+	m_infoCloseButton->setSize(18, 18);
+	m_infoCloseButton->setTextSize(11);
+	m_infoCloseButton->setPosition(tgui::bindRight(m_infoTextBox) + 2, tgui::bindTop(m_infoTextBox));
+	m_infoCloseButton->setVisible(false);
+	m_infoCloseButton->onPress([this]() { deactivate(); });
+	gui.add(m_infoCloseButton);
 
 	panel = tgui::Panel::create();
 	panel->setSize(220, 260);
@@ -65,6 +78,13 @@ void ObjectInfo::setup(Space& space, tgui::Gui& gui)
 	panel->getRenderer()->setBorderColor(sf::Color::Black);
 	panel->getRenderer()->setBorders(1);
 	gui.add(panel);
+
+	closeButton = tgui::Button::create("X");
+	closeButton->setSize(20, 20);
+	closeButton->setTextSize(12);
+	closeButton->setPosition("100% - 25", 5);
+	closeButton->onPress([this]() { deactivate(); });
+	panel->add(closeButton);
 
 		float y = 5;
 		float labelWidth = 75;
@@ -298,6 +318,57 @@ void ObjectInfo::update_ui_values(Space& space, sf::RenderWindow& window)
 	}
 }
 
+void ObjectInfo::update_info_text()
+{
+	if (!m_infoTextBox || !m_space || target_id == -1) return;
+
+	Planet* target = m_space->findPlanetPtr(target_id);
+	if (!target) return;
+
+	const auto selected_temp_unit = static_cast<TemperatureUnit>(m_space->temperatureUnitSelector->getSelectedIndex());
+
+	std::string info = target->getName() +
+		"\nType: " + target->getDisplayName() +
+		"\nRadius: " + std::to_string(static_cast<int>(target->getRadius())) +
+		"\nMass: " + std::to_string(static_cast<int>(target->getMass())) +
+		"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) +
+		"\nTemperature: " + Space::temperature_info_string(target->getTemp(), selected_temp_unit);
+
+	Planet* target_parent = m_space->findPlanetPtr(target->getStrongestAttractorId());
+	if (target_parent)
+		info += "\nDistance: " + std::to_string(static_cast<int>(std::hypot(target->getx() - target_parent->getx(),
+			target->gety() - target_parent->gety())));
+
+	if (target->hasFuel() || target->isFuelDepleted())
+	{
+		int pct = static_cast<int>(target->fuelFraction() * 100.0);
+		info += "\nFuel: " + std::to_string(pct) + "%";
+	}
+
+	if (target->getType() == TERRESTRIAL)
+	{
+		info += "\n\nAtmo: " + std::to_string((int)target->getCurrentAtmosphere()) + " / " + std::to_string((int)target->getAtmospherePotensial()) + "kPa";
+		if (target->getLife().getTypeEnum() == 0)
+			info += "\n\n" + target->getFlavorTextLife();
+	}
+
+	if (target->getLife().getTypeEnum() != 0)
+	{
+		info += "\n\nBiomass: " + std::to_string((int)target->getLife().getBmass()) + "MT";
+		info += "\n" + target->getLife().getType() + "\n" + target->getFlavorTextLife();
+	}
+
+	m_infoTextBox->setVisible(true);
+	m_infoTextBox->setText(info);
+
+	float lineHeight = m_infoTextBox->getTextSize() * 1.2f;
+	int lines = static_cast<int>(m_infoTextBox->getLinesCount());
+	m_infoTextBox->setSize(m_infoTextBox->getSize().x, std::max(32.0f, lines * lineHeight + 12.0f));
+
+	if (m_infoCloseButton)
+		m_infoCloseButton->setVisible(true);
+}
+
 void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 {
 	Planet* target = space.findPlanetPtr(target_id);
@@ -307,6 +378,8 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		return;
 	}
 
+	set_visible(space.editObjectCheckBox->isChecked());
+	update_info_text();
 	update_ui_values(space, window);
 	
 	sf::Vector2f pos(target->getx(), target->gety());

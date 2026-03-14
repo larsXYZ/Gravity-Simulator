@@ -24,10 +24,16 @@ class ObjectInfo
 	tgui::EditBox::Ptr atmoBox;
 	tgui::EditBox::Ptr atmoPotBox;
 	tgui::ComboBox::Ptr lifeLevelSelector;
+	tgui::Button::Ptr closeButton;
+
+	tgui::TextArea::Ptr m_infoTextBox;
+	tgui::Button::Ptr m_infoCloseButton;
 
 	bool ignore_change_signals{ false };
 	Space* m_space{ nullptr };
 	mutable sf::Clock m_lastInteractionClock;
+
+	void update_info_text();
 
 public:
 	ObjectInfo();
@@ -39,7 +45,7 @@ public:
 	void set_visible(bool visible);
 	void render(Space& space, sf::RenderWindow & window);
 	
-	void setup(Space& space, tgui::Gui& gui);
+	void setup(Space& space, tgui::Gui& gui, tgui::TextArea::Ptr infoTextBox);
 	void update_ui_values(Space& space, sf::RenderWindow& window);
 	
 	bool is_focused(sf::RenderWindow& window) const;

@@ -1175,6 +1175,12 @@ void Space::initSetup()
 	massSlider->setMinimum(1);
 	massSlider->setMaximum(ROCKYLIMIT - 1);
 
+	objectInfoText->getVerticalScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
+	objectInfoText->setSize(180, 32);
+	objectInfoText->setPosition(5, tgui::bindBottom(massSlider) + 2 * UI_SEPERATION_DISTANCE);
+	objectInfoText->setTextSize(14);
+	objectInfoText->setVisible(false);
+
 	timeStepLabel->setText("Timestep");
 	timeStepLabel->setTextSize(14);
 	timeStepLabel->getRenderer()->setTextColor(sf::Color::White);

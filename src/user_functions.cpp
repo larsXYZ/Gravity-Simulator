@@ -798,14 +798,11 @@ public:
     void on_deselection(FunctionContext& context) override
     {
         IUserFunction::on_deselection(context);
-        context.space.object_info.set_visible(false);
-        context.space.object_info.deactivate();
+        // Keep object_info active — it has its own close button
     }
 
 	void execute(FunctionContext& context) override
 	{
-		context.space.object_info.set_visible(context.space.editObjectCheckBox->isChecked());
-
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 		{
 			for (const auto& planet : context.space.planets)
@@ -814,54 +811,9 @@ public:
 					planet.gety() - context.mouse_pos_world.y);
 				if (dist >= planet.getRadius())
 					continue;
-				
+
 				context.space.object_info.activate(planet.getId());
 				return;
-			}
-		}
-
-		if (context.space.object_info.is_active())
-		{
-			Planet* target = context.space.findPlanetPtr(context.space.object_info.get_target_id());
-			if (target)
-			{
-				const auto selected_temp_unit = static_cast<TemperatureUnit>(context.space.temperatureUnitSelector->getSelectedIndex());
-
-				std::string info = target->getName() +
-					"\nType: " + target->getDisplayName() +
-					"\nRadius: " + std::to_string(static_cast<int>(target->getRadius())) +
-					"\nMass: " + std::to_string(static_cast<int>(target->getMass())) +
-					"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) +
-					"\nTemperature: " + Space::temperature_info_string(target->getTemp(), selected_temp_unit);
-
-				Planet* target_parent = context.space.findPlanetPtr(target->getStrongestAttractorId());
-				if (target_parent)
-					info += "\nDistance: " + std::to_string(static_cast<int>(std::hypot(target->getx() - target_parent->getx(),
-						target->gety() - target_parent->gety())));
-
-				if (target->hasFuel() || target->isFuelDepleted())
-				{
-					int pct = static_cast<int>(target->fuelFraction() * 100.0);
-					info += "\nFuel: " + std::to_string(pct) + "%";
-				}
-
-			if (target->getType() == TERRESTRIAL)
-				{
-					info += "\n\nAtmo: " + std::to_string((int)target->getCurrentAtmosphere()) + " / " + std::to_string((int)target->getAtmospherePotensial()) + "kPa";
-					if (target->getLife().getTypeEnum() == 0)
-						info += "\n\n" + target->getFlavorTextLife();
-				}
-
-				if (target->getLife().getTypeEnum() != 0)
-				{
-					info += "\n\nBiomass: " + std::to_string((int)target->getLife().getBmass()) + "MT";
-					info += "\n" + target->getLife().getType() + "\n" + target->getFlavorTextLife();
-				}
-
-				context.new_object_info->setText(info);
-				
-				// Count lines for scaling
-				updateGuiSize(context.new_object_info, context.new_object_info->getLinesCount());
 			}
 		}
 	}
