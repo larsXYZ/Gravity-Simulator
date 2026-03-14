@@ -74,14 +74,15 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.add(autoBound);
 	autoBound->onUncheck([&]() {bound.setActiveState(false); });
 
+	// Initialize bloom effect
+	bloom.init(window_size.x, window_size.y);
+
 	sf::Event event;
 	while (window.isOpen())
 	{
-		window.clear(sf::Color::Black);
-
 		timestep = paused ? 0.0 : timeStepSlider->getValue();
         is_mouse_on_gui = is_mouse_on_widgets(window, gui);
-		
+
 		FunctionContext context
 		{
 			.type = getSelectedFunction(functions),
@@ -104,6 +105,9 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			if (event.type == sf::Event::Closed)
 				window.close();
 
+			if (event.type == sf::Event::Resized)
+				bloom.resize(event.size.width, event.size.height);
+
 			if (!object_info.is_focused(window))
 				hotkeys(event, mainView, window);
 
@@ -116,8 +120,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		}
 
 		window.setView(mainView);
-		
-		executeFunction(context);
+
 		flushPlanets();
 
 		if (object_tracker.is_active())
@@ -125,13 +128,33 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 
 		updateInfoBox();
 
-		drawPlanets(window);
-		ship.draw(window);
-		drawDust(window);
-		drawEffects(window);
-		
+		// Draw scene to bloom render target or directly to window
+		bool useBloom = bloom.isAvailable() && bloomCheckBox->isChecked();
+		sf::RenderTarget& target = useBloom ?
+			static_cast<sf::RenderTarget&>(bloom.getSceneTarget()) :
+			static_cast<sf::RenderTarget&>(window);
+
+		target.clear(sf::Color::Black);
+		target.setView(mainView);
+
+		drawPlanets(target);
+		ship.draw(target);
+		drawDust(target);
+		drawEffects(target);
+
 		if (bound.isActive())
-			bound.render(window, click_and_drag_handler.get_zoom());
+			bound.render(target, click_and_drag_handler.get_zoom());
+
+		// Apply bloom post-processing
+		if (useBloom)
+		{
+			window.clear(sf::Color::Black);
+			bloom.apply(window);
+		}
+
+		// Draw overlays directly to window (not bloomed)
+		window.setView(mainView);
+		executeFunction(context);
 
 		if (object_info.is_active())
 			object_info.render(*this, window);

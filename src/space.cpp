@@ -1182,8 +1182,8 @@ void Space::initSetup()
 	optionsButton->getRenderer()->setBackgroundColorHover(sf::Color(255, 255, 255, 50));
 	optionsButton->onPress([this]() { optionsMenu->setVisible(!optionsMenu->isVisible()); });
 
-	optionsMenu->setSize(200, 170);
-	optionsMenu->setPosition("50% - 100", "50% - 85");
+	optionsMenu->setSize(200, 200);
+	optionsMenu->setPosition("50% - 100", "50% - 100");
 	optionsMenu->setVisible(false);
 	optionsMenu->setCloseBehavior(tgui::ChildWindow::CloseBehavior::Hide);
 
@@ -1214,6 +1214,11 @@ void Space::initSetup()
 	fuelBurnSlider->setValue(10);
 	fuelConsumptionMultiplier = 1.0;
 	optionsMenu->add(fuelBurnSlider);
+
+	bloomCheckBox->setPosition(10, 150);
+	bloomCheckBox->setChecked(true);
+	bloomCheckBox->getRenderer()->setTextColor(sf::Color::Black);
+	optionsMenu->add(bloomCheckBox);
 }
 
 template<typename T>
@@ -1266,7 +1271,7 @@ double Space::convertStringToDouble(std::string string)
 	return result;
 }
 
-void Space::renderMST(sf::RenderWindow& window, const std::vector<size_t>& members)
+void Space::renderMST(sf::RenderTarget& window, const std::vector<size_t>& members)
 {
 	if (members.size() < 2u) return;
 
@@ -1315,7 +1320,7 @@ void Space::renderMST(sf::RenderWindow& window, const std::vector<size_t>& membe
 	}
 }
 
-void Space::drawPlanets(sf::RenderWindow &window)
+void Space::drawPlanets(sf::RenderTarget &window)
 {
 	//DRAWING PLANETS
 	for (auto& planet : planets)
@@ -1342,7 +1347,7 @@ void Space::drawPlanets(sf::RenderWindow &window)
 	}
 }
 
-void Space::drawLifeVisuals(sf::RenderWindow& window, const Planet& p)
+void Space::drawLifeVisuals(sf::RenderTarget& window, const Planet& p)
 {
 	lType lt = p.getLife().getTypeEnum();
 	if (lt < 1) return;
@@ -1366,7 +1371,7 @@ void Space::drawLifeVisuals(sf::RenderWindow& window, const Planet& p)
 	window.draw(indicator);
 }
 
-void Space::drawCivConnections(sf::RenderWindow& window, const Planet& p, bool drawIndicatorsOnColonies)
+void Space::drawCivConnections(sf::RenderTarget& window, const Planet& p, bool drawIndicatorsOnColonies)
 {
 	if (p.getLife().getTypeEnum() < 6) return;
 
@@ -1391,7 +1396,7 @@ void Space::drawCivConnections(sf::RenderWindow& window, const Planet& p, bool d
 	}
 }
 
-void Space::drawEffects(sf::RenderWindow &window)
+void Space::drawEffects(sf::RenderTarget &window)
 {
 
 	//EXPLOSIONS
@@ -1458,12 +1463,12 @@ void Space::drawEffects(sf::RenderWindow &window)
 
 }
 
-void Space::drawDust(sf::RenderWindow &window)
+void Space::drawDust(sf::RenderTarget &window)
 {
     particles->render_all(window);
 }
 
-void Space::drawMissiles(sf::RenderWindow& window)
+void Space::drawMissiles(sf::RenderTarget& window)
 {
 	for (const auto& m : missiles)
 	{

@@ -87,7 +87,7 @@ int SpaceShip::move(int timeStep)
 	return isFiring;
 }
 
-void SpaceShip::draw(sf::RenderWindow &w)
+void SpaceShip::draw(sf::RenderTarget &w)
 {
 	if (exist)
 	{
@@ -380,7 +380,7 @@ void SpaceShip::updateGrapple(double dt, Space& space)
     }
 }
 
-void SpaceShip::renderCharge(sf::RenderWindow& window)
+void SpaceShip::renderCharge(sf::RenderTarget& window)
 {
     if (!is_charging) return;
 
@@ -420,7 +420,7 @@ void SpaceShip::renderCharge(sf::RenderWindow& window)
     render_shine(window, charge_ball.getPosition(), glow_col, size * 2.0 + charge_ratio * 10.0);
 }
 
-void SpaceShip::renderProjectiles(sf::RenderWindow& window)
+void SpaceShip::renderProjectiles(sf::RenderTarget& window)
 {
     for (const auto& p : projectiles)
     {
@@ -675,7 +675,7 @@ void SpaceShip::updateTug(Space& space, double dt)
     speed.y += dir_y * total_force * reaction_scale * dt / mass;
 }
 
-void SpaceShip::renderTug(sf::RenderWindow& window, Space& space)
+void SpaceShip::renderTug(sf::RenderTarget& window, Space& space)
 {
     if (grapple.flying)
     {
@@ -871,7 +871,7 @@ void SpaceShip::updateTrajectory(Space& space)
     }
 }
 
-void SpaceShip::renderTrajectory(sf::RenderWindow& window, float zoom)
+void SpaceShip::renderTrajectory(sf::RenderTarget& window, float zoom)
 {
     if (!trajectory_active || !exist || last_prediction.path.empty()) return;
 

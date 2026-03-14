@@ -130,11 +130,11 @@ public:
 	void update(double timestep) override;
 	void update_planet_sim(double timestep, bool heat_enabled = true, double fuelBurnRate = 1.0);
 	void updateLife(int t);
-	void render(sf::RenderWindow& window) const override;
+	void render(sf::RenderTarget& window) const override;
 	[[nodiscard]] double getDist(const CelestialBody& forcer) const noexcept;
-	void draw_starshine(sf::RenderWindow& window) const;
-	void draw_planetshine(sf::RenderWindow& window) const;
-	void draw_gas_planet_atmosphere(sf::RenderWindow& window) const;
+	void draw_starshine(sf::RenderTarget& window) const;
+	void draw_planetshine(sf::RenderTarget& window) const;
+	void draw_gas_planet_atmosphere(sf::RenderTarget& window) const;
 	void setColor() noexcept;
 
 private:

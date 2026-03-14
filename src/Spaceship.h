@@ -95,7 +95,7 @@ public:
 	float getAngle() const;
     void missileHit(Space& space);
 	
-	void draw(sf::RenderWindow &w);
+	void draw(sf::RenderTarget &w);
 
     // New Features
     void startCharge();
@@ -103,16 +103,16 @@ public:
     void shoot(Space &space);
     double chargeLevelToPower(double charge_level);
     void updateProjectiles(double dt, Space& space);
-    void renderProjectiles(sf::RenderWindow& window);
-    void renderCharge(sf::RenderWindow& window);
+    void renderProjectiles(sf::RenderTarget& window);
+    void renderCharge(sf::RenderTarget& window);
     void checkProjectileCollisions(Space& space, double dt);
 
     void toggleTug(Space& space);
     void shootGrapple();
     void updateGrapple(double dt, Space& space);
     void updateTug(Space& space, double dt);
-    void renderTug(sf::RenderWindow& window, Space& space);
+    void renderTug(sf::RenderTarget& window, Space& space);
 
     void updateTrajectory(Space& space);
-    void renderTrajectory(sf::RenderWindow& window, float zoom);
+    void renderTrajectory(sf::RenderTarget& window, float zoom);
 };

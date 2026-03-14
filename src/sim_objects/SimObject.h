@@ -60,5 +60,5 @@ public:
     }
 
     virtual void update(double timestep) = 0;
-    virtual void render(sf::RenderWindow& window) const = 0;
+    virtual void render(sf::RenderTarget& window) const = 0;
 };

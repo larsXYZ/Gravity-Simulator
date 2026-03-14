@@ -19,6 +19,7 @@
 #include "object_info.h"
 #include "object_tracker.h"
 #include "particles/particle_container.h"
+#include "BloomEffect.h"
 
 enum class TemperatureUnit
 {
@@ -104,14 +105,17 @@ class Space
 	tgui::CheckBox::Ptr gravityCheckBox = tgui::CheckBox::create("Gravity Enabled");
 	tgui::CheckBox::Ptr heatCheckBox = tgui::CheckBox::create("Heat Enabled");
 	tgui::CheckBox::Ptr renderLifeAlwaysCheckBox = tgui::CheckBox::create("Always Render Life");
+	tgui::CheckBox::Ptr bloomCheckBox = tgui::CheckBox::create("Bloom");
 	tgui::Slider::Ptr fuelBurnSlider = tgui::Slider::create();
 	tgui::Label::Ptr fuelBurnLabel = tgui::Label::create();
+
+	BloomEffect bloom;
 
 	ClickAndDragHandler click_and_drag_handler;
 	ObjectTracker object_tracker;
 	ObjectInfo object_info;
 
-	void renderMST(sf::RenderWindow& window, const std::vector<size_t>& members);
+	void renderMST(sf::RenderTarget& window, const std::vector<size_t>& members);
 
 public:
 
@@ -139,12 +143,12 @@ public:
 	//SIMULATION FUNCTIONS
 	void update();
 	void runSim(sf::Vector2i window_size, bool fullscreen);
-	void drawPlanets(sf::RenderWindow &window);
-	void drawLifeVisuals(sf::RenderWindow& window, const Planet& p);
-	void drawCivConnections(sf::RenderWindow& window, const Planet& p, bool drawIndicatorsOnColonies = false);
-	void drawEffects(sf::RenderWindow & window);
-	void drawMissiles(sf::RenderWindow& window);
-	void drawDust(sf::RenderWindow &window);
+	void drawPlanets(sf::RenderTarget &window);
+	void drawLifeVisuals(sf::RenderTarget& window, const Planet& p);
+	void drawCivConnections(sf::RenderTarget& window, const Planet& p, bool drawIndicatorsOnColonies = false);
+	void drawEffects(sf::RenderTarget & window);
+	void drawMissiles(sf::RenderTarget& window);
+	void drawDust(sf::RenderTarget &window);
 	void giveId(Planet &p);
 	Planet findPlanet(int id);
 	Planet* findPlanetPtr(int id);

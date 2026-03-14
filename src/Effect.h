@@ -27,7 +27,7 @@ public:
 	sf::Vector2f getpos() const;
 	double getsize() const;
 	sf::Color getcol() const;
-	virtual void render(sf::RenderWindow &w) = 0;
+	virtual void render(sf::RenderTarget &w) = 0;
 	void setID(int i);
 	int getID() const;
 	int getAge(double t);
@@ -54,7 +54,7 @@ public:
 		setcol(sf::Color::Yellow);
 	}
 
-	void render(sf::RenderWindow &w)
+	void render(sf::RenderTarget &w)
 	{
 		//LIGHT - Flash
 		if (getAge(0) <= 2)
@@ -125,7 +125,7 @@ public:
 		royk.setFillColor(getcol());
 		royk.setOrigin(TRAILRAD, TRAILRAD);
 	}
-	void render(sf::RenderWindow &w)
+	void render(sf::RenderTarget &w)
 	{
 
 		royk.setPosition(getpos().x, getpos().y);
@@ -150,7 +150,7 @@ public:
 		: Effect(p, 0, 0, v, l), color(col), long_range_luminosity(lr_lum), short_range_luminosity(sr_lum)
 	{}
 
-	void render(sf::RenderWindow& w)
+	void render(sf::RenderTarget& w)
 	{
 		float life_ratio = (float)getAge(0) / maxLifeTime();
 		if (life_ratio >= 1.0f) return;

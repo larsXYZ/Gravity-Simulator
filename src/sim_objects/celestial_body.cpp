@@ -455,7 +455,7 @@ void CelestialBody::collision(const CelestialBody& p)
 	increaseThermalEnergy(p.thermalEnergy() * mass_ratio);
 }
 
-void CelestialBody::draw_starshine(sf::RenderWindow& window) const
+void CelestialBody::draw_starshine(sf::RenderTarget& window) const
 {
 	sf::Color col = getStarCol();
 
@@ -470,7 +470,7 @@ void CelestialBody::draw_starshine(sf::RenderWindow& window) const
 	render_shine(window, position, col, short_range_luminosity);
 }
 
-void CelestialBody::draw_planetshine(sf::RenderWindow& window) const
+void CelestialBody::draw_planetshine(sf::RenderTarget& window) const
 {
 	/*
 	 *	Caused by very hot temperatures
@@ -478,7 +478,7 @@ void CelestialBody::draw_planetshine(sf::RenderWindow& window) const
 	draw_heat_glow(window, position, getTemp(), radius);
 }
 
-void CelestialBody::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
+void CelestialBody::draw_gas_planet_atmosphere(sf::RenderTarget& window) const
 {
 	for (size_t i = 0; i < atmoLinesBrightness.size(); i++)
 	{
@@ -507,7 +507,7 @@ void CelestialBody::draw_gas_planet_atmosphere(sf::RenderWindow& window) const
 	}
 }
 
-void CelestialBody::render(sf::RenderWindow& window) const
+void CelestialBody::render(sf::RenderTarget& window) const
 {
 	circle.setPosition(position);
 
