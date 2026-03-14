@@ -64,8 +64,9 @@ const double DENSITY_REDSUPERGIANT = 0.03;
 const double DENSITY_WHITEDWARF = 2.0;
 const double DENSITY_NEUTRONSTAR = 5.0;
 
-//FUEL CONSTANTS (for future stellar evolution)
+//FUEL CONSTANTS
 const double INITIAL_FUEL_PER_MASS = 100.0;
+const double BASE_FUEL_BURN_RATE = 0.0025;  // GUI multiplier 1x = this rate
 
 //NEW OBJECT MASS SLIDER
 const double MASS_SLIDER_MIN_VALUE = 1;

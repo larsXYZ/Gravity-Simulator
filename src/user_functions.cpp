@@ -839,7 +839,14 @@ public:
 					info += "\nDistance: " + std::to_string(static_cast<int>(std::hypot(target->getx() - target_parent->getx(),
 						target->gety() - target_parent->gety())));
 
-				if (target->getType() == TERRESTIAL)
+				if (target->isMainSequenceStar())
+				{
+					double maxFuel = target->getMass() * INITIAL_FUEL_PER_MASS;
+					int pct = (maxFuel > 0.0) ? static_cast<int>(target->getFuel() / maxFuel * 100.0) : 0;
+					info += "\nFuel: " + std::to_string(pct) + "%";
+				}
+
+			if (target->getType() == TERRESTIAL)
 				{
 					info += "\n\nAtmo: " + std::to_string((int)target->getCurrentAtmosphere()) + " / " + std::to_string((int)target->getAtmospherePotensial()) + "kPa";
 					if (target->getLife().getTypeEnum() == 0)

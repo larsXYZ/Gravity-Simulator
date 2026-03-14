@@ -1,5 +1,6 @@
 #include "space.h"
 
+#include <sstream>
 #include "particles/particle_container.h"
 #include "user_functions.h"
 #include "physics_utils.h"
@@ -347,8 +348,27 @@ void Space::update()
 
 	std::erase_if(planets, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
 	
+	// Update fuel burn rate from slider (0-50 maps to 0.0-5.0x)
+	fuelConsumptionMultiplier = fuelBurnSlider->getValue() / 10.0;
+	{
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(1) << fuelConsumptionMultiplier;
+		fuelBurnLabel->setText("Fuel burn: " + ss.str() + "x");
+	}
+
 	for (auto & planet : planets)
-		planet.update_planet_sim(timestep, heat_enabled);
+		planet.update_planet_sim(timestep, heat_enabled, fuelConsumptionMultiplier);
+
+	// Stellar fuel depletion — explode stars that ran out of fuel
+	for (auto& planet : planets)
+	{
+		if (planet.isFuelDepleted())
+		{
+			explodePlanet(planet);
+			removePlanet(planet.getId());
+			break; // planets vector modified, restart next frame
+		}
+	}
 
 	//COLONIZATION
 	for (auto& planet : planets)
@@ -1112,8 +1132,8 @@ void Space::initSetup()
 	optionsButton->getRenderer()->setBackgroundColorHover(sf::Color(255, 255, 255, 50));
 	optionsButton->onPress([this]() { optionsMenu->setVisible(!optionsMenu->isVisible()); });
 
-	optionsMenu->setSize(200, 120);
-	optionsMenu->setPosition("50% - 100", "50% - 50");
+	optionsMenu->setSize(200, 170);
+	optionsMenu->setPosition("50% - 100", "50% - 85");
 	optionsMenu->setVisible(false);
 	optionsMenu->setCloseBehavior(tgui::ChildWindow::CloseBehavior::Hide);
 
@@ -1130,6 +1150,20 @@ void Space::initSetup()
 	renderLifeAlwaysCheckBox->setPosition(10, 70);
 	renderLifeAlwaysCheckBox->setChecked(true);
 	optionsMenu->add(renderLifeAlwaysCheckBox);
+
+	fuelBurnLabel->setText("Fuel burn: 1.0x");
+	fuelBurnLabel->setPosition(10, 100);
+	fuelBurnLabel->setTextSize(12);
+	fuelBurnLabel->getRenderer()->setTextColor(sf::Color::Black);
+	optionsMenu->add(fuelBurnLabel);
+
+	fuelBurnSlider->setPosition(10, 125);
+	fuelBurnSlider->setSize(180, 18);
+	fuelBurnSlider->setMinimum(0);
+	fuelBurnSlider->setMaximum(50);
+	fuelBurnSlider->setValue(10);
+	fuelConsumptionMultiplier = 1.0;
+	optionsMenu->add(fuelBurnSlider);
 }
 
 template<typename T>

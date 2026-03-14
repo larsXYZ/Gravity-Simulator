@@ -24,7 +24,7 @@ class ObjectInfo
 	tgui::EditBox::Ptr atmoBox;
 	tgui::EditBox::Ptr atmoPotBox;
 	tgui::ComboBox::Ptr lifeLevelSelector;
-	
+
 	bool ignore_change_signals{ false };
 	Space* m_space{ nullptr };
 	mutable sf::Clock m_lastInteractionClock;

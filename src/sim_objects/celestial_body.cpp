@@ -215,9 +215,18 @@ void CelestialBody::update(double timestep)
 	update_planet_sim(timestep, true);
 }
 
-void CelestialBody::update_planet_sim(double timestep, bool heat_enabled)
+void CelestialBody::update_planet_sim(double timestep, bool heat_enabled, double fuelBurnRate)
 {
 	age += timestep;
+
+	// Burn fusion fuel for stars
+	if (fuel > 0.0 && planetType == STAR)
+	{
+		fuel -= timestep * fusionEnergy() * BASE_FUEL_BURN_RATE * fuelBurnRate;
+		if (fuel < 0.0)
+			fuel = 0.0;
+	}
+
 	if (heat_enabled)
 		coolDown(timestep);
 	setColor();

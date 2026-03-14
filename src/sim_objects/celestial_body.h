@@ -103,6 +103,7 @@ public:
 	[[nodiscard]] bool isAnyStarType() const noexcept;
 	[[nodiscard]] bool isCompactRemnant() const noexcept;
 	[[nodiscard]] bool canTidallyDisrupt() const noexcept { return planetType == BLACKHOLE || planetType == NEUTRONSTAR; }
+	[[nodiscard]] bool isFuelDepleted() const noexcept { return planetType == STAR && fuel <= 0.0; }
 
 	// State checks
 	[[nodiscard]] bool canDisintegrate(double curr_time) const noexcept;
@@ -127,7 +128,7 @@ public:
 
 	// Simulation and rendering
 	void update(double timestep) override;
-	void update_planet_sim(double timestep, bool heat_enabled = true);
+	void update_planet_sim(double timestep, bool heat_enabled = true, double fuelBurnRate = 1.0);
 	void updateLife(int t);
 	void render(sf::RenderWindow& window) const override;
 	[[nodiscard]] double getDist(const CelestialBody& forcer) const noexcept;
