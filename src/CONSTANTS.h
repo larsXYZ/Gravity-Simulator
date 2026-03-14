@@ -55,6 +55,7 @@ const double DENSITY_NEUTRONSTAR = 1.0;
 
 //FUEL CONSTANTS
 const double INITIAL_FUEL_PER_MASS = 100.0;
+const double BROWNDWARF_FUEL_FRACTION = 0.04; // deuterium is ~4% of hydrogen fuel budget
 const double BASE_FUEL_BURN_RATE = 0.0025;  // GUI multiplier 1x = this rate
 
 //STELLAR GIANT PHASE

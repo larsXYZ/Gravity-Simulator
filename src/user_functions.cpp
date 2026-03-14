@@ -839,10 +839,9 @@ public:
 					info += "\nDistance: " + std::to_string(static_cast<int>(std::hypot(target->getx() - target_parent->getx(),
 						target->gety() - target_parent->gety())));
 
-				if (target->isMainSequenceStar())
+				if (target->hasFuel() || target->isFuelDepleted())
 				{
-					double maxFuel = target->getMass() * INITIAL_FUEL_PER_MASS;
-					int pct = (maxFuel > 0.0) ? static_cast<int>(target->getFuel() / maxFuel * 100.0) : 0;
+					int pct = static_cast<int>(target->fuelFraction() * 100.0);
 					info += "\nFuel: " + std::to_string(pct) + "%";
 				}
 

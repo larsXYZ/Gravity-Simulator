@@ -42,9 +42,7 @@ CelestialBody::CelestialBody(double m, double xx, double yy, double xvv, double 
 	updateRadiAndType();
 	circle.setPosition(position);
 
-	// Initialize fuel for stars
-	if (planetType == STAR)
-		fuel = m * INITIAL_FUEL_PER_MASS;
+	initializeFuel();
 
 	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
 	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
@@ -68,7 +66,7 @@ std::string CelestialBody::getTypeString(BodyType type) noexcept
 	case GASGIANT: return "Gas giant";
 	case BROWNDWARF: return "Brown dwarf";
 	case STAR: return "Star";
-case WHITEDWARF: return "White dwarf";
+	case WHITEDWARF: return "White dwarf";
 	case NEUTRONSTAR: return "Neutron star";
 	case BLACKHOLE: return "Black hole";
 	default: return "Unknown";
@@ -92,17 +90,13 @@ std::string CelestialBody::getDisplayName() const noexcept
 	case BROWNDWARF:
 		return "Brown dwarf";
 	case STAR:
-		{
-		double maxFuel = getMass() * INITIAL_FUEL_PER_MASS;
-		double fuelFrac = (maxFuel > 0.0) ? fuel / maxFuel : 1.0;
-		if (fuelFrac < GIANT_PHASE_BEGIN)
+		if (fuelFraction() < GIANT_PHASE_BEGIN)
 		{
 			if (getMass() > (GASGIANTLIMIT + STARLIMIT) / 2.0) return "Red supergiant";
 			return "Red giant";
 		}
 		return getStarSpectralName(getMass());
-		}
-case WHITEDWARF:
+	case WHITEDWARF:
 		return "White dwarf";
 	case NEUTRONSTAR:
 		return "Neutron star";
@@ -129,8 +123,10 @@ bool CelestialBody::emitsHeat() const noexcept
 {
 	switch (getType())
 	{
+	case BROWNDWARF:
 	case STAR:
 	case WHITEDWARF:
+	case NEUTRONSTAR:
 	case BLACKHOLE:
 		return true;
 	default:
@@ -202,6 +198,27 @@ sf::Color CelestialBody::getStarCol() const noexcept
 	return interpolator.getStarColor(getTemp());	
 }
 
+double CelestialBody::maxFuel() const noexcept
+{
+	if (planetType == STAR)
+		return getMass() * INITIAL_FUEL_PER_MASS;
+	if (planetType == BROWNDWARF)
+		return getMass() * INITIAL_FUEL_PER_MASS * BROWNDWARF_FUEL_FRACTION;
+	return 0.0;
+}
+
+double CelestialBody::fuelFraction() const noexcept
+{
+	const double mf = maxFuel();
+	return (mf > 0.0) ? fuel / mf : 1.0;
+}
+
+void CelestialBody::initializeFuel() noexcept
+{
+	if (fuel <= 0.0)
+		fuel = maxFuel();
+}
+
 double CelestialBody::fusionEnergy() const noexcept
 {
 	switch (planetType)
@@ -209,12 +226,10 @@ double CelestialBody::fusionEnergy() const noexcept
 	case STAR:
 		{
 		double base = calculateStarFusionEnergy(getMass());
-		double maxFuel = getMass() * INITIAL_FUEL_PER_MASS;
-		double fuelFraction = (maxFuel > 0.0) ? fuel / maxFuel : 1.0;
-		if (fuelFraction < GIANT_PHASE_BEGIN)
+		double ff = fuelFraction();
+		if (ff < GIANT_PHASE_BEGIN)
 		{
-			// Shell burning intensifies as star expands — matches cooling increase
-			double t = std::clamp((GIANT_PHASE_BEGIN - fuelFraction) / (GIANT_PHASE_BEGIN - GIANT_PHASE_END), 0.0, 1.0);
+			double t = std::clamp((GIANT_PHASE_BEGIN - ff) / (GIANT_PHASE_BEGIN - GIANT_PHASE_END), 0.0, 1.0);
 			double boost = 1.0 + t * t * GIANT_PHASE_FUSION_BOOST;
 			return base * boost;
 		}
@@ -262,13 +277,21 @@ void CelestialBody::update_planet_sim(double timestep, bool heat_enabled, double
 {
 	age += timestep;
 
-	// Burn fusion fuel for stars
-	if (fuel > 0.0 && planetType == STAR)
+	// Burn fusion fuel
+	if (hasFuel())
 	{
 		fuel -= timestep * fusionEnergy() * BASE_FUEL_BURN_RATE * fuelBurnRate;
 		if (fuel < 0.0)
 			fuel = 0.0;
-		// Update density and radius as star expands in late life
+		updateVisualProperties();
+		updateRadius();
+	}
+
+	// Brown dwarf fuel depleted — cools into a gas giant
+	if (planetType == BROWNDWARF && fuel <= 0.0)
+	{
+		planetType = GASGIANT;
+		isEvolved = true;
 		updateVisualProperties();
 		updateRadius();
 	}
@@ -369,16 +392,15 @@ void CelestialBody::updateEvolvedType() noexcept
 		}
 		break;
 	case BROWNDWARF:
+	case GASGIANT:
 		if (getMass() >= GASGIANTLIMIT)
 		{
-			// Fusion ignites — becomes a main sequence star
 			planetType = STAR;
 			isEvolved = false;
-			if (fuel <= 0.0)
-				fuel = getMass() * INITIAL_FUEL_PER_MASS;
+			initializeFuel();
 		}
 		break;
-case BLACKHOLE:
+	case BLACKHOLE:
 		// Black holes are forever
 		isEvolved = false;
 		break;
@@ -416,12 +438,11 @@ void CelestialBody::updateVisualProperties() noexcept
 	case STAR:
 		{
 		double baseDensity = interpolate(0.2, 0.1, getMass(), GASGIANTLIMIT, STARLIMIT);
-		double maxFuel = getMass() * INITIAL_FUEL_PER_MASS;
-		double fuelFraction = (maxFuel > 0.0) ? fuel / maxFuel : 1.0;
-		if (fuelFraction < GIANT_PHASE_BEGIN)
+		double ff = fuelFraction();
+		if (ff < GIANT_PHASE_BEGIN)
 		{
 			// Star expands as fuel depletes — quadratic curve for gradual start
-			double t = std::clamp((GIANT_PHASE_BEGIN - fuelFraction) / (GIANT_PHASE_BEGIN - GIANT_PHASE_END), 0.0, 1.0); // 0 at 35%, 1 at 10%
+			double t = std::clamp((GIANT_PHASE_BEGIN - ff) / (GIANT_PHASE_BEGIN - GIANT_PHASE_END), 0.0, 1.0);
 			double expansion = t * t; // slow start, accelerates toward end
 			double giantDensity = interpolate(DENSITY_STAR_GIANT, DENSITY_STAR_SUPERGIANT, getMass(), GASGIANTLIMIT, STARLIMIT);
 			baseDensity = baseDensity + expansion * (giantDensity - baseDensity);
@@ -431,7 +452,7 @@ void CelestialBody::updateVisualProperties() noexcept
 		circle.setOutlineThickness(static_cast<float>(interpolate(3, 10, getMass(), GASGIANTLIMIT, STARLIMIT)));
 		break;
 		}
-case WHITEDWARF:
+	case WHITEDWARF:
 		density = DENSITY_WHITEDWARF;
 		circle.setOutlineColor(sf::Color(220, 220, 255, 40));
 		circle.setOutlineThickness(1);
@@ -471,12 +492,11 @@ void CelestialBody::updateRadius() noexcept
 
 void CelestialBody::incMass(double m) noexcept
 {
-	const bool wasNotStar = (planetType != STAR);
+	const auto prevType = planetType;
 	setMass(getMass() + m);
 	updateRadiAndType();
-	// Initialize fuel if mass pushes into star range
-	if (wasNotStar && planetType == STAR && fuel <= 0.0)
-		fuel = getMass() * INITIAL_FUEL_PER_MASS;
+	if (prevType != planetType)
+		initializeFuel();
 }
 
 void CelestialBody::collision(const CelestialBody& p)
@@ -596,10 +616,6 @@ void CelestialBody::render(sf::RenderTarget& window) const
 		break;
 
 	case BROWNDWARF:
-		window.draw(circle);
-		draw_starshine(window);
-		break;
-
 	case STAR:
 		window.draw(circle);
 		draw_starshine(window);

@@ -82,6 +82,8 @@ public:
 	[[nodiscard]] double getSupportedBiomass() const noexcept { return supportedBiomass; }
 	[[nodiscard]] GoldilockInfo getGoldilockInfo() const noexcept;
 	[[nodiscard]] double getFuel() const noexcept { return fuel; }
+	[[nodiscard]] double maxFuel() const noexcept;
+	[[nodiscard]] double fuelFraction() const noexcept;
 	[[nodiscard]] double getAge() const noexcept { return age; }
 	[[nodiscard]] StellarSubType getSubType() const noexcept { return subType; }
 	[[nodiscard]] bool getIsEvolved() const noexcept { return isEvolved; }
@@ -105,6 +107,7 @@ public:
 	[[nodiscard]] bool isCompactRemnant() const noexcept;
 	[[nodiscard]] bool canTidallyDisrupt() const noexcept { return planetType == BLACKHOLE || planetType == NEUTRONSTAR; }
 	[[nodiscard]] bool isFuelDepleted() const noexcept { return planetType == STAR && fuel <= 0.0; }
+	[[nodiscard]] bool hasFuel() const noexcept { return (planetType == STAR || planetType == BROWNDWARF) && fuel > 0.0; }
 
 	// State checks
 	[[nodiscard]] bool canDisintegrate(double curr_time) const noexcept;
@@ -145,6 +148,7 @@ private:
 	void updateEvolvedType() noexcept;
 	void updateVisualProperties() noexcept;
 	void updateRadius() noexcept;
+	void initializeFuel() noexcept;
 
 	[[nodiscard]] int modernRandomWithLimits(int min, int max) const;
 	[[nodiscard]] std::string generate_name();
