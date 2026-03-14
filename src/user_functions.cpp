@@ -828,7 +828,7 @@ public:
 				const auto selected_temp_unit = static_cast<TemperatureUnit>(context.space.temperatureUnitSelector->getSelectedIndex());
 
 				std::string info = target->getName() +
-					"\nType: " + std::string(target->getTypeString(target->getType())) +
+					"\nType: " + target->getDisplayName() +
 					"\nRadius: " + std::to_string(static_cast<int>(target->getRadius())) +
 					"\nMass: " + std::to_string(static_cast<int>(target->getMass())) +
 					"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) +
@@ -846,7 +846,7 @@ public:
 					info += "\nFuel: " + std::to_string(pct) + "%";
 				}
 
-			if (target->getType() == TERRESTIAL)
+			if (target->getType() == TERRESTRIAL)
 				{
 					info += "\n\nAtmo: " + std::to_string((int)target->getCurrentAtmosphere()) + " / " + std::to_string((int)target->getAtmospherePotensial()) + "kPa";
 					if (target->getLife().getTypeEnum() == 0)

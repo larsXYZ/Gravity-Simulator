@@ -16,7 +16,7 @@ namespace StringConstants {
 
     // Planet type strings
     inline const std::string PLANET_ROCKY = "Rocky";
-    inline const std::string PLANET_TERRESTIAL = "Terrestial";
+    inline const std::string PLANET_TERRESTRIAL = "Terrestrial";
     inline const std::string PLANET_GAS_GIANT = "Gas Giant";
     inline const std::string PLANET_BROWN_DWARF = "Brown Dwarf";
     inline const std::string PLANET_STAR = "Star";

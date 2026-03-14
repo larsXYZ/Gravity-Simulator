@@ -734,7 +734,7 @@ void SpaceShip::checkShield(Space& space, double dt)
     for (auto& planet : space.planets)
     {
         if (planet.isMarkedForRemoval()) continue;
-        if (planet.getMass() >= TERRESTIALLIMIT) continue; // Too big
+        if (planet.getMass() >= TERRESTRIALLIMIT) continue; // Too big
 
         double dx = planet.getx() - pos.x;
         double dy = planet.gety() - pos.y;

@@ -2,7 +2,7 @@
 
 //STATES
 enum BodyType {
-	ROCKY, TERRESTIAL, GASGIANT,
+	ROCKY, TERRESTRIAL, GASGIANT,
 	BROWNDWARF,
 	STAR,                               // single main sequence type (was SMALLSTAR/STAR/BIGSTAR)
 	REDGIANT, REDSUPERGIANT,            // evolved giants
@@ -32,7 +32,7 @@ const float CREATEDUSTSPEEDMULT = 0.003f;
 
 //OBJECT-TYPE LIMITS
 const double ROCKYLIMIT = 15;
-const double TERRESTIALLIMIT = 100;
+const double TERRESTRIALLIMIT = 100;
 const double BROWNDWARFLIMIT = 400;     // gas giant ends, brown dwarf begins
 const double GASGIANTLIMIT = 600;       // brown dwarf ends, star begins
 const double STARLIMIT = 4000;          // star ends, black hole begins

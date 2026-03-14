@@ -15,11 +15,13 @@ namespace {
 	// Spectral class display name for STAR type based on mass
 	std::string getStarSpectralName(double mass)
 	{
-		if (mass < 800) return "Red dwarf";
-		if (mass < 1200) return "Orange dwarf";
-		if (mass < 1600) return "Yellow dwarf";
-		if (mass < 2200) return "White star";
-		if (mass < 3000) return "Blue giant";
+		const double range = STARLIMIT - GASGIANTLIMIT;
+		const double t = (mass - GASGIANTLIMIT) / range; // 0.0 to 1.0
+		if (t < 1.0 / 6.0) return "Red dwarf";
+		if (t < 2.0 / 6.0) return "Orange dwarf";
+		if (t < 3.0 / 6.0) return "Yellow dwarf";
+		if (t < 4.0 / 6.0) return "White star";
+		if (t < 5.0 / 6.0) return "Blue giant";
 		return "Blue supergiant";
 	}
 
@@ -62,7 +64,7 @@ std::string CelestialBody::getTypeString(BodyType type) noexcept
 	switch (type)
 	{
 	case ROCKY: return "Rocky";
-	case TERRESTIAL: return "Terrestial";
+	case TERRESTRIAL: return "Terrestrial";
 	case GASGIANT: return "Gas giant";
 	case BROWNDWARF: return "Brown dwarf";
 	case STAR: return "Star";
@@ -72,6 +74,40 @@ std::string CelestialBody::getTypeString(BodyType type) noexcept
 	case NEUTRONSTAR: return "Neutron star";
 	case BLACKHOLE: return "Black hole";
 	default: return "Unknown";
+	}
+}
+
+std::string CelestialBody::getDisplayName() const noexcept
+{
+	switch (planetType)
+	{
+	case ROCKY:
+		if (getMass() < ROCKYLIMIT * 0.2) return "Asteroid";
+		if (getMass() < ROCKYLIMIT * 0.5) return "Dwarf planet";
+		return "Rocky";
+	case TERRESTRIAL:
+		if (getMass() > (ROCKYLIMIT + TERRESTRIALLIMIT) / 2.0) return "Super-Earth";
+		return "Terrestrial";
+	case GASGIANT:
+		if (getMass() > (TERRESTRIALLIMIT + BROWNDWARFLIMIT) / 2.0) return "Super-Jupiter";
+		return "Gas giant";
+	case BROWNDWARF:
+		return "Brown dwarf";
+	case STAR:
+		return getStarSpectralName(getMass());
+	case REDGIANT:
+		return "Red giant";
+	case REDSUPERGIANT:
+		return "Red supergiant";
+	case WHITEDWARF:
+		return "White dwarf";
+	case NEUTRONSTAR:
+		return "Neutron star";
+	case BLACKHOLE:
+		if (getMass() > STARLIMIT * 2.5) return "Supermassive black hole";
+		return "Black hole";
+	default:
+		return "Unknown";
 	}
 }
 
@@ -296,8 +332,8 @@ void CelestialBody::updateMainSequenceType() noexcept
 {
 	if (getMass() < ROCKYLIMIT)
 		planetType = ROCKY;
-	else if (getMass() < TERRESTIALLIMIT)
-		planetType = TERRESTIAL;
+	else if (getMass() < TERRESTRIALLIMIT)
+		planetType = TERRESTRIAL;
 	else if (getMass() < BROWNDWARFLIMIT)
 		planetType = GASGIANT;
 	else if (getMass() < GASGIANTLIMIT)
@@ -361,7 +397,7 @@ void CelestialBody::updateVisualProperties() noexcept
 		circle.setOutlineThickness(0);
 		circle.setPointCount(30);
 		break;
-	case TERRESTIAL:
+	case TERRESTRIAL:
 		density = 0.5;
 		circle.setPointCount(40);
 		break;
@@ -514,7 +550,7 @@ void CelestialBody::render(sf::RenderTarget& window) const
 	switch (getType())
 	{
 	case ROCKY:
-	case TERRESTIAL:
+	case TERRESTRIAL:
 		draw_planetshine(window);
 		window.draw(circle);
 		break;
@@ -556,7 +592,7 @@ void CelestialBody::setColor() noexcept
 	switch (getType())
 	{
 	case ROCKY:
-	case TERRESTIAL:
+	case TERRESTRIAL:
 		{
 		auto temp_effect = temperature_effect(getTemp());
 		const double r = 100.0 + randBrightness + temp_effect.r;
@@ -597,7 +633,7 @@ void CelestialBody::setColor() noexcept
 
 void CelestialBody::updateAtmosphere(int t) noexcept
 {
-	if (planetType != TERRESTIAL)
+	if (planetType != TERRESTRIAL)
 	{
 		if (planetType == ROCKY)
 		{
@@ -625,7 +661,7 @@ void CelestialBody::updateAtmosphere(int t) noexcept
 
 void CelestialBody::updateLife(int t)
 {
-	if (planetType == ROCKY || planetType == TERRESTIAL)
+	if (planetType == ROCKY || planetType == TERRESTRIAL)
 	{
 		supportedBiomass = 100000 / (1 + (LIFE_PREFERRED_TEMP_MULTIPLIER *
 			pow((getTemp() - LIFE_PREFERRED_TEMP), 2) + LIFE_PREFERRED_ATMO_MULTIPLIER * pow(

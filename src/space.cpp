@@ -906,7 +906,7 @@ int Space::findBestPlanetByRef(const Planet& query_planet)
 
 	for (size_t i = 0; i < planets.size(); i++)
 	{
-		if (planets[i].getType() == ROCKY || planets[i].getType() == TERRESTIAL)
+		if (planets[i].getType() == ROCKY || planets[i].getType() == TERRESTRIAL)
 		{
 			int nr = planets[i].getLife().getTypeEnum();
 			if (nr == 6 || nr == 7 || nr == 5 || nr == 4)
@@ -1078,7 +1078,7 @@ void Space::initSetup()
 	newPlanetInfo->setTextSize(14);
 
 	objectTypeSelector->addItem(StringConstants::PLANET_ROCKY);
-	objectTypeSelector->addItem(StringConstants::PLANET_TERRESTIAL);
+	objectTypeSelector->addItem(StringConstants::PLANET_TERRESTRIAL);
 	objectTypeSelector->addItem(StringConstants::PLANET_GAS_GIANT);
 	objectTypeSelector->addItem(StringConstants::PLANET_BROWN_DWARF);
 	objectTypeSelector->addItem(StringConstants::PLANET_STAR);
@@ -1092,12 +1092,12 @@ void Space::initSetup()
 			massSlider->setMinimum(1);
 			massSlider->setMaximum(ROCKYLIMIT - 1);
 		}
-		else if (item == "Terrestial") {
+		else if (item == "Terrestrial") {
 			massSlider->setMinimum(ROCKYLIMIT);
-			massSlider->setMaximum(TERRESTIALLIMIT - 1);
+			massSlider->setMaximum(TERRESTRIALLIMIT - 1);
 		}
 		else if (item == "Gas Giant") {
-			massSlider->setMinimum(TERRESTIALLIMIT);
+			massSlider->setMinimum(TERRESTRIALLIMIT);
 			massSlider->setMaximum(BROWNDWARFLIMIT - 1);
 		}
 		else if (item == "Brown Dwarf") {

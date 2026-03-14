@@ -63,6 +63,7 @@ public:
 	// Getters
 	[[nodiscard]] BodyType getType() const noexcept { return planetType; }
 	[[nodiscard]] static std::string getTypeString(BodyType type) noexcept;
+	[[nodiscard]] std::string getDisplayName() const noexcept;
 	[[nodiscard]] int getId() const noexcept override { return id; }
 	[[nodiscard]] int getStrongestAttractorId() const noexcept { return strongestAttractorId; }
 	[[nodiscard]] int getStrongestAttractorIdRef() const noexcept { return strongestAttractorId; }
