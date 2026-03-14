@@ -44,8 +44,8 @@ const double BROWNDWARFLIMIT = 400;     // gas giant ends, brown dwarf begins
 const double GASGIANTLIMIT = 600;       // brown dwarf ends, star begins
 const double STARLIMIT = 4000;          // star ends, black hole begins
 
-// Evolution limits (for future stellar evolution)
-const double CHANDRASEKHAR_LIMIT = 2800; // white dwarf + mass -> Type Ia supernova
+// Evolution limits
+const double CHANDRASEKHAR_LIMIT = 1500; // white dwarf + mass -> Type Ia supernova
 const double TOV_LIMIT = 3200;           // neutron star + mass -> black hole
 
 //STAR HEAT MULTIPLIERS (used for interpolation across star mass range)
@@ -61,8 +61,8 @@ const double HEAT_REDSUPERGIANT_MULT = 3.0;
 const double DENSITY_BROWNDWARF = 0.25;
 const double DENSITY_REDGIANT = 0.05;
 const double DENSITY_REDSUPERGIANT = 0.03;
-const double DENSITY_WHITEDWARF = 2.0;
-const double DENSITY_NEUTRONSTAR = 5.0;
+const double DENSITY_WHITEDWARF = 0.9;
+const double DENSITY_NEUTRONSTAR = 1.0;
 
 //FUEL CONSTANTS
 const double INITIAL_FUEL_PER_MASS = 100.0;

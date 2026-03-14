@@ -359,13 +359,61 @@ void Space::update()
 	for (auto & planet : planets)
 		planet.update_planet_sim(timestep, heat_enabled, fuelConsumptionMultiplier);
 
-	// Stellar fuel depletion — explode stars that ran out of fuel
+	// Stellar fuel depletion — star dies, leaves remnant
 	for (auto& planet : planets)
 	{
 		if (planet.isFuelDepleted())
 		{
-			explodePlanet(planet);
+			const double mass = planet.getMass();
+			const sf::Vector2f pos = planet.getPosition();
+			const sf::Vector2f vel = planet.getVelocity();
+
+			// Determine remnant fraction based on original mass
+			double remnantFraction;
+			BodyType remnantType;
+			if (mass < CHANDRASEKHAR_LIMIT)
+			{
+				remnantFraction = 0.6;
+				remnantType = WHITEDWARF;
+			}
+			else if (mass < TOV_LIMIT)
+			{
+				remnantFraction = 0.2;
+				remnantType = NEUTRONSTAR;
+			}
+			else
+			{
+				remnantFraction = 0.4;
+				remnantType = BLACKHOLE;
+			}
+
+			// Explode only the ejected mass
+			Planet ejecta(planet);
+			ejecta.setMass(mass * (1.0 - remnantFraction));
+			ejecta.updateRadiAndType();
+			auto fragment_ids = explodePlanet(ejecta);
 			removePlanet(planet.getId());
+
+			// Spawn remnant with the retained mass and original velocity
+			CelestialBody remnant(mass * remnantFraction, pos.x, pos.y, vel.x, vel.y);
+			remnant.setIsEvolved(true);
+			remnant.planetType = remnantType;
+			remnant.updateVisualProperties();
+			remnant.updateRadius();
+			int remnantId = addPlanet(std::move(remnant));
+
+			// Remnant and fragments should ignore each other
+			if (auto* r = findPlanetPtr(remnantId))
+			{
+				for (int fid : fragment_ids)
+				{
+					r->registerIgnoredId(fid);
+					if (auto* f = findPlanetPtr(fid))
+						f->registerIgnoredId(remnantId);
+				}
+				r->setDisintegrationGraceTime(500, curr_time);
+			}
+
 			break; // planets vector modified, restart next frame
 		}
 	}
@@ -744,7 +792,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 	return generated_ids;
 }
 
-void Space::explodePlanet(Planet planet)
+std::vector<int> Space::explodePlanet(Planet planet)
 {
 	const float original_mass = planet.getMass();
 
@@ -811,6 +859,8 @@ void Space::explodePlanet(Planet planet)
 			fragment->setVelocity(fragment->getVelocity() + escape_speed);
 		}
 	}
+
+	return fragment_ids;
 }
 
 void Space::giveId(Planet &p)
