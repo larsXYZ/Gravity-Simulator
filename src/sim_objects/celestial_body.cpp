@@ -82,12 +82,11 @@ std::string CelestialBody::getDisplayName() const noexcept
 	switch (planetType)
 	{
 	case ROCKY:
-		if (getMass() < ROCKYLIMIT * 0.2) return "Asteroid";
-		if (getMass() < ROCKYLIMIT * 0.5) return "Dwarf planet";
-		return "Rocky";
+		if (getMass() < ROCKYLIMIT * 0.4) return "Asteroid";
+		return "Dwarf planet";
 	case TERRESTRIAL:
 		if (getMass() > (ROCKYLIMIT + TERRESTRIALLIMIT) / 2.0) return "Super-Earth";
-		return "Terrestrial";
+		return "Earth-like";
 	case GASGIANT:
 		if (getMass() > (TERRESTRIALLIMIT + BROWNDWARFLIMIT) / 2.0) return "Super-Jupiter";
 		return "Gas giant";
