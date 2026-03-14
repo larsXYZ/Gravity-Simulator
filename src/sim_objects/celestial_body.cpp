@@ -565,13 +565,21 @@ void CelestialBody::draw_white_dwarf_glow(sf::RenderTarget& window) const
 
 void CelestialBody::draw_neutron_star_glow(sf::RenderTarget& window) const
 {
-	// Harsh, intense white core — tiny but extremely bright
-	sf::Color coreCol(230, 230, 255, 220);
-	render_shine(window, position, coreCol, radius * 3.0);
+	// Wide violet-blue halo
+	sf::Color outerCol(80, 120, 255, 35);
+	render_shine(window, position, outerCol, radius * 22.0);
 
-	// Wide eerie glow
-	sf::Color outerCol(180, 190, 255, 60);
-	render_shine(window, position, outerCol, radius * 12.0);
+	// Mid-range cyan-violet glow
+	sf::Color midCol(100, 160, 255, 90);
+	render_shine(window, position, midCol, radius * 9.0);
+
+	// Intense inner glow
+	sf::Color innerCol(140, 200, 255, 160);
+	render_shine(window, position, innerCol, radius * 4.0);
+
+	// Searing bright core
+	sf::Color coreCol(180, 230, 255, 250);
+	render_shine(window, position, coreCol, radius * 2.0);
 }
 
 void CelestialBody::render(sf::RenderTarget& window) const
@@ -651,8 +659,8 @@ void CelestialBody::setColor() noexcept
 		circle.setOutlineColor(sf::Color(220, 220, 255, 40));
 		break;
 	case NEUTRONSTAR:
-		circle.setFillColor(sf::Color(200, 200, 220));
-		circle.setOutlineColor(sf::Color(200, 200, 220, 40));
+		circle.setFillColor(sf::Color(160, 200, 255));
+		circle.setOutlineColor(sf::Color(140, 180, 255, 50));
 		break;
 	case BLACKHOLE:
 		break;
