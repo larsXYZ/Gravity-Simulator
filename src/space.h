@@ -131,7 +131,8 @@ public:
 	void full_reset(sf::View& view, const sf::RenderWindow & window);
 
 	std::vector<int> disintegratePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
-	std::vector<int> explodePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
+	std::vector<int> explodePlanet(Planet planet, CelestialBody* remnant = nullptr);	/* No reference due to addition of new planets possibly invalidating references */
+	void checkChandrasekharLimit();
 
 	void randomPlanets(int totmass, int antall, double radius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);

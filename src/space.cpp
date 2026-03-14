@@ -254,7 +254,17 @@ void Space::update()
 				// Collision
 				if (dist < rad_dist)
 				{
-					if (mi <= hot_planets[j].mass)
+					// Compact remnants always absorb less dense objects
+					auto compactness = [](BodyType t) {
+						if (t == BLACKHOLE)    return 3;
+						if (t == NEUTRONSTAR)  return 2;
+						if (t == WHITEDWARF)   return 1;
+						return 0;
+					};
+					const int ci = compactness(hot_planets[i].type);
+					const int cj = compactness(hot_planets[j].type);
+
+					if (ci < cj || (ci == cj && mi <= hot_planets[j].mass))
 					{
 						#pragma omp critical(events)
 						collision_events.push_back({i, static_cast<int>(j)});
@@ -387,36 +397,25 @@ void Space::update()
 				remnantType = BLACKHOLE;
 			}
 
-			// Explode only the ejected mass
+			// Explode only the ejected mass, spawn remnant
 			Planet ejecta(planet);
 			ejecta.setMass(mass * (1.0 - remnantFraction));
 			ejecta.updateRadiAndType();
-			auto fragment_ids = explodePlanet(ejecta);
-			removePlanet(planet.getId());
 
-			// Spawn remnant with the retained mass and original velocity
 			CelestialBody remnant(mass * remnantFraction, pos.x, pos.y, vel.x, vel.y);
 			remnant.setIsEvolved(true);
 			remnant.planetType = remnantType;
 			remnant.updateVisualProperties();
 			remnant.updateRadius();
-			int remnantId = addPlanet(std::move(remnant));
 
-			// Remnant and fragments should ignore each other
-			if (auto* r = findPlanetPtr(remnantId))
-			{
-				for (int fid : fragment_ids)
-				{
-					r->registerIgnoredId(fid);
-					if (auto* f = findPlanetPtr(fid))
-						f->registerIgnoredId(remnantId);
-				}
-				r->setDisintegrationGraceTime(500, curr_time);
-			}
+			explodePlanet(ejecta, &remnant);
+			removePlanet(planet.getId());
 
 			break; // planets vector modified, restart next frame
 		}
 	}
+
+	checkChandrasekharLimit();
 
 	//COLONIZATION
 	for (auto& planet : planets)
@@ -792,7 +791,47 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 	return generated_ids;
 }
 
-std::vector<int> Space::explodePlanet(Planet planet)
+void Space::checkChandrasekharLimit()
+{
+	for (auto& planet : planets)
+	{
+		if (planet.planetType != WHITEDWARF || planet.getMass() <= CHANDRASEKHAR_LIMIT)
+			continue;
+
+		const double mass = planet.getMass();
+		const sf::Vector2f pos = planet.getPosition();
+		const sf::Vector2f vel = planet.getVelocity();
+
+		if (uniform_random(0, 100) < 90)
+		{
+			// Type Ia supernova — complete detonation, no remnant
+			Planet ejecta(planet);
+			ejecta.updateRadiAndType();
+			explodePlanet(ejecta);
+			removePlanet(planet.getId());
+		}
+		else
+		{
+			// Accretion-induced collapse — becomes neutron star
+			Planet ejecta(planet);
+			ejecta.setMass(mass * 0.8);
+			ejecta.updateRadiAndType();
+
+			CelestialBody remnant(mass * 0.2, pos.x, pos.y, vel.x, vel.y);
+			remnant.setIsEvolved(true);
+			remnant.planetType = NEUTRONSTAR;
+			remnant.updateVisualProperties();
+			remnant.updateRadius();
+
+			explodePlanet(ejecta, &remnant);
+			removePlanet(planet.getId());
+		}
+
+		break; // planets vector modified, restart next frame
+	}
+}
+
+std::vector<int> Space::explodePlanet(Planet planet, CelestialBody* remnant)
 {
 	const float original_mass = planet.getMass();
 
@@ -857,6 +896,21 @@ std::vector<int> Space::explodePlanet(Planet planet)
 												static_cast<float>(uniform_random(0.85, 1.15));
 
 			fragment->setVelocity(fragment->getVelocity() + escape_speed);
+		}
+	}
+
+	if (remnant)
+	{
+		int remnantId = addPlanet(std::move(*remnant));
+		if (auto* r = findPlanetPtr(remnantId))
+		{
+			for (int fid : fragment_ids)
+			{
+				r->registerIgnoredId(fid);
+				if (auto* f = findPlanetPtr(fid))
+					f->registerIgnoredId(remnantId);
+			}
+			r->setDisintegrationGraceTime(500, curr_time);
 		}
 	}
 

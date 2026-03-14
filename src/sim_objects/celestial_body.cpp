@@ -359,11 +359,7 @@ void CelestialBody::updateEvolvedType() noexcept
 	switch (planetType)
 	{
 	case WHITEDWARF:
-		if (getMass() > CHANDRASEKHAR_LIMIT)
-		{
-			// Type Ia supernova placeholder — stay as-is for now
-			// Future: trigger supernova event
-		}
+		// Chandrasekhar limit handled in Space::update() where explosion can be spawned
 		break;
 	case NEUTRONSTAR:
 		if (getMass() > TOV_LIMIT)
