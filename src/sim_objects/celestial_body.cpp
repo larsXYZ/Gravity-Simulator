@@ -592,8 +592,8 @@ void CelestialBody::render(sf::RenderTarget& window) const
 		break;
 
 	case BROWNDWARF:
-		draw_planetshine(window);
 		window.draw(circle);
+		draw_starshine(window);
 		break;
 
 	case STAR:
