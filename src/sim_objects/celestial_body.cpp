@@ -88,8 +88,9 @@ std::string CelestialBody::getDisplayName() const noexcept
 		if (getMass() > (ROCKYLIMIT + TERRESTRIALLIMIT) / 2.0) return "Super-Earth";
 		return "Earth-like";
 	case GASGIANT:
-		if (getMass() > (TERRESTRIALLIMIT + BROWNDWARFLIMIT) / 2.0) return "Super-Jupiter";
-		return "Gas giant";
+		if (getMass() > TERRESTRIALLIMIT + (BROWNDWARFLIMIT - TERRESTRIALLIMIT) * 0.66) return "Super-Jupiter";
+		if (getMass() > TERRESTRIALLIMIT + (BROWNDWARFLIMIT - TERRESTRIALLIMIT) * 0.33) return "Jupiter-like";
+		return "Neptune-like";
 	case BROWNDWARF:
 		return "Brown dwarf";
 	case STAR:
