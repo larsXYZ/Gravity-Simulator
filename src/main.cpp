@@ -26,8 +26,8 @@ namespace LauncherConfig
     {
         const sf::Vector2f Position = {247, 33};
         const int CharacterSize = 25;
-        const std::string Text = "v1.2";
-        const sf::Color Color = sf::Color(252, 240, 3);
+        const std::string Text = "v1.3";
+        const sf::Color Color = sf::Color(175, 27, 63);
     }
 
     namespace Resolution
