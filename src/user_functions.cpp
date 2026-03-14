@@ -118,7 +118,7 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 
 			// Roche
 			if (RocheLimit::hasMinimumBreakupSize(pSub.mass) &&
-				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].canTidallyDisrupt()))
+				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].type == BLACKHOLE || planets[k].type == NEUTRONSTAR))
 			{
 				disintegration = true;
 				break;
