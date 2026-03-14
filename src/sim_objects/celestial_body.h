@@ -136,6 +136,8 @@ public:
 	void draw_starshine(sf::RenderTarget& window) const;
 	void draw_planetshine(sf::RenderTarget& window) const;
 	void draw_gas_planet_atmosphere(sf::RenderTarget& window) const;
+	void draw_white_dwarf_glow(sf::RenderTarget& window) const;
+	void draw_neutron_star_glow(sf::RenderTarget& window) const;
 	void setColor() noexcept;
 
 private:

@@ -68,9 +68,7 @@ std::string CelestialBody::getTypeString(BodyType type) noexcept
 	case GASGIANT: return "Gas giant";
 	case BROWNDWARF: return "Brown dwarf";
 	case STAR: return "Star";
-	case REDGIANT: return "Red giant";
-	case REDSUPERGIANT: return "Red supergiant";
-	case WHITEDWARF: return "White dwarf";
+case WHITEDWARF: return "White dwarf";
 	case NEUTRONSTAR: return "Neutron star";
 	case BLACKHOLE: return "Black hole";
 	default: return "Unknown";
@@ -94,12 +92,17 @@ std::string CelestialBody::getDisplayName() const noexcept
 	case BROWNDWARF:
 		return "Brown dwarf";
 	case STAR:
+		{
+		double maxFuel = getMass() * INITIAL_FUEL_PER_MASS;
+		double fuelFrac = (maxFuel > 0.0) ? fuel / maxFuel : 1.0;
+		if (fuelFrac < GIANT_PHASE_BEGIN)
+		{
+			if (getMass() > (GASGIANTLIMIT + STARLIMIT) / 2.0) return "Red supergiant";
+			return "Red giant";
+		}
 		return getStarSpectralName(getMass());
-	case REDGIANT:
-		return "Red giant";
-	case REDSUPERGIANT:
-		return "Red supergiant";
-	case WHITEDWARF:
+		}
+case WHITEDWARF:
 		return "White dwarf";
 	case NEUTRONSTAR:
 		return "Neutron star";
@@ -127,8 +130,6 @@ bool CelestialBody::emitsHeat() const noexcept
 	switch (getType())
 	{
 	case STAR:
-	case REDGIANT:
-	case REDSUPERGIANT:
 	case WHITEDWARF:
 	case BLACKHOLE:
 		return true;
@@ -143,8 +144,6 @@ bool CelestialBody::isAnyStarType() const noexcept
 	{
 	case STAR:
 	case BROWNDWARF:
-	case REDGIANT:
-	case REDSUPERGIANT:
 		return true;
 	default:
 		return false;
@@ -208,13 +207,21 @@ double CelestialBody::fusionEnergy() const noexcept
 	switch (planetType)
 	{
 	case STAR:
-		return calculateStarFusionEnergy(getMass());
+		{
+		double base = calculateStarFusionEnergy(getMass());
+		double maxFuel = getMass() * INITIAL_FUEL_PER_MASS;
+		double fuelFraction = (maxFuel > 0.0) ? fuel / maxFuel : 1.0;
+		if (fuelFraction < GIANT_PHASE_BEGIN)
+		{
+			// Shell burning intensifies as star expands — matches cooling increase
+			double t = std::clamp((GIANT_PHASE_BEGIN - fuelFraction) / (GIANT_PHASE_BEGIN - GIANT_PHASE_END), 0.0, 1.0);
+			double boost = 1.0 + t * t * GIANT_PHASE_FUSION_BOOST;
+			return base * boost;
+		}
+		return base;
+		}
 	case BROWNDWARF:
 		return HEAT_BROWNDWARF_MULT * getMass();
-	case REDGIANT:
-		return HEAT_REDGIANT_MULT * getMass();
-	case REDSUPERGIANT:
-		return HEAT_REDSUPERGIANT_MULT * getMass();
 	default:
 		return 0;
 	}
@@ -261,6 +268,9 @@ void CelestialBody::update_planet_sim(double timestep, bool heat_enabled, double
 		fuel -= timestep * fusionEnergy() * BASE_FUEL_BURN_RATE * fuelBurnRate;
 		if (fuel < 0.0)
 			fuel = 0.0;
+		// Update density and radius as star expands in late life
+		updateVisualProperties();
+		updateRadius();
 	}
 
 	if (heat_enabled)
@@ -372,11 +382,7 @@ void CelestialBody::updateEvolvedType() noexcept
 				fuel = getMass() * INITIAL_FUEL_PER_MASS;
 		}
 		break;
-	case REDGIANT:
-	case REDSUPERGIANT:
-		// Evolved giants stay as-is (evolution logic will handle transitions)
-		break;
-	case BLACKHOLE:
+case BLACKHOLE:
 		// Black holes are forever
 		isEvolved = false;
 		break;
@@ -412,21 +418,24 @@ void CelestialBody::updateVisualProperties() noexcept
 		circle.setPointCount(60);
 		break;
 	case STAR:
-		density = interpolate(0.2, 0.1, getMass(), GASGIANTLIMIT, STARLIMIT);
+		{
+		double baseDensity = interpolate(0.2, 0.1, getMass(), GASGIANTLIMIT, STARLIMIT);
+		double maxFuel = getMass() * INITIAL_FUEL_PER_MASS;
+		double fuelFraction = (maxFuel > 0.0) ? fuel / maxFuel : 1.0;
+		if (fuelFraction < GIANT_PHASE_BEGIN)
+		{
+			// Star expands as fuel depletes — quadratic curve for gradual start
+			double t = std::clamp((GIANT_PHASE_BEGIN - fuelFraction) / (GIANT_PHASE_BEGIN - GIANT_PHASE_END), 0.0, 1.0); // 0 at 35%, 1 at 10%
+			double expansion = t * t; // slow start, accelerates toward end
+			double giantDensity = interpolate(DENSITY_STAR_GIANT, DENSITY_STAR_SUPERGIANT, getMass(), GASGIANTLIMIT, STARLIMIT);
+			baseDensity = baseDensity + expansion * (giantDensity - baseDensity);
+		}
+		density = baseDensity;
 		circle.setPointCount(static_cast<int>(interpolate(90, 150, getMass(), GASGIANTLIMIT, STARLIMIT)));
 		circle.setOutlineThickness(static_cast<float>(interpolate(3, 10, getMass(), GASGIANTLIMIT, STARLIMIT)));
 		break;
-	case REDGIANT:
-		density = DENSITY_REDGIANT;
-		circle.setOutlineThickness(8);
-		circle.setPointCount(120);
-		break;
-	case REDSUPERGIANT:
-		density = DENSITY_REDSUPERGIANT;
-		circle.setOutlineThickness(12);
-		circle.setPointCount(150);
-		break;
-	case WHITEDWARF:
+		}
+case WHITEDWARF:
 		density = DENSITY_WHITEDWARF;
 		circle.setOutlineColor(sf::Color(220, 220, 255, 40));
 		circle.setOutlineThickness(1);
@@ -543,6 +552,28 @@ void CelestialBody::draw_gas_planet_atmosphere(sf::RenderTarget& window) const
 	}
 }
 
+void CelestialBody::draw_white_dwarf_glow(sf::RenderTarget& window) const
+{
+	// Intense compact blue-white core glow
+	sf::Color coreCol(220, 220, 255, 120);
+	render_shine(window, position, coreCol, radius * 6.0);
+
+	// Tight bright inner glow
+	sf::Color innerCol(240, 240, 255, 200);
+	render_shine(window, position, innerCol, radius * 2.5);
+}
+
+void CelestialBody::draw_neutron_star_glow(sf::RenderTarget& window) const
+{
+	// Harsh, intense white core — tiny but extremely bright
+	sf::Color coreCol(230, 230, 255, 220);
+	render_shine(window, position, coreCol, radius * 3.0);
+
+	// Wide eerie glow
+	sf::Color outerCol(180, 190, 255, 60);
+	render_shine(window, position, outerCol, radius * 12.0);
+}
+
 void CelestialBody::render(sf::RenderTarget& window) const
 {
 	circle.setPosition(position);
@@ -566,18 +597,17 @@ void CelestialBody::render(sf::RenderTarget& window) const
 		break;
 
 	case STAR:
-	case REDGIANT:
-	case REDSUPERGIANT:
 		window.draw(circle);
 		draw_starshine(window);
 		break;
 
 	case WHITEDWARF:
+		draw_white_dwarf_glow(window);
 		window.draw(circle);
-		draw_planetshine(window);
 		break;
 
 	case NEUTRONSTAR:
+		draw_neutron_star_glow(window);
 		window.draw(circle);
 		break;
 
@@ -612,8 +642,6 @@ void CelestialBody::setColor() noexcept
 		circle.setOutlineColor(sf::Color(180, 80, 50, 30));
 		break;
 	case STAR:
-	case REDGIANT:
-	case REDSUPERGIANT:
 		circle.setFillColor(getStarCol());
 		circle.setOutlineColor(sf::Color(circle.getFillColor().r, circle.getFillColor().g, circle.getFillColor().b,
 			20));

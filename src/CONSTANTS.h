@@ -5,7 +5,6 @@ enum BodyType {
 	ROCKY, TERRESTRIAL, GASGIANT,
 	BROWNDWARF,
 	STAR,                               // single main sequence type (was SMALLSTAR/STAR/BIGSTAR)
-	REDGIANT, REDSUPERGIANT,            // evolved giants
 	WHITEDWARF, NEUTRONSTAR,            // compact remnants
 	BLACKHOLE
 };
@@ -47,19 +46,21 @@ const double HEAT_STAR_HIGH_MULT = 6.0;  // at STARLIMIT (4000)
 
 //EVOLVED TYPE HEAT MULTIPLIERS
 const double HEAT_BROWNDWARF_MULT = 0.1;
-const double HEAT_REDGIANT_MULT = 1.0;
-const double HEAT_REDSUPERGIANT_MULT = 3.0;
-
 //EVOLVED TYPE DENSITIES
 const double DENSITY_BROWNDWARF = 0.25;
-const double DENSITY_REDGIANT = 0.05;
-const double DENSITY_REDSUPERGIANT = 0.03;
+const double DENSITY_STAR_GIANT = 0.05;
+const double DENSITY_STAR_SUPERGIANT = 0.03;
 const double DENSITY_WHITEDWARF = 0.9;
 const double DENSITY_NEUTRONSTAR = 1.0;
 
 //FUEL CONSTANTS
 const double INITIAL_FUEL_PER_MASS = 100.0;
 const double BASE_FUEL_BURN_RATE = 0.0025;  // GUI multiplier 1x = this rate
+
+//STELLAR GIANT PHASE
+const double GIANT_PHASE_BEGIN = 0.35;      // fuel fraction where expansion begins
+const double GIANT_PHASE_END = 0.10;        // fuel fraction where expansion reaches maximum
+const double GIANT_PHASE_FUSION_BOOST = 15.0; // max fusion multiplier increase at full expansion
 
 //NEW OBJECT MASS SLIDER
 const double MASS_SLIDER_MIN_VALUE = 1;

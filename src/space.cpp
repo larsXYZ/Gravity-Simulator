@@ -723,7 +723,7 @@ std::vector<int> Space::disintegratePlanet(Planet planet)
 	if (match == planets.end())
 		return {};
 
-	if (planet.isMainSequenceStar() || planet.getType() == REDGIANT || planet.getType() == REDSUPERGIANT)
+	if (planet.isMainSequenceStar())
 	{
 		sf::Color col = planet.getStarCol();
 		const auto long_range_luminosity = 30 * sqrt(planet.fusionEnergy());
@@ -807,7 +807,7 @@ std::vector<int> Space::explodePlanet(Planet planet)
 
 	addExplosion(original_position, size, original_velocity, lifetime);
 
-	if (planet.isMainSequenceStar() || planet.getType() == REDGIANT || planet.getType() == REDSUPERGIANT)
+	if (planet.isMainSequenceStar())
 	{
 		sf::Color col = planet.getStarCol();
 		const auto long_range_luminosity = 30 * sqrt(planet.fusionEnergy());
