@@ -1,6 +1,7 @@
 #include "space.h"
 
 #include <sstream>
+#include <iomanip>
 #include <random>
 #include "particles/particle_container.h"
 #include "user_functions.h"
@@ -1115,13 +1116,14 @@ void Space::update_spaceship()
 
 void Space::updateInfoBox()
 {
+	std::ostringstream zoomStr;
+	zoomStr << std::fixed << std::setprecision(1) << (1.0 / click_and_drag_handler.get_zoom());
+
 	simInfo->setText("Frame rate: " + std::to_string(fps) +
-		"\nFrame: " + std::to_string(iteration) +
-		"\nTime step: " + std::to_string(static_cast<int>(timestep)) +
 		"\nTotal mass: " + std::to_string(static_cast<int>(total_mass)) +
 		"\nObjects: " + std::to_string(planets.size()) +
 		"\nParticles: " + std::to_string(particles->size()) +
-		"\nZoom: " + std::to_string(1 / click_and_drag_handler.get_zoom()));
+		"\nZoom: " + zoomStr.str());
 
 	if (ship.isExist())
 	{
@@ -1137,9 +1139,9 @@ void Space::updateInfoBox()
 void Space::initSetup()
 {
 	simInfo->getVerticalScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
-	simInfo->setSize(180, 110);
+	simInfo->setSize(140, 82);
 	simInfo->setPosition(5, 5);
-	simInfo->setTextSize(14);
+	simInfo->setTextSize(13);
 
 	toolInfo->setPosition("2%", "95%");
 	toolInfo->setTextSize(18);
@@ -1153,15 +1155,51 @@ void Space::initSetup()
 
 	fillFunctionGUIDropdown(functions);
 	
-	functions->setSize(180, functions->getItemCount()*functions->getItemHeight()+5);
+	functions->setSize(140, functions->getItemCount()*functions->getItemHeight()+5);
 
-	editObjectCheckBox->setText("");
-	editObjectCheckBox->setPosition(190, 112 - 29 + functions->getItemCount() * functions->getItemHeight());
-	editObjectCheckBox->setSize(14, 14);
-	editObjectCheckBox->setVisible(true);
+	// Procedurally generate a pencil icon for edit button
+	{
+		sf::RenderTexture ert;
+		ert.create(32, 32);
+		ert.clear(sf::Color::Transparent);
+
+		// Pencil body (rotated rectangle)
+		sf::RectangleShape body(sf::Vector2f(28, 9));
+		body.setOrigin(14, 4.5f);
+		body.setPosition(16, 16);
+		body.setRotation(-45);
+		body.setFillColor(sf::Color(200, 200, 200));
+		ert.draw(body);
+
+		// Pencil tip (triangle)
+		sf::ConvexShape tip;
+		tip.setPointCount(3);
+		tip.setPoint(0, sf::Vector2f(0, 0));
+		tip.setPoint(1, sf::Vector2f(0, 9));
+		tip.setPoint(2, sf::Vector2f(-7, 4.5f));
+		tip.setOrigin(0, 4.5f);
+		tip.setPosition(16 - 14 * 0.707f, 16 + 14 * 0.707f);
+		tip.setRotation(-45);
+		tip.setFillColor(sf::Color(200, 200, 200));
+		ert.draw(tip);
+
+		ert.display();
+		editButtonTexture = ert.getTexture();
+
+		tgui::Texture et;
+		et.loadFromPixelData(editButtonTexture.getSize(), editButtonTexture.copyToImage().getPixelsPtr());
+		editObjectButton->setImage(et);
+		editObjectButton->setSize(25, 25);
+		editObjectButton->setPosition("100% - 62", "100% - 33");
+		editObjectButton->getRenderer()->setBackgroundColor(sf::Color::Transparent);
+		editObjectButton->getRenderer()->setBorderColor(sf::Color::Transparent);
+		editObjectButton->getRenderer()->setBackgroundColorHover(sf::Color(255, 255, 255, 50));
+		editObjectButton->setVisible(false);
+		editObjectButton->onPress([this]() { editPanelOpen = !editPanelOpen; });
+	}
 
 	newPlanetInfo->getVerticalScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
-	newPlanetInfo->setSize(180, 32);
+	newPlanetInfo->setSize(140, 32);
 	newPlanetInfo->setPosition(5, tgui::bindBottom(functions) + 2 * UI_SEPERATION_DISTANCE);
 	newPlanetInfo->setTextSize(14);
 
@@ -1172,7 +1210,7 @@ void Space::initSetup()
 	objectTypeSelector->addItem(StringConstants::PLANET_STAR);
 	objectTypeSelector->setSelectedItem(StringConstants::PLANET_ROCKY);
 	objectTypeSelector->setPosition(5, tgui::bindBottom(newPlanetInfo) + UI_SEPERATION_DISTANCE);
-	objectTypeSelector->setSize(180, 20);
+	objectTypeSelector->setSize(140, 20);
 	objectTypeSelector->setVisible(true);
 
 	objectTypeSelector->onItemSelect([this](const tgui::String& item) {
@@ -1199,12 +1237,12 @@ void Space::initSetup()
 		massSlider->setValue(massSlider->getMinimum());
 	});
 
-	autoBound->setPosition(190, 112 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
+	autoBound->setPosition(150, 112 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
 	autoBound->setSize(14, 14);
 	autoBound->setChecked(true);
 
 	massSlider->setPosition(5, tgui::bindBottom(objectTypeSelector) + UI_SEPERATION_DISTANCE);
-	massSlider->setSize(180, 10);
+	massSlider->setSize(140, 10);
 	massSlider->setValue(1);
 	massSlider->setMinimum(1);
 	massSlider->setMaximum(ROCKYLIMIT - 1);

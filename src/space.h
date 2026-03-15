@@ -165,7 +165,9 @@ public:
 
 	void set_ambient_temperature(Planet& planet);
 	
-	tgui::CheckBox::Ptr editObjectCheckBox = std::make_shared<tgui::CheckBox>();
+	tgui::BitmapButton::Ptr editObjectButton = std::make_shared<tgui::BitmapButton>();
+	sf::Texture editButtonTexture;
+	bool editPanelOpen = false;
 
 	void hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow & window);
 	

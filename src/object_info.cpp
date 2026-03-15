@@ -378,7 +378,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		return;
 	}
 
-	set_visible(space.editObjectCheckBox->isChecked());
+	set_visible(space.editPanelOpen);
 	update_info_text();
 	update_ui_values(space, window);
 	

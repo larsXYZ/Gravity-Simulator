@@ -62,7 +62,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 	gui.add(simInfo);
 	gui.add(toolInfo);
 	gui.add(functions);
-	gui.add(editObjectCheckBox);
+	gui.add(editObjectButton);
 	gui.add(newPlanetInfo);
 	gui.add(objectTypeSelector);
 	gui.add(massSlider);
@@ -150,6 +150,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 			object_tracker.update(*this, mainView);
 
 		updateInfoBox();
+		editObjectButton->setVisible(object_info.is_active());
 
 		// Draw scene to bloom render target or directly to window
 		bool useBloom = bloom.isAvailable() && config.bloom_enabled;
