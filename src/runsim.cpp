@@ -72,6 +72,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 
 	gui.add(optionsMenu);
 	gui.add(optionsButton);
+	gui.add(quitDialog);
 
 
 	// Initialize bloom effect

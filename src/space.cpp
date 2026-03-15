@@ -634,7 +634,11 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 			config.paused = !config.paused;
 			break;
 		case sf::Keyboard::Escape:
-			exit(0);
+			if (quitDialog->isVisible())
+				exit(0);
+			else
+				quitDialog->setVisible(true);
+			break;
 		case sf::Keyboard::R:
 			full_reset(view, window);
 			break;
@@ -1357,6 +1361,24 @@ void Space::initSetup()
 	optionsMenu->add(autoBound);
 
 	optionsMenu->setSize(200, 240);
+
+	// Quit confirmation dialog
+	quitDialog->setSize(200, 80);
+	quitDialog->setPosition("50% - 100", "50% - 40");
+	quitDialog->setVisible(false);
+	quitDialog->setCloseBehavior(tgui::ChildWindow::CloseBehavior::Hide);
+
+	auto quitButton = tgui::Button::create("Quit");
+	quitButton->setPosition(15, 10);
+	quitButton->setSize(75, 30);
+	quitButton->onPress([]() { exit(0); });
+	quitDialog->add(quitButton);
+
+	auto cancelButton = tgui::Button::create("Cancel");
+	cancelButton->setPosition(110, 10);
+	cancelButton->setSize(75, 30);
+	cancelButton->onPress([this]() { quitDialog->setVisible(false); });
+	quitDialog->add(cancelButton);
 }
 
 template<typename T>

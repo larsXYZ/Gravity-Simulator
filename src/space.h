@@ -95,6 +95,8 @@ class Space
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
 	tgui::CheckBox::Ptr autoBound = tgui::CheckBox::create("Auto Bound");
 
+	tgui::ChildWindow::Ptr quitDialog = tgui::ChildWindow::create("Quit?");
+
 	tgui::ChildWindow::Ptr optionsMenu = tgui::ChildWindow::create("Options Menu");
 	tgui::BitmapButton::Ptr optionsButton = tgui::BitmapButton::create();
 	sf::Texture optionsButtonTexture;
