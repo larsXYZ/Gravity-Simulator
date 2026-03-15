@@ -74,9 +74,6 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 	gui.add(optionsMenu);
 	gui.add(optionsButton);
 
-	gui.add(autoBound);
-	autoBound->onCheck([this]() { config.autobound = true; });
-	autoBound->onUncheck([this]() { config.autobound = false; bound.setActiveState(false); });
 
 	// Initialize bloom effect
 	bloom.init(window_size.x, window_size.y);

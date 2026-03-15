@@ -1237,9 +1237,6 @@ void Space::initSetup()
 		massSlider->setValue(massSlider->getMinimum());
 	});
 
-	autoBound->setPosition(150, 112 + UI_SEPERATION_DISTANCE + functions->getItemCount()*functions->getItemHeight());
-	autoBound->setSize(14, 14);
-	autoBound->setChecked(true);
 
 	massSlider->setPosition(5, tgui::bindBottom(objectTypeSelector) + UI_SEPERATION_DISTANCE);
 	massSlider->setSize(140, 10);
@@ -1355,6 +1352,16 @@ void Space::initSetup()
 	bloomCheckBox->onChange([this](bool checked) { config.bloom_enabled = checked; });
 	bloomCheckBox->getRenderer()->setTextColor(sf::Color::Black);
 	optionsMenu->add(bloomCheckBox);
+
+	autoBound->setPosition(10, 180);
+	autoBound->setChecked(true);
+	config.autobound = true;
+	autoBound->onCheck([this]() { config.autobound = true; });
+	autoBound->onUncheck([this]() { config.autobound = false; bound.setActiveState(false); });
+	autoBound->getRenderer()->setTextColor(sf::Color::Black);
+	optionsMenu->add(autoBound);
+
+	optionsMenu->setSize(200, 240);
 }
 
 template<typename T>

@@ -94,7 +94,7 @@ class Space
 	tgui::ComboBox::Ptr objectTypeSelector = std::make_shared<tgui::ComboBox>();
 	tgui::Slider::Ptr massSlider = std::make_shared<tgui::Slider>();
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
-	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();
+	tgui::CheckBox::Ptr autoBound = tgui::CheckBox::create("Auto Bound");
 
 	tgui::ChildWindow::Ptr optionsMenu = tgui::ChildWindow::create("Options Menu");
 	tgui::BitmapButton::Ptr optionsButton = tgui::BitmapButton::create();
