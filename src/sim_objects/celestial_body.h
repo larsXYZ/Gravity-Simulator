@@ -100,6 +100,7 @@ public:
 	void setFuel(double f) noexcept { fuel = f; }
 	void setIsEvolved(bool evolved) noexcept { isEvolved = evolved; }
 	void setSubType(StellarSubType st) noexcept { subType = st; }
+	void setType(BodyType t) noexcept { planetType = t; }
 
 	// Type classification helpers
 	[[nodiscard]] bool isMainSequenceStar() const noexcept { return planetType == STAR; }

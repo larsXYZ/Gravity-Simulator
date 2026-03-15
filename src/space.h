@@ -11,6 +11,7 @@
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
 #include "sim_objects/celestial_body.h"
+#include "sim_config.h"
 #include "Spaceship.h"
 #include "Effect.h"
 #include "CONSTANTS.h"
@@ -41,15 +42,10 @@ class Space
 {
 	double total_mass{0.0};
 	int next_id{0};
-	bool paused{ false };
-	bool gravity_enabled{ true };
-	bool heat_enabled{ true };
-	double fuelConsumptionMultiplier{ 1.0 };
 	float timestep{ TIMESTEP_VALUE_START };
 	double curr_time{ 0.0 };
 	int iteration{0};
 	int fps{ 0 };
-	bool show_gui{true};
     bool is_mouse_on_gui{ false };
 	
 	SpaceShip ship;
@@ -144,7 +140,7 @@ public:
 	
 	//SIMULATION FUNCTIONS
 	void update();
-	void runSim(sf::Vector2i window_size, bool fullscreen);
+	void runSim(sf::Vector2i window_size, bool fullscreen, int udp_port = 0);
 	void drawPlanets(sf::RenderTarget &window);
 	void drawLifeVisuals(sf::RenderTarget& window, const Planet& p);
 	void drawCivConnections(sf::RenderTarget& window, const Planet& p, bool drawIndicatorsOnColonies = false);
@@ -162,6 +158,11 @@ public:
 	sf::Vector2f centerOfMassAll();
 	int get_iteration() const;
 	bool auto_bound_active() const;
+	const std::vector<Planet>& getPlanets() const { return planets; }
+	void syncConfigToWidgets();
+
+	SimConfig config;
+
 	void set_ambient_temperature(Planet& planet);
 	
 	tgui::CheckBox::Ptr editObjectCheckBox = std::make_shared<tgui::CheckBox>();

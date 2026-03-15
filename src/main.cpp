@@ -297,7 +297,7 @@ void runLauncher()
 	}
 }
 
-void runDirect(int width, int height, bool fullscreen)
+void runDirect(int width, int height, bool fullscreen, int udp_port = 0)
 {
     saveSettings(width, height, fullscreen);
 
@@ -308,15 +308,16 @@ void runDirect(int width, int height, bool fullscreen)
 
     Space space;
     tempWin.close();
-    space.runSim({width, height}, fullscreen);
+    space.runSim({width, height}, fullscreen, udp_port);
 }
 
 void runWithArgs(int argc, char** argv)
 {
-    // Usage: Gravity-Simulator [--skip-launcher] [--width W] [--height H] [--fullscreen|--windowed]
+    // Usage: Gravity-Simulator [--skip-launcher] [--width W] [--height H] [--fullscreen|--windowed] [--udp-server PORT]
     int width = 0, height = 0;
     bool fullscreen = false;
     bool skip = false;
+    int udp_port = 0;
 
     for (int i = 1; i < argc; i++)
     {
@@ -326,6 +327,7 @@ void runWithArgs(int argc, char** argv)
         else if (arg == "--windowed") fullscreen = false;
         else if (arg == "--width" && i + 1 < argc) width = std::atoi(argv[++i]);
         else if (arg == "--height" && i + 1 < argc) height = std::atoi(argv[++i]);
+        else if (arg == "--udp-server" && i + 1 < argc) udp_port = std::atoi(argv[++i]);
     }
 
     if (skip)
@@ -345,7 +347,7 @@ void runWithArgs(int argc, char** argv)
         }
         if (width <= 0) width = 1366;
         if (height <= 0) height = 768;
-        runDirect(width, height, fullscreen);
+        runDirect(width, height, fullscreen, udp_port);
     }
     else
     {
@@ -368,6 +370,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
         int width = 0, height = 0;
         bool fullscreen = false;
+        int udp_port = 0;
 
         if (cmdLine.find("--fullscreen") != std::string::npos) fullscreen = true;
 
@@ -380,6 +383,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         };
         width = parseValue("--width");
         height = parseValue("--height");
+        udp_port = parseValue("--udp-server");
 
         if (width <= 0 || height <= 0)
         {
@@ -395,7 +399,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
         if (width <= 0) width = 1366;
         if (height <= 0) height = 768;
-        runDirect(width, height, fullscreen);
+        runDirect(width, height, fullscreen, udp_port);
     }
     else
     {

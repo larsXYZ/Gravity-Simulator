@@ -87,6 +87,18 @@ int Space::get_iteration() const
 	return iteration;
 }
 
+void Space::syncConfigToWidgets()
+{
+	gravityCheckBox->setChecked(config.gravity_enabled);
+	heatCheckBox->setChecked(config.heat_enabled);
+	bloomCheckBox->setChecked(config.bloom_enabled);
+	renderLifeAlwaysCheckBox->setChecked(config.render_life_always);
+	autoBound->setChecked(config.autobound);
+	if (!config.autobound) bound.setActiveState(false);
+	timeStepSlider->setValue(config.timestep_slider_value);
+	fuelBurnSlider->setValue(static_cast<float>(config.fuel_burn_rate * 10.0));
+}
+
 sf::Vector2f Space::centerOfMassAll()
 {
 	double tMass = 0;
@@ -129,7 +141,7 @@ void Space::update()
 
 	update_spaceship();
 
-	particles->update(planets, bound, timestep, curr_time, gravity_enabled, heat_enabled);
+	particles->update(planets, bound, timestep, curr_time, config.gravity_enabled, config.heat_enabled);
 
 	const size_t n_planets = planets.size();
 	if (n_planets == 0) return;
@@ -148,7 +160,7 @@ void Space::update()
 		hot_planets[i].g_mass = G * hot_planets[i].mass;
 		hot_planets[i].id = planets[i].getId();
 		hot_planets[i].type = planets[i].getType();
-		hot_planets[i].thermalEnergyOutput = (heat_enabled && planets[i].emitsHeat()) ? planets[i].giveThermalEnergy(1) : 0.0;
+		hot_planets[i].thermalEnergyOutput = (config.heat_enabled && planets[i].emitsHeat()) ? planets[i].giveThermalEnergy(1) : 0.0;
 		hot_planets[i].strongestAttractorMag = 0;
 		hot_planets[i].strongestAttractorId = -1;
 		hot_planets[i].accumulatedHeat = 0;
@@ -165,7 +177,7 @@ void Space::update()
 	{
 		if (planets[i].isMarkedForRemoval()) continue;
 
-		if (gravity_enabled)
+		if (config.gravity_enabled)
 		{
 			sf::Vector2f vel = planets[i].getVelocity();
 			vel.x += accelerations[i].x * half_dt;
@@ -223,7 +235,7 @@ void Space::update()
 				const double rad_dist = ri + hot_planets[j].radius;
 
 				// Gravity
-				if (gravity_enabled) {
+				if (config.gravity_enabled) {
 					const double g_mj = hot_planets[j].g_mass;
 					const double factor = g_mj / (dist2 * dist);
 					ax += factor * dx;
@@ -237,7 +249,7 @@ void Space::update()
 				}
 
 				// Heat
-				if (heat_enabled && hot_planets[j].thermalEnergyOutput > 0) {
+				if (config.heat_enabled && hot_planets[j].thermalEnergyOutput > 0) {
 					const auto heat = tempConstTwo * ri2 * hot_planets[j].thermalEnergyOutput / std::max(dist, 1.0);
 					total_heat += heat;
 				}
@@ -287,7 +299,7 @@ void Space::update()
 	{
 		if (planets[i].isMarkedForRemoval()) continue;
 		
-		if (gravity_enabled) {
+		if (config.gravity_enabled) {
 			sf::Vector2f vel = planets[i].getVelocity();
 			vel.x += accelerations[i].x * half_dt;
 			vel.y += accelerations[i].y * half_dt;
@@ -298,7 +310,7 @@ void Space::update()
 		planets[i].setStrongestAttractorStrength(hot_planets[i].strongestAttractorMag);
 		planets[i].setStrongestAttractorIdRef(hot_planets[i].strongestAttractorId);
 		
-		if (heat_enabled) {
+		if (config.heat_enabled) {
 			planets[i].absorbHeat(hot_planets[i].accumulatedHeat * timestep, static_cast<int>(timestep));
 		}
 
@@ -359,15 +371,15 @@ void Space::update()
 	std::erase_if(planets, [](const Planet & planet) { return planet.isMarkedForRemoval(); });
 	
 	// Update fuel burn rate from slider (0-50 maps to 0.0-5.0x)
-	fuelConsumptionMultiplier = fuelBurnSlider->getValue() / 10.0;
+	config.fuel_burn_rate = fuelBurnSlider->getValue() / 10.0;
 	{
 		std::stringstream ss;
-		ss << std::fixed << std::setprecision(1) << fuelConsumptionMultiplier;
+		ss << std::fixed << std::setprecision(1) << config.fuel_burn_rate;
 		fuelBurnLabel->setText("Fuel burn: " + ss.str() + "x");
 	}
 
 	for (auto & planet : planets)
-		planet.update_planet_sim(timestep, heat_enabled, fuelConsumptionMultiplier);
+		planet.update_planet_sim(timestep, config.heat_enabled, config.fuel_burn_rate);
 
 	// Stellar fuel depletion — star dies, leaves remnant
 	for (auto& planet : planets)
@@ -598,7 +610,7 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 		switch (event.key.code)
 		{
 		case sf::Keyboard::P:
-			paused = !paused;
+			config.paused = !config.paused;
 			break;
 		case sf::Keyboard::Escape:
 			exit(0);
@@ -606,7 +618,7 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 			full_reset(view, window);
 			break;
 		case sf::Keyboard::F1:
-			show_gui = !show_gui;
+			config.show_gui = !config.show_gui;
 			break;
 		}
 	}
@@ -648,7 +660,7 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 
 bool Space::auto_bound_active() const
 {
-	return autoBound->isChecked();
+	return config.autobound;
 }
 
 void Space::set_ambient_temperature(Planet& planet)
@@ -1062,7 +1074,7 @@ void Space::update_spaceship()
 
 	for (const auto & planet : planets)
 	{
-		if (ship.isExist() && !ship.pullofGravity(planet, ship, timestep, gravity_enabled))
+		if (ship.isExist() && !ship.pullofGravity(planet, ship, timestep, config.gravity_enabled))
 			addExplosion(ship.getpos(), 10, sf::Vector2f(0, 0), 10);
 	}
 
@@ -1248,17 +1260,19 @@ void Space::initSetup()
 	optionsMenu->setCloseBehavior(tgui::ChildWindow::CloseBehavior::Hide);
 
 	gravityCheckBox->setPosition(10, 10);
-	gravityCheckBox->setChecked(gravity_enabled);
-	gravityCheckBox->onChange([this](bool checked) { gravity_enabled = checked; });
+	gravityCheckBox->setChecked(config.gravity_enabled);
+	gravityCheckBox->onChange([this](bool checked) { config.gravity_enabled = checked; });
 	optionsMenu->add(gravityCheckBox);
 
 	heatCheckBox->setPosition(10, 40);
-	heatCheckBox->setChecked(heat_enabled);
-	heatCheckBox->onChange([this](bool checked) { heat_enabled = checked; });
+	heatCheckBox->setChecked(config.heat_enabled);
+	heatCheckBox->onChange([this](bool checked) { config.heat_enabled = checked; });
 	optionsMenu->add(heatCheckBox);
 
 	renderLifeAlwaysCheckBox->setPosition(10, 70);
 	renderLifeAlwaysCheckBox->setChecked(true);
+	config.render_life_always = true;
+	renderLifeAlwaysCheckBox->onChange([this](bool checked) { config.render_life_always = checked; });
 	optionsMenu->add(renderLifeAlwaysCheckBox);
 
 	fuelBurnLabel->setText("Fuel burn: 1.0x");
@@ -1272,11 +1286,13 @@ void Space::initSetup()
 	fuelBurnSlider->setMinimum(0);
 	fuelBurnSlider->setMaximum(50);
 	fuelBurnSlider->setValue(10);
-	fuelConsumptionMultiplier = 1.0;
+	config.fuel_burn_rate = 1.0;
 	optionsMenu->add(fuelBurnSlider);
 
 	bloomCheckBox->setPosition(10, 150);
 	bloomCheckBox->setChecked(true);
+	config.bloom_enabled = true;
+	bloomCheckBox->onChange([this](bool checked) { config.bloom_enabled = checked; });
 	bloomCheckBox->getRenderer()->setTextColor(sf::Color::Black);
 	optionsMenu->add(bloomCheckBox);
 }
@@ -1388,7 +1404,7 @@ void Space::drawPlanets(sf::RenderTarget &window)
 		planet.render(window);
 	}
 
-	if (renderLifeAlwaysCheckBox->isChecked())
+	if (config.render_life_always)
 	{
 		std::map<int, std::vector<size_t>> civGroups;
 		for (size_t i = 0; i < planets.size(); i++)
@@ -1551,7 +1567,7 @@ void Space::drawMissiles(sf::RenderTarget& window)
 
 double Space::thermalEnergyAtPosition(sf::Vector2f pos)
 {
-	if (!heat_enabled) return 0.0;
+	if (!config.heat_enabled) return 0.0;
 
 	double tEnergyFromOutside = 0;
 

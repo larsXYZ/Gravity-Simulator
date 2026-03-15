@@ -406,7 +406,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 	if (space.get_iteration() % TRAILFREQ == 0)
 		space.addTrail(pos, TRAILLIFE);
 
-	if (!space.renderLifeAlwaysCheckBox->isChecked())
+	if (!space.config.render_life_always)
 	{
 		space.drawLifeVisuals(window, *target);
 		space.drawCivConnections(window, *target, true);

@@ -1,6 +1,8 @@
 #include "space.h"
 
 #include "user_functions.h"
+#include "udp_server.h"
+#include <memory>
 
 bool is_mouse_on_widgets(const sf::RenderWindow & window, const tgui::Gui & gui)
 {
@@ -38,7 +40,7 @@ bool is_mouse_on_widgets(const sf::RenderWindow & window, const tgui::Gui & gui)
 	return mouse_currently_over_gui || started_on_gui;
 }
 
-void Space::runSim(sf::Vector2i window_size, bool fullscreen)
+void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 {
 	sf::RenderWindow window;
 
@@ -73,16 +75,27 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.add(optionsButton);
 
 	gui.add(autoBound);
-	autoBound->onUncheck([&]() {bound.setActiveState(false); });
+	autoBound->onCheck([this]() { config.autobound = true; });
+	autoBound->onUncheck([this]() { config.autobound = false; bound.setActiveState(false); });
 
 	// Initialize bloom effect
 	bloom.init(window_size.x, window_size.y);
 
+	// UDP command server
+	std::unique_ptr<UdpCommandServer> udpServer;
+	if (udp_port > 0)
+	{
+		udpServer = std::make_unique<UdpCommandServer>(static_cast<unsigned short>(udp_port));
+		if (!udpServer->start())
+			udpServer.reset();
+	}
+
 	sf::Event event;
+	bool window_has_focus = true;
 	while (window.isOpen())
 	{
-		timestep = paused ? 0.0 : timeStepSlider->getValue();
-        is_mouse_on_gui = is_mouse_on_widgets(window, gui);
+		timestep = config.paused ? 0.0 : timeStepSlider->getValue();
+        is_mouse_on_gui = !window_has_focus || is_mouse_on_widgets(window, gui);
 
 		FunctionContext context
 		{
@@ -106,6 +119,11 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			if (event.type == sf::Event::Closed)
 				window.close();
 
+			if (event.type == sf::Event::GainedFocus)
+				window_has_focus = true;
+			if (event.type == sf::Event::LostFocus)
+				window_has_focus = false;
+
 			if (event.type == sf::Event::Resized)
 				bloom.resize(event.size.width, event.size.height);
 
@@ -124,13 +142,19 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 
 		flushPlanets();
 
+		if (udpServer)
+		{
+			udpServer->processCommands(*this, mainView, window);
+			syncConfigToWidgets();
+		}
+
 		if (object_tracker.is_active())
 			object_tracker.update(*this, mainView);
 
 		updateInfoBox();
 
 		// Draw scene to bloom render target or directly to window
-		bool useBloom = bloom.isAvailable() && bloomCheckBox->isChecked();
+		bool useBloom = bloom.isAvailable() && config.bloom_enabled;
 		sf::RenderTarget& target = useBloom ?
 			static_cast<sf::RenderTarget&>(bloom.getSceneTarget()) :
 			static_cast<sf::RenderTarget&>(window);
@@ -160,7 +184,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		if (object_info.is_active())
 			object_info.render(*this, window);
 
-		if (show_gui)
+		if (config.show_gui)
 			gui.draw();
 
 		window.display();
