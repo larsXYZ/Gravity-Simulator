@@ -79,7 +79,7 @@ void UdpCommandServer::sendReply(const sf::IpAddress& addr, unsigned short port,
     sendSocket.send(msg.c_str(), msg.size(), addr, port);
 }
 
-void UdpCommandServer::processCommands(Space& space, sf::View& view, sf::RenderWindow& window)
+bool UdpCommandServer::processCommands(Space& space, sf::View& view, sf::RenderWindow& window)
 {
     std::vector<UdpCommand> local;
     {
@@ -93,6 +93,8 @@ void UdpCommandServer::processCommands(Space& space, sf::View& view, sf::RenderW
         if (!response.empty())
             sendReply(cmd.sender, cmd.senderPort, response);
     }
+
+    return !local.empty();
 }
 
 static std::string bodyTypeToString(BodyType type)
@@ -174,6 +176,7 @@ std::string UdpCommandServer::handleCommand(const std::string& line, Space& spac
             if (type == WHITEDWARF || type == NEUTRONSTAR)
                 p.setIsEvolved(true);
             p.updateRadiAndType();
+            p.initializeRemnantTemperature();
         }
 
         int id = space.addPlanet(std::move(p));
@@ -256,7 +259,8 @@ std::string UdpCommandServer::handleCommand(const std::string& line, Space& spac
             << p->getx() << " " << p->gety() << " "
             << p->getxv() << " " << p->getyv() << " "
             << p->getMass() << " " << p->getRadius() << " "
-            << bodyTypeToString(p->getType());
+            << bodyTypeToString(p->getType()) << " "
+            << p->getTemp();
         return out.str();
     }
     else if (cmd == "LIST")

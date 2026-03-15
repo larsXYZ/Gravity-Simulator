@@ -419,6 +419,10 @@ void Space::update()
 			remnant.planetType = remnantType;
 			remnant.updateVisualProperties();
 			remnant.updateRadius();
+			if (remnantType == WHITEDWARF)
+				remnant.setTemp(INITIAL_TEMP_WHITEDWARF);
+			else if (remnantType == NEUTRONSTAR)
+				remnant.setTemp(INITIAL_TEMP_NEUTRONSTAR);
 
 			explodePlanet(ejecta, &remnant);
 			removePlanet(planet.getId());

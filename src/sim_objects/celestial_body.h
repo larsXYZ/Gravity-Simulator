@@ -122,6 +122,7 @@ public:
 	void clearIgnores() noexcept { ignore_ids.clear(); }
 	void becomeAbsorbedBy(CelestialBody& absorbing_planet);
 	void updateRadiAndType() noexcept;
+	void initializeRemnantTemperature() noexcept;
 	void resetAttractorMeasure() noexcept { strongestAttractorStrength = 0; }
 	void incMass(double m) noexcept;
 	void collision(const CelestialBody& p);

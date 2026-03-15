@@ -91,11 +91,17 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 	}
 
 	sf::Event event;
-	bool window_has_focus = true;
 	while (window.isOpen())
 	{
 		timestep = config.paused ? 0.0 : timeStepSlider->getValue();
-        is_mouse_on_gui = !window_has_focus || is_mouse_on_widgets(window, gui);
+
+		// Check if mouse is inside the window bounds
+		sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+		bool mouse_in_window = mousePos.x >= 0 && mousePos.y >= 0
+			&& mousePos.x < static_cast<int>(window.getSize().x)
+			&& mousePos.y < static_cast<int>(window.getSize().y);
+
+        is_mouse_on_gui = !mouse_in_window || is_mouse_on_widgets(window, gui);
 
 		FunctionContext context
 		{
@@ -119,11 +125,6 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 			if (event.type == sf::Event::Closed)
 				window.close();
 
-			if (event.type == sf::Event::GainedFocus)
-				window_has_focus = true;
-			if (event.type == sf::Event::LostFocus)
-				window_has_focus = false;
-
 			if (event.type == sf::Event::Resized)
 				bloom.resize(event.size.width, event.size.height);
 
@@ -142,11 +143,8 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 
 		flushPlanets();
 
-		if (udpServer)
-		{
-			udpServer->processCommands(*this, mainView, window);
+		if (udpServer && udpServer->processCommands(*this, mainView, window))
 			syncConfigToWidgets();
-		}
 
 		if (object_tracker.is_active())
 			object_tracker.update(*this, mainView);

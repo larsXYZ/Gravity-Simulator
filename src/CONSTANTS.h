@@ -44,6 +44,10 @@ const double TOV_LIMIT = 3200;           // neutron star + mass -> black hole
 const double HEAT_STAR_LOW_MULT = 0.8;   // at GASGIANTLIMIT (600)
 const double HEAT_STAR_HIGH_MULT = 6.0;  // at STARLIMIT (4000)
 
+//INITIAL REMNANT TEMPERATURES
+const double INITIAL_TEMP_WHITEDWARF = 25000.0;
+const double INITIAL_TEMP_NEUTRONSTAR = 500000.0;
+
 //EVOLVED TYPE HEAT MULTIPLIERS
 const double HEAT_BROWNDWARF_MULT = 0.1;
 //EVOLVED TYPE DENSITIES

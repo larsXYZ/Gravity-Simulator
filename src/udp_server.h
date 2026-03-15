@@ -35,5 +35,5 @@ public:
 
     bool start();
     void stop();
-    void processCommands(Space& space, sf::View& view, sf::RenderWindow& window);
+    bool processCommands(Space& space, sf::View& view, sf::RenderWindow& window);
 };

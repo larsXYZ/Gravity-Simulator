@@ -361,6 +361,14 @@ void CelestialBody::updateRadiAndType() noexcept
 	updateRadius();
 }
 
+void CelestialBody::initializeRemnantTemperature() noexcept
+{
+	if (planetType == WHITEDWARF && getTemp() < 1.0)
+		setTemp(INITIAL_TEMP_WHITEDWARF);
+	else if (planetType == NEUTRONSTAR && getTemp() < 1.0)
+		setTemp(INITIAL_TEMP_NEUTRONSTAR);
+}
+
 void CelestialBody::updateMainSequenceType() noexcept
 {
 	if (getMass() < ROCKYLIMIT)
