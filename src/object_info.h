@@ -13,7 +13,7 @@ class ObjectInfo
 	sf::Font font;
 	sf::Text text;
 	
-	tgui::Panel::Ptr panel;
+	tgui::ChildWindow::Ptr panel;
 	tgui::EditBox::Ptr nameBox;
 	tgui::EditBox::Ptr massBox;
 	tgui::EditBox::Ptr tempBox;
@@ -24,10 +24,9 @@ class ObjectInfo
 	tgui::EditBox::Ptr atmoBox;
 	tgui::EditBox::Ptr atmoPotBox;
 	tgui::ComboBox::Ptr lifeLevelSelector;
-	tgui::Button::Ptr closeButton;
 
-	tgui::TextArea::Ptr m_infoTextBox;
-	tgui::Button::Ptr m_infoCloseButton;
+	tgui::ChildWindow::Ptr m_infoWindow;
+	tgui::Label::Ptr m_infoLabel;
 
 	bool ignore_change_signals{ false };
 	Space* m_space{ nullptr };
@@ -45,7 +44,7 @@ public:
 	void set_visible(bool visible);
 	void render(Space& space, sf::RenderWindow & window);
 	
-	void setup(Space& space, tgui::Gui& gui, tgui::TextArea::Ptr infoTextBox);
+	void setup(Space& space, tgui::Gui& gui);
 	void update_ui_values(Space& space, sf::RenderWindow& window);
 	
 	bool is_focused(sf::RenderWindow& window) const;

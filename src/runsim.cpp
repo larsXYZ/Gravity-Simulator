@@ -58,7 +58,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 	tgui::Gui gui{ window };
 	gui.setFont("sansation.ttf");
 	initSetup();
-	object_info.setup(*this, gui, objectInfoText);
+	object_info.setup(*this, gui);
 	gui.add(simInfo);
 	gui.add(toolInfo);
 	gui.add(functions);
@@ -66,7 +66,6 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 	gui.add(newPlanetInfo);
 	gui.add(objectTypeSelector);
 	gui.add(massSlider);
-	gui.add(objectInfoText);
 	gui.add(timeStepLabel);
 	gui.add(timeStepSlider);
 	gui.add(temperatureUnitSelector);

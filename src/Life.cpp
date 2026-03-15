@@ -220,7 +220,7 @@ double Life::getBmass() const {
     return biomass;
 }
 
-const std::string& Life::getType() const {
+const std::string Life::getTypeString() const {
     switch (type) {
         case NONE:
             return "Lifeless";

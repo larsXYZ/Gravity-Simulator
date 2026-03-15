@@ -1139,7 +1139,7 @@ void Space::updateInfoBox()
 void Space::initSetup()
 {
 	simInfo->getVerticalScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
-	simInfo->setSize(140, 82);
+	simInfo->setSize(140, 60);
 	simInfo->setPosition(5, 5);
 	simInfo->setTextSize(13);
 
@@ -1244,11 +1244,6 @@ void Space::initSetup()
 	massSlider->setMinimum(1);
 	massSlider->setMaximum(ROCKYLIMIT - 1);
 
-	objectInfoText->getVerticalScrollbar()->setPolicy(tgui::Scrollbar::Policy::Never);
-	objectInfoText->setSize(180, 32);
-	objectInfoText->setPosition(5, tgui::bindBottom(massSlider) + 2 * UI_SEPERATION_DISTANCE);
-	objectInfoText->setTextSize(14);
-	objectInfoText->setVisible(false);
 
 	timeStepLabel->setText("Timestep");
 	timeStepLabel->setTextSize(14);

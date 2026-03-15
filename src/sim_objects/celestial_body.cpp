@@ -536,10 +536,13 @@ void CelestialBody::draw_starshine(sf::RenderTarget& window) const
 	const auto long_range_luminosity = 30 * sqrt(fusionEnergy());
 	render_shine(window, position, col, long_range_luminosity);
 
-	//SHORT RANGE LIGHT
-	col.a = 250;
-	const auto short_range_luminosity = 1.5 * getRadius();
-	render_shine(window, position, col, short_range_luminosity);
+	//SURFACE GLOW - covers the star body
+	col.a = 255;
+	render_shine(window, position, col, getRadius() * 1.2);
+
+	//SHORT RANGE LIGHT - shine beyond the surface
+	col.a = 200;
+	render_shine(window, position, col, getRadius() * 3.0);
 }
 
 void CelestialBody::draw_planetshine(sf::RenderTarget& window) const

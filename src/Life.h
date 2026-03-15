@@ -40,7 +40,7 @@ public:
 	// Getters
 	[[nodiscard]] lType getTypeEnum() const;
 	[[nodiscard]] double getBmass() const;
-	[[nodiscard]] const std::string& getType() const;
+	[[nodiscard]] const std::string getTypeString() const;
 	[[nodiscard]] int getId() const;
 	[[nodiscard]] sf::Color getCol() const;
 	[[nodiscard]] const std::string& getDesc() const;

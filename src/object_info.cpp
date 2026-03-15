@@ -35,10 +35,8 @@ void ObjectInfo::deactivate()
 	if (m_space) m_space->trail.clear();
 	if (panel)
 		panel->setVisible(false);
-	if (m_infoTextBox)
-		m_infoTextBox->setVisible(false);
-	if (m_infoCloseButton)
-		m_infoCloseButton->setVisible(false);
+	if (m_infoWindow)
+		m_infoWindow->setVisible(false);
 }
 
 void ObjectInfo::activate(int new_target_id)
@@ -57,57 +55,54 @@ void ObjectInfo::set_visible(bool visible)
 	}
 }
 
-void ObjectInfo::setup(Space& space, tgui::Gui& gui, tgui::TextArea::Ptr infoTextBox)
+void ObjectInfo::setup(Space& space, tgui::Gui& gui)
 {
 	m_space = &space;
-	m_infoTextBox = infoTextBox;
 
-	m_infoCloseButton = tgui::Button::create("X");
-	m_infoCloseButton->setSize(18, 18);
-	m_infoCloseButton->setTextSize(11);
-	m_infoCloseButton->setPosition(tgui::bindRight(m_infoTextBox) + 2, tgui::bindTop(m_infoTextBox));
-	m_infoCloseButton->setVisible(false);
-	m_infoCloseButton->onPress([this]() { deactivate(); });
-	gui.add(m_infoCloseButton);
+	m_infoWindow = tgui::ChildWindow::create("Object Info");
+	m_infoWindow->setPosition(5, "100% - 250");
+	m_infoWindow->setVisible(false);
+	m_infoWindow->setCloseBehavior(tgui::ChildWindow::CloseBehavior::Hide);
+	m_infoWindow->onClose([this]() { deactivate(); });
+	gui.add(m_infoWindow);
 
-	panel = tgui::Panel::create();
-	panel->setSize(220, 260);
+	m_infoLabel = tgui::Label::create();
+	m_infoLabel->setPosition(5, 5);
+	m_infoLabel->setSize("100% - 10", "100% - 10");
+	m_infoLabel->setTextSize(13);
+	m_infoLabel->getRenderer()->setTextColor(sf::Color::Black);
+	m_infoWindow->add(m_infoLabel);
+
+	panel = tgui::ChildWindow::create("Object Editor");
 	panel->setPosition("100% - 230", 100);
 	panel->setVisible(false);
-	panel->getRenderer()->setBackgroundColor(sf::Color(255, 255, 255, 200));
-	panel->getRenderer()->setBorderColor(sf::Color::Black);
-	panel->getRenderer()->setBorders(1);
+	panel->setCloseBehavior(tgui::ChildWindow::CloseBehavior::Hide);
+	panel->onClose([this]() { deactivate(); });
 	gui.add(panel);
 
-	closeButton = tgui::Button::create("X");
-	closeButton->setSize(20, 20);
-	closeButton->setTextSize(12);
-	closeButton->setPosition("100% - 25", 5);
-	closeButton->onPress([this]() { deactivate(); });
-	panel->add(closeButton);
-
 		float y = 5;
-		float labelWidth = 75;
-		float boxX = 80;
-		float boxWidth = 130;
-		float rowHeight = 30;
-	
+		float labelWidth = 65;
+		float boxX = 70;
+		float boxWidth = 120;
+		float rowHeight = 24;
+
 		auto addRow = [&](const std::string& labelText, tgui::EditBox::Ptr& box, bool numeric = true) {
 			auto label = tgui::Label::create(labelText);
-			label->setPosition(5, y + 4); 
-			label->setSize(labelWidth, 22);
+			label->setPosition(5, y + 2);
+			label->setSize(labelWidth, 18);
 			label->getRenderer()->setTextColor(sf::Color::Black);
-			label->setTextSize(13);
+			label->setTextSize(12);
 			panel->add(label);
-	
+
 			box = tgui::EditBox::create();
 			box->setPosition(boxX, y);
-			box->setSize(boxWidth, 24);		box->setTextSize(13);
-		if (numeric)
-			box->setInputValidator(tgui::EditBox::Validator::Float);
-		panel->add(box);
-		y += rowHeight;
-	};
+			box->setSize(boxWidth, 20);
+			box->setTextSize(12);
+			if (numeric)
+				box->setInputValidator(tgui::EditBox::Validator::Float);
+			panel->add(box);
+			y += rowHeight;
+		};
 
 	addRow("Name:", nameBox, false);
 	nameBox->onReturnKeyPress([this](const tgui::String& val) {
@@ -216,16 +211,16 @@ void ObjectInfo::setup(Space& space, tgui::Gui& gui, tgui::TextArea::Ptr infoTex
 	});
 
 	auto lifeLabel = tgui::Label::create("Life Level:");
-	lifeLabel->setPosition(5, y + 4);
-	lifeLabel->setSize(labelWidth, 22);
+	lifeLabel->setPosition(5, y + 2);
+	lifeLabel->setSize(labelWidth, 18);
 	lifeLabel->getRenderer()->setTextColor(sf::Color::Black);
-	lifeLabel->setTextSize(13);
+	lifeLabel->setTextSize(12);
 	panel->add(lifeLabel);
 
 	lifeLevelSelector = tgui::ComboBox::create();
 	lifeLevelSelector->setPosition(boxX, y);
-	lifeLevelSelector->setSize(boxWidth, 24);
-	lifeLevelSelector->setTextSize(13);
+	lifeLevelSelector->setSize(boxWidth, 20);
+	lifeLevelSelector->setTextSize(12);
 	lifeLevelSelector->addItem("Lifeless");
 	lifeLevelSelector->addItem("Unicellular");
 	lifeLevelSelector->addItem("Multicellular (S)");
@@ -251,7 +246,7 @@ void ObjectInfo::setup(Space& space, tgui::Gui& gui, tgui::TextArea::Ptr infoTex
 	panel->add(lifeLevelSelector);
 	y += rowHeight;
 
-	panel->setSize(220, y + 5);
+	panel->setSize(200, y + 25);
 }
 
 bool ObjectInfo::is_focused(sf::RenderWindow& window) const
@@ -320,7 +315,7 @@ void ObjectInfo::update_ui_values(Space& space, sf::RenderWindow& window)
 
 void ObjectInfo::update_info_text()
 {
-	if (!m_infoTextBox || !m_space || target_id == -1) return;
+	if (!m_infoLabel || !m_space || target_id == -1) return;
 
 	Planet* target = m_space->findPlanetPtr(target_id);
 	if (!target) return;
@@ -331,7 +326,7 @@ void ObjectInfo::update_info_text()
 		"\nType: " + target->getDisplayName() +
 		"\nRadius: " + std::to_string(static_cast<int>(target->getRadius())) +
 		"\nMass: " + std::to_string(static_cast<int>(target->getMass())) +
-		"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) +
+		"\nSpeed: " + ([&]() { std::ostringstream s; s << std::fixed << std::setprecision(2) << std::hypot(target->getxv(), target->getyv()); return s.str(); })() +
 		"\nTemperature: " + Space::temperature_info_string(target->getTemp(), selected_temp_unit);
 
 	Planet* target_parent = m_space->findPlanetPtr(target->getStrongestAttractorId());
@@ -355,18 +350,18 @@ void ObjectInfo::update_info_text()
 	if (target->getLife().getTypeEnum() != 0)
 	{
 		info += "\n\nBiomass: " + std::to_string((int)target->getLife().getBmass()) + "MT";
-		info += "\n" + target->getLife().getType() + "\n" + target->getFlavorTextLife();
+		info += "\n" + target->getLife().getTypeString() + "\n" + target->getFlavorTextLife();
 	}
 
-	m_infoTextBox->setVisible(true);
-	m_infoTextBox->setText(info);
+	m_infoLabel->setText(info);
 
-	float lineHeight = m_infoTextBox->getTextSize() * 1.2f;
-	int lines = static_cast<int>(m_infoTextBox->getLinesCount());
-	m_infoTextBox->setSize(m_infoTextBox->getSize().x, std::max(32.0f, lines * lineHeight + 12.0f));
-
-	if (m_infoCloseButton)
-		m_infoCloseButton->setVisible(true);
+	// Count newlines to determine height
+	int lines = 1;
+	for (char c : info) if (c == '\n') lines++;
+	float lineHeight = m_infoLabel->getTextSize() * 1.4f;
+	float contentHeight = std::max(32.0f, lines * lineHeight + 15.0f);
+	m_infoWindow->setSize(150, contentHeight + 30);
+	m_infoWindow->setVisible(true);
 }
 
 void ObjectInfo::render(Space& space, sf::RenderWindow& window)
