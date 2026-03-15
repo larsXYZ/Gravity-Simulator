@@ -40,9 +40,9 @@ const double STARLIMIT = 4000;          // star ends, black hole begins
 const double CHANDRASEKHAR_LIMIT = 1500; // white dwarf + mass -> Type Ia supernova
 const double TOV_LIMIT = 3200;           // neutron star + mass -> black hole
 
-//STAR HEAT MULTIPLIERS (used for interpolation across star mass range)
-const double HEAT_STAR_LOW_MULT = 0.8;   // at GASGIANTLIMIT (600)
-const double HEAT_STAR_HIGH_MULT = 6.0;  // at STARLIMIT (4000)
+//STAR EQUILIBRIUM TEMPERATURES (K) — used to back-compute fusion energy
+const double TEMP_STAR_LOW = 2800.0;     // red dwarf at GASGIANTLIMIT
+const double TEMP_STAR_HIGH = 28000.0;   // blue supergiant at STARLIMIT
 
 //NEUTRON STAR SUBTYPES
 const double PULSAR_ROTATION_SPEED = 0.02;
@@ -56,7 +56,7 @@ const double INITIAL_TEMP_WHITEDWARF = 25000.0;
 const double INITIAL_TEMP_NEUTRONSTAR = 500000.0;
 
 //EVOLVED TYPE HEAT MULTIPLIERS
-const double HEAT_BROWNDWARF_MULT = 0.1;
+const double HEAT_BROWNDWARF_MULT = 0.15;
 //EVOLVED TYPE DENSITIES
 const double DENSITY_BROWNDWARF = 0.25;
 const double DENSITY_STAR_GIANT = 0.05;

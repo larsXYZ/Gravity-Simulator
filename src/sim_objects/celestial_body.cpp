@@ -26,10 +26,15 @@ namespace {
 	}
 
 	// Continuous fusion energy for STAR type
+	// Back-computed from target equilibrium temperatures (T = fusion / (SBconst * r²))
 	double calculateStarFusionEnergy(double mass)
 	{
-		double mult = interpolate(HEAT_STAR_LOW_MULT, HEAT_STAR_HIGH_MULT, mass, GASGIANTLIMIT, STARLIMIT);
-		return mult * mass;
+		double t = std::clamp((mass - GASGIANTLIMIT) / (STARLIMIT - GASGIANTLIMIT), 0.0, 1.0);
+		double curved_t = t * t; // quadratic: realistic slow rise for cool stars, steep rise for hot stars
+		double target_temp = TEMP_STAR_LOW + curved_t * (TEMP_STAR_HIGH - TEMP_STAR_LOW);
+		double dens = interpolate(0.2, 0.1, mass, GASGIANTLIMIT, STARLIMIT);
+		double r = std::cbrt(mass) / dens;
+		return target_temp * SBconst * r * r;
 	}
 }
 
@@ -43,6 +48,12 @@ CelestialBody::CelestialBody(double m, double xx, double yy, double xvv, double 
 	circle.setPosition(position);
 
 	initializeFuel();
+	updateRadiAndType(); // recalculate with correct fuel fraction
+
+	// Set steady-state temperature: cooling = fusion → SBconst * r² * T = fusionEnergy()
+	double fe = fusionEnergy();
+	if (fe > 0.0 && radius > 0.0)
+		setTemp(fe / (SBconst * radius * radius));
 
 	//DETERMINING NUMBER OF ATMOSPHERE LINES, FOR GASGIANT PHASE
 	numAtmoLines = modernRandomWithLimits(minAtmoLayer, maxAtmoLayer);
@@ -527,30 +538,46 @@ void CelestialBody::collision(const CelestialBody& p)
 	fuel += p.fuel;
 }
 
-void CelestialBody::draw_starshine(sf::RenderTarget& window) const
+sf::Color CelestialBody::getShineColor() const noexcept
 {
-	sf::Color col = getStarCol();
-
-	//LONG RANGE LIGHT
-	col.a = 50;
-	const auto long_range_luminosity = 30 * sqrt(fusionEnergy());
-	render_shine(window, position, col, long_range_luminosity);
-
-	//SURFACE GLOW - covers the star body
-	col.a = 255;
-	render_shine(window, position, col, getRadius() * 1.2);
-
-	//SHORT RANGE LIGHT - shine beyond the surface
-	col.a = 200;
-	render_shine(window, position, col, getRadius() * 3.0);
+	switch (planetType) {
+	case WHITEDWARF:
+		return sf::Color(220, 220, 255);
+	case NEUTRONSTAR:
+		if (subType == PULSAR)   return sf::Color(140, 230, 255);
+		if (subType == MAGNETAR) return sf::Color(200, 160, 255);
+		return sf::Color(200, 200, 220);
+	default:
+		return getStarCol();
+	}
 }
 
-void CelestialBody::draw_planetshine(sf::RenderTarget& window) const
+void CelestialBody::draw_thermal_shine(sf::RenderTarget& window) const
 {
-	/*
-	 *	Caused by very hot temperatures
-	 */
-	draw_heat_glow(window, position, getTemp(), radius);
+	double temp = getTemp();
+	if (temp < 700.0) return;
+
+	sf::Color col = getShineColor();
+
+	// Surface glow — always covers the body when hot enough
+	double surface_intensity = std::clamp((temp - 700.0) / 800.0, 0.0, 1.0);
+	col.a = static_cast<sf::Uint8>(255 * surface_intensity);
+	render_shine(window, position, col, getRadius() * 1.2);
+
+	// Short-range shine — visible halo beyond the surface
+	if (temp > 2000.0) {
+		double short_range_intensity = std::clamp((temp - 2000.0) / 5000.0, 0.0, 1.0);
+		col.a = static_cast<sf::Uint8>(200 * short_range_intensity);
+		double short_range_mult = 2.0 + short_range_intensity * 2.0;
+		render_shine(window, position, col, getRadius() * short_range_mult);
+	}
+
+	// Long-range luminosity — the big glow visible from far away
+	if (temp > 4000.0) {
+		double luminosity_factor = std::sqrt(temp / 1000.0) * std::sqrt(radius);
+		col.a = 50;
+		render_shine(window, position, col, luminosity_factor * 10.0);
+	}
 }
 
 void CelestialBody::draw_gas_planet_atmosphere(sf::RenderTarget& window) const
@@ -579,57 +606,6 @@ void CelestialBody::draw_gas_planet_atmosphere(sf::RenderTarget& window) const
 
 		atmoLine.setFillColor(sf::Color(r, g, b));
 		window.draw(atmoLine);
-	}
-}
-
-void CelestialBody::draw_white_dwarf_glow(sf::RenderTarget& window) const
-{
-	// Intense compact blue-white core glow
-	sf::Color coreCol(220, 220, 255, 120);
-	render_shine(window, position, coreCol, radius * 6.0);
-
-	// Tight bright inner glow
-	sf::Color innerCol(240, 240, 255, 200);
-	render_shine(window, position, innerCol, radius * 2.5);
-}
-
-void CelestialBody::draw_neutron_star_glow(sf::RenderTarget& window) const
-{
-	if (subType == PULSAR)
-	{
-		// Dimmer ambient glow for pulsars
-		sf::Color outerCol(60, 140, 255, 25);
-		render_shine(window, position, outerCol, radius * 18.0);
-
-		sf::Color midCol(80, 180, 255, 70);
-		render_shine(window, position, midCol, radius * 7.0);
-
-		sf::Color innerCol(100, 220, 255, 140);
-		render_shine(window, position, innerCol, radius * 3.0);
-
-		sf::Color coreCol(140, 240, 255, 240);
-		render_shine(window, position, coreCol, radius * 1.8);
-
-		draw_pulsar_beams(window);
-	}
-	else if (subType == MAGNETAR)
-	{
-		draw_magnetar_glow(window);
-	}
-	else
-	{
-		// Normal neutron star — original glow
-		sf::Color outerCol(80, 120, 255, 35);
-		render_shine(window, position, outerCol, radius * 22.0);
-
-		sf::Color midCol(100, 160, 255, 90);
-		render_shine(window, position, midCol, radius * 9.0);
-
-		sf::Color innerCol(140, 200, 255, 160);
-		render_shine(window, position, innerCol, radius * 4.0);
-
-		sf::Color coreCol(180, 230, 255, 250);
-		render_shine(window, position, coreCol, radius * 2.0);
 	}
 }
 
@@ -698,28 +674,30 @@ void CelestialBody::render(sf::RenderTarget& window) const
 	{
 	case ROCKY:
 	case TERRESTRIAL:
-		draw_planetshine(window);
+		draw_thermal_shine(window);
 		window.draw(circle);
 		break;
 
 	case GASGIANT:
-		draw_planetshine(window);
+		draw_thermal_shine(window);
 		draw_gas_planet_atmosphere(window);
 		break;
 
 	case BROWNDWARF:
 	case STAR:
 		window.draw(circle);
-		draw_starshine(window);
+		draw_thermal_shine(window);
 		break;
 
 	case WHITEDWARF:
-		draw_white_dwarf_glow(window);
+		draw_thermal_shine(window);
 		window.draw(circle);
 		break;
 
 	case NEUTRONSTAR:
-		draw_neutron_star_glow(window);
+		draw_thermal_shine(window);
+		if (subType == PULSAR) draw_pulsar_beams(window);
+		if (subType == MAGNETAR) draw_magnetar_glow(window);
 		window.draw(circle);
 		break;
 

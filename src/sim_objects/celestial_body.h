@@ -138,11 +138,8 @@ public:
 	void updateLife(int t);
 	void render(sf::RenderTarget& window) const override;
 	[[nodiscard]] double getDist(const CelestialBody& forcer) const noexcept;
-	void draw_starshine(sf::RenderTarget& window) const;
-	void draw_planetshine(sf::RenderTarget& window) const;
+	void draw_thermal_shine(sf::RenderTarget& window) const;
 	void draw_gas_planet_atmosphere(sf::RenderTarget& window) const;
-	void draw_white_dwarf_glow(sf::RenderTarget& window) const;
-	void draw_neutron_star_glow(sf::RenderTarget& window) const;
 	void draw_pulsar_beams(sf::RenderTarget& window) const;
 	void draw_magnetar_glow(sf::RenderTarget& window) const;
 	void setColor() noexcept;
@@ -153,6 +150,7 @@ private:
 	void updateVisualProperties() noexcept;
 	void updateRadius() noexcept;
 	void initializeFuel() noexcept;
+	[[nodiscard]] sf::Color getShineColor() const noexcept;
 
 	[[nodiscard]] int modernRandomWithLimits(int min, int max) const;
 	[[nodiscard]] std::string generate_name();
