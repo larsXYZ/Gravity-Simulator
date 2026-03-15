@@ -37,8 +37,9 @@ const double GASGIANTLIMIT = 600;       // brown dwarf ends, star begins
 const double STARLIMIT = 4000;          // star ends, black hole begins
 
 // Evolution limits
-const double CHANDRASEKHAR_LIMIT = 1500; // white dwarf + mass -> Type Ia supernova
-const double TOV_LIMIT = 3200;           // neutron star + mass -> black hole
+const double WHITEDWARF_PROGENITOR_LIMIT = 2867; // star mass below this → white dwarf remnant
+const double CHANDRASEKHAR_LIMIT = 1500;         // white dwarf + mass → Type Ia supernova
+const double TOV_LIMIT = 3200;                   // neutron star + mass → black hole
 
 //STAR EQUILIBRIUM TEMPERATURES (K) — used to back-compute fusion energy
 const double TEMP_STAR_LOW = 2800.0;     // red dwarf at GASGIANTLIMIT

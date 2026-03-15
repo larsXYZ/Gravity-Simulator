@@ -407,7 +407,7 @@ void Space::update()
 			// Determine remnant fraction based on original mass
 			double remnantFraction;
 			BodyType remnantType;
-			if (mass < CHANDRASEKHAR_LIMIT)
+			if (mass < WHITEDWARF_PROGENITOR_LIMIT)
 			{
 				remnantFraction = 0.6;
 				remnantType = WHITEDWARF;
