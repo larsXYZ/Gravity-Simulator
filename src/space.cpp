@@ -894,7 +894,9 @@ std::vector<int> Space::explodePlanet(Planet planet, CelestialBody* remnant)
 	}
 
 	//Fast fragments
-	int particle_count = static_cast<int>(planet.getRadius() * 10.0);
+	int particle_budget = static_cast<int>(std::clamp(
+		MAX_N_DUST_PARTICLES - particles->size(), static_cast<size_t>(0), MAX_N_DUST_PARTICLES));
+	int particle_count = std::min(static_cast<int>(planet.getRadius() * 10.0), particle_budget / 2);
 	for (int i = 0; i < particle_count; i++)
 	{
 		const auto scatter_pos = original_position + random_vector(planet.getRadius());
@@ -908,7 +910,9 @@ std::vector<int> Space::explodePlanet(Planet planet, CelestialBody* remnant)
 	}
 
 	//Slow fragments
-	particle_count = static_cast<int>(planet.getMass() * 5.0);
+	particle_budget = static_cast<int>(std::clamp(
+		MAX_N_DUST_PARTICLES - particles->size(), static_cast<size_t>(0), MAX_N_DUST_PARTICLES));
+	particle_count = std::min(static_cast<int>(planet.getRadius() * 10.0), particle_budget);
 	for (int i = 0; i < particle_count; i++)
 	{
 		const auto scatter_pos = original_position + random_vector(planet.getRadius());
