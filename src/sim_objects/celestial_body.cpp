@@ -522,6 +522,9 @@ void CelestialBody::collision(const CelestialBody& p)
 	// We use mass ratio to determine how much thermal energy is transferred
 	const double mass_ratio = p.getMass() / (getMass() + p.getMass());
 	increaseThermalEnergy(p.thermalEnergy() * mass_ratio);
+
+	// Conservation of fuel
+	fuel += p.fuel;
 }
 
 void CelestialBody::draw_starshine(sf::RenderTarget& window) const
