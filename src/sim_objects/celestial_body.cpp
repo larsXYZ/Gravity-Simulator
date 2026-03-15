@@ -99,6 +99,8 @@ std::string CelestialBody::getDisplayName() const noexcept
 	case WHITEDWARF:
 		return "White dwarf";
 	case NEUTRONSTAR:
+		if (subType == PULSAR) return "Pulsar";
+		if (subType == MAGNETAR) return "Magnetar";
 		return "Neutron star";
 	case BLACKHOLE:
 		if (getMass() > STARLIMIT * 2.5) return "Supermassive black hole";
@@ -587,20 +589,98 @@ void CelestialBody::draw_white_dwarf_glow(sf::RenderTarget& window) const
 
 void CelestialBody::draw_neutron_star_glow(sf::RenderTarget& window) const
 {
-	// Wide violet-blue halo
-	sf::Color outerCol(80, 120, 255, 35);
-	render_shine(window, position, outerCol, radius * 22.0);
+	if (subType == PULSAR)
+	{
+		// Dimmer ambient glow for pulsars
+		sf::Color outerCol(60, 140, 255, 25);
+		render_shine(window, position, outerCol, radius * 18.0);
 
-	// Mid-range cyan-violet glow
-	sf::Color midCol(100, 160, 255, 90);
-	render_shine(window, position, midCol, radius * 9.0);
+		sf::Color midCol(80, 180, 255, 70);
+		render_shine(window, position, midCol, radius * 7.0);
+
+		sf::Color innerCol(100, 220, 255, 140);
+		render_shine(window, position, innerCol, radius * 3.0);
+
+		sf::Color coreCol(140, 240, 255, 240);
+		render_shine(window, position, coreCol, radius * 1.8);
+
+		draw_pulsar_beams(window);
+	}
+	else if (subType == MAGNETAR)
+	{
+		draw_magnetar_glow(window);
+	}
+	else
+	{
+		// Normal neutron star — original glow
+		sf::Color outerCol(80, 120, 255, 35);
+		render_shine(window, position, outerCol, radius * 22.0);
+
+		sf::Color midCol(100, 160, 255, 90);
+		render_shine(window, position, midCol, radius * 9.0);
+
+		sf::Color innerCol(140, 200, 255, 160);
+		render_shine(window, position, innerCol, radius * 4.0);
+
+		sf::Color coreCol(180, 230, 255, 250);
+		render_shine(window, position, coreCol, radius * 2.0);
+	}
+}
+
+void CelestialBody::draw_pulsar_beams(sf::RenderTarget& window) const
+{
+	double angle = std::fmod(age * PULSAR_ROTATION_SPEED, 2.0 * PI);
+	double beamLen = radius * PULSAR_BEAM_LENGTH_MULT;
+
+	for (int beam = 0; beam < 2; beam++)
+	{
+		double beamAngle = angle + beam * PI;
+
+		sf::VertexArray tri(sf::Triangles, 3);
+
+		// Center vertex (bright)
+		tri[0].position = position;
+		tri[0].color = sf::Color(100, 240, 255, 100);
+
+		// Two outer vertices (transparent)
+		double leftAngle = beamAngle - PULSAR_BEAM_WIDTH;
+		double rightAngle = beamAngle + PULSAR_BEAM_WIDTH;
+
+		tri[1].position = sf::Vector2f(
+			position.x + std::cos(leftAngle) * beamLen,
+			position.y + std::sin(leftAngle) * beamLen);
+		tri[1].color = sf::Color(100, 240, 255, 0);
+
+		tri[2].position = sf::Vector2f(
+			position.x + std::cos(rightAngle) * beamLen,
+			position.y + std::sin(rightAngle) * beamLen);
+		tri[2].color = sf::Color(100, 240, 255, 0);
+
+		window.draw(tri);
+	}
+}
+
+void CelestialBody::draw_magnetar_glow(sf::RenderTarget& window) const
+{
+	double pulse = 0.7 + 0.3 * std::sin(age * MAGNETAR_PULSE_SPEED);
+	auto pulseAlpha = [pulse](int base) -> sf::Uint8 {
+		return static_cast<sf::Uint8>(std::min(255.0, base * pulse));
+	};
+
+	// Wide purple halo — pulsating
+	sf::Color outerCol(120, 60, 255, pulseAlpha(45));
+	render_shine(window, position, outerCol, radius * 22.0 * MAGNETAR_GLOW_SIZE_MULT);
+
+	// Mid-range magenta glow
+	sf::Color midCol(160, 80, 255, pulseAlpha(100));
+	render_shine(window, position, midCol, radius * 10.0 * MAGNETAR_GLOW_SIZE_MULT);
 
 	// Intense inner glow
-	sf::Color innerCol(140, 200, 255, 160);
-	render_shine(window, position, innerCol, radius * 4.0);
+	sf::Color innerCol(200, 140, 255, pulseAlpha(180));
+	render_shine(window, position, innerCol, radius * 4.5);
 
 	// Searing bright core
-	sf::Color coreCol(180, 230, 255, 250);
+	sf::Color coreCol(220, 180, 255, pulseAlpha(250));
 	render_shine(window, position, coreCol, radius * 2.0);
 }
 
@@ -677,8 +757,16 @@ void CelestialBody::setColor() noexcept
 		circle.setOutlineColor(sf::Color(220, 220, 255, 40));
 		break;
 	case NEUTRONSTAR:
-		circle.setFillColor(sf::Color(160, 200, 255));
-		circle.setOutlineColor(sf::Color(140, 180, 255, 50));
+		if (subType == PULSAR) {
+			circle.setFillColor(sf::Color(140, 230, 255));
+			circle.setOutlineColor(sf::Color(100, 210, 255, 50));
+		} else if (subType == MAGNETAR) {
+			circle.setFillColor(sf::Color(200, 160, 255));
+			circle.setOutlineColor(sf::Color(180, 120, 255, 50));
+		} else {
+			circle.setFillColor(sf::Color(160, 200, 255));
+			circle.setOutlineColor(sf::Color(140, 180, 255, 50));
+		}
 		break;
 	case BLACKHOLE:
 		break;

@@ -1,11 +1,24 @@
 #include "space.h"
 
 #include <sstream>
+#include <random>
 #include "particles/particle_container.h"
 #include "user_functions.h"
 #include "physics_utils.h"
 #include "roche_limit.h"
 #include "StringConstants.h"
+
+namespace {
+StellarSubType rollNeutronStarSubType()
+{
+	static std::mt19937 rng(std::random_device{}());
+	std::uniform_real_distribution<double> dist(0.0, 1.0);
+	double roll = dist(rng);
+	if (roll < 0.20) return MAGNETAR;     // 20%
+	if (roll < 0.55) return PULSAR;       // 35%
+	return SUBTYPE_NONE;                  // 45%
+}
+}
 
 Space::Space()
 	: particles(std::make_unique<DecimatedLegacyParticleContainer>())
@@ -422,7 +435,10 @@ void Space::update()
 			if (remnantType == WHITEDWARF)
 				remnant.setTemp(INITIAL_TEMP_WHITEDWARF);
 			else if (remnantType == NEUTRONSTAR)
+			{
 				remnant.setTemp(INITIAL_TEMP_NEUTRONSTAR);
+				remnant.setSubType(rollNeutronStarSubType());
+			}
 
 			explodePlanet(ejecta, &remnant);
 			removePlanet(planet.getId());
@@ -836,6 +852,8 @@ void Space::checkChandrasekharLimit()
 			CelestialBody remnant(mass * 0.2, pos.x, pos.y, vel.x, vel.y);
 			remnant.setIsEvolved(true);
 			remnant.planetType = NEUTRONSTAR;
+			remnant.setSubType(rollNeutronStarSubType());
+			remnant.setTemp(INITIAL_TEMP_NEUTRONSTAR);
 			remnant.updateVisualProperties();
 			remnant.updateRadius();
 

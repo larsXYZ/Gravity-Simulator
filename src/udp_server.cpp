@@ -126,6 +126,14 @@ static bool parseBodyType(const std::string& name, BodyType& out)
     return false;
 }
 
+static bool parseSubType(const std::string& name, StellarSubType& out)
+{
+    if (name == "PULSAR")   { out = PULSAR; return true; }
+    if (name == "MAGNETAR") { out = MAGNETAR; return true; }
+    if (name == "NONE")     { out = SUBTYPE_NONE; return true; }
+    return false;
+}
+
 static sf::Keyboard::Key parseKeyName(const std::string& name)
 {
     if (name == "P") return sf::Keyboard::P;
@@ -177,6 +185,16 @@ std::string UdpCommandServer::handleCommand(const std::string& line, Space& spac
                 p.setIsEvolved(true);
             p.updateRadiAndType();
             p.initializeRemnantTemperature();
+
+            // Optional subtype: ADD <x> <y> <xv> <yv> <mass> <TYPE> [SUBTYPE]
+            std::string subTypeName;
+            if (iss >> subTypeName)
+            {
+                StellarSubType st;
+                if (!parseSubType(subTypeName, st))
+                    return "ERR unknown subtype";
+                p.setSubType(st);
+            }
         }
 
         int id = space.addPlanet(std::move(p));

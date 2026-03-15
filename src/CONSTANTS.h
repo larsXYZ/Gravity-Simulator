@@ -44,6 +44,13 @@ const double TOV_LIMIT = 3200;           // neutron star + mass -> black hole
 const double HEAT_STAR_LOW_MULT = 0.8;   // at GASGIANTLIMIT (600)
 const double HEAT_STAR_HIGH_MULT = 6.0;  // at STARLIMIT (4000)
 
+//NEUTRON STAR SUBTYPES
+const double PULSAR_ROTATION_SPEED = 0.02;
+const double PULSAR_BEAM_LENGTH_MULT = 20.0;
+const double PULSAR_BEAM_WIDTH = 0.08;            // half-angle in radians
+const double MAGNETAR_PULSE_SPEED = 0.03;
+const double MAGNETAR_GLOW_SIZE_MULT = 1.5;
+
 //INITIAL REMNANT TEMPERATURES
 const double INITIAL_TEMP_WHITEDWARF = 25000.0;
 const double INITIAL_TEMP_NEUTRONSTAR = 500000.0;
