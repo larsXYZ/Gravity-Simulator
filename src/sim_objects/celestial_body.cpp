@@ -379,10 +379,8 @@ void CelestialBody::updateMainSequenceType() noexcept
 		planetType = GASGIANT;
 	else if (getMass() < GASGIANTLIMIT)
 		planetType = BROWNDWARF;
-	else if (getMass() < STARLIMIT)
-		planetType = STAR;
 	else
-		planetType = BLACKHOLE;
+		planetType = STAR;
 }
 
 void CelestialBody::updateEvolvedType() noexcept
