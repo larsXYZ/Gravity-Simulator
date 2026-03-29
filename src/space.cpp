@@ -724,6 +724,97 @@ void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f po
 
 }
 
+void Space::generateStableSystem(double starMass, int numPlanets, double systemRadius, sf::Vector2f pos)
+{
+	// Find a star mass whose goldilocks zone fits well within the user's circle.
+	// Try the requested mass, then scale down if goldilocks overshoots.
+	double bestMass = starMass;
+	for (int attempt = 0; attempt < 10; attempt++)
+	{
+		Planet probe(bestMass);
+		set_ambient_temperature(probe);
+		auto goldi = probe.getGoldilockInfo();
+		if (goldi.max_rad < systemRadius * 0.7)
+			break;  // goldilocks fits comfortably
+		bestMass *= 0.7;  // shrink star
+	}
+	bestMass = std::max(bestMass, GASGIANTLIMIT);  // must still be a star
+
+	Planet star(bestMass, pos.x, pos.y);
+	set_ambient_temperature(star);
+
+	const auto goldi = star.getGoldilockInfo();
+	const double starThermalOutput = star.emitsHeat() ? star.giveThermalEnergy(1) : 0.0;
+
+	addPlanet(std::move(star));
+
+	if (numPlanets <= 0) return;
+
+	// Build orbit radii: one planet at goldilocks center, others spread out with log spacing
+	Planet tempStar(bestMass);
+	double innerEdge = std::max(tempStar.getRadius() * 3.0, goldi.min_rad * 0.3);
+	double outerEdge = systemRadius;
+	double goldiCenter = (goldi.min_rad + goldi.max_rad) * 0.5;
+	goldiCenter = std::clamp(goldiCenter, innerEdge, outerEdge);
+
+	// Compute the log-spacing ratio — use wider spacing than planet count implies
+	double logRatio = std::log(outerEdge / innerEdge) / std::max(numPlanets + 1, 2);
+
+	// Build orbit list: start with goldilocks planet, then fill inward and outward
+	const double goldiOrbit = goldi.max_rad;
+	std::vector<double> orbits;
+	orbits.push_back(goldiOrbit);
+
+	// Fill inward from goldilocks
+	for (double r = goldiCenter / std::exp(logRatio); r >= innerEdge && static_cast<int>(orbits.size()) < numPlanets; r /= std::exp(logRatio))
+		orbits.push_back(r);
+
+	// Fill outward from goldilocks
+	for (double r = goldiCenter * std::exp(logRatio); r <= outerEdge && static_cast<int>(orbits.size()) < numPlanets; r *= std::exp(logRatio))
+		orbits.push_back(r);
+
+	std::sort(orbits.begin(), orbits.end());
+
+	for (size_t i = 0; i < orbits.size(); i++)
+	{
+		double orbitRadius = orbits[i] * uniform_random(0.9, 1.1);
+		double t = (orbits.size() == 1) ? 0.5 : static_cast<double>(i) / (orbits.size() - 1);
+
+		// Planet mass: goldilocks planet is terrestrial, others by position
+		bool isGoldiPlanet = (orbits[i] == goldiOrbit);
+		double mass;
+		if (isGoldiPlanet)
+			mass = uniform_random(ROCKYLIMIT, TERRESTRIALLIMIT);  // terrestrial
+		else if (t < 0.4)
+			mass = uniform_random(1.0, 10.0);           // inner rocky
+		else if (t < 0.7)
+			mass = uniform_random(5.0, ROCKYLIMIT * 4);  // mid-range, up to small gas giant
+		else
+			mass = uniform_random(1.0, 8.0);             // outer small bodies
+
+		// Circular orbit velocity: v = sqrt(G * M_star / r)
+		double speed = std::sqrt(G * bestMass / orbitRadius);
+
+		// Random angle for placement
+		double angle = uniform_random(0.0, 2.0 * PI);
+
+		double x = pos.x + orbitRadius * std::cos(angle);
+		double y = pos.y + orbitRadius * std::sin(angle);
+		double xv = speed * std::cos(angle + PI / 2.0);
+		double yv = speed * std::sin(angle + PI / 2.0);
+
+		Planet planet(mass, x, y, xv, yv);
+
+		// Compute temperature from star's heat directly (star is still pending, not in planets list)
+		double heatFromStar = starThermalOutput / std::max(orbitRadius, 1.0);
+		double planetTemp = planet.fusionEnergy() / (planet.getRadius() * planet.getRadius() * SBconst)
+			+ heatFromStar * tempConstTwo / SBconst;
+		planet.setTemp(planetTemp);
+
+		addPlanet(std::move(planet));
+	}
+}
+
 bool Space::auto_bound_active() const
 {
 	return config.autobound;
@@ -1384,7 +1475,7 @@ void Space::initSetup()
 	fuelBurnSlider->setPosition(10, 125);
 	fuelBurnSlider->setSize(180, 18);
 	fuelBurnSlider->setMinimum(0);
-	fuelBurnSlider->setMaximum(50);
+	fuelBurnSlider->setMaximum(250);
 	fuelBurnSlider->setValue(10);
 	config.fuel_burn_rate = 1.0;
 	optionsMenu->add(fuelBurnSlider);

@@ -68,7 +68,7 @@ const double DENSITY_NEUTRONSTAR = 1.0;
 //FUEL CONSTANTS
 const double INITIAL_FUEL_PER_MASS = 100.0;
 const double BROWNDWARF_FUEL_FRACTION = 0.04; // deuterium is ~4% of hydrogen fuel budget
-const double BASE_FUEL_BURN_RATE = 0.0025;  // GUI multiplier 1x = this rate
+const double BASE_FUEL_BURN_RATE = 0.0005;  // GUI multiplier 1x = this rate
 
 //STELLAR GIANT PHASE
 const double GIANT_PHASE_BEGIN = 0.35;      // fuel fraction where expansion begins
@@ -137,8 +137,8 @@ const int interstellar_min_size = 1000;
 const double civilization_compact_constant = 500;
 const int LIFE_PREFERRED_TEMP = 298;                  //KELVIN
 const int LIFE_PREFERRED_ATMO = 300;                  //KILOPASCAL
-const double LIFE_PREFERRED_TEMP_MULTIPLIER = 0.005;  //HOW MUCH THE TEMPERATURE DIFFERENCE FROM THE IDEAL IMPACTS LIFE
-const double LIFE_PREFERRED_ATMO_MULTIPLIER = 0.0003; //HOW MUCH THE ATMO DIFFERENCE FROM THE IDEAL IMPACTS LIFE
+const double LIFE_PREFERRED_TEMP_MULTIPLIER = 0.003;  //HOW MUCH THE TEMPERATURE DIFFERENCE FROM THE IDEAL IMPACTS LIFE
+const double LIFE_PREFERRED_ATMO_MULTIPLIER = 0.0002; //HOW MUCH THE ATMO DIFFERENCE FROM THE IDEAL IMPACTS LIFE
 
 //GOLDI LOCK ZONE
 const double inner_goldi_temp = 323.15;

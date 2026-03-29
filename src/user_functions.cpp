@@ -655,7 +655,7 @@ public:
 	}
 };
 
-class RandomSystemFunction : public IUserFunction
+class ProtoSystemFunction : public IUserFunction
 {
 	sf::Font font;
 
@@ -673,7 +673,7 @@ class RandomSystemFunction : public IUserFunction
 		location = {};
 	}
 public:
-	RandomSystemFunction()
+	ProtoSystemFunction()
 	{
 		font.loadFromFile("sansation.ttf");
 	}
@@ -681,7 +681,7 @@ public:
     void on_selection(FunctionContext& context) override
     {
         IUserFunction::on_selection(context);
-        context.new_object_info->setText("Click and drag to spawn a random solar system.");
+        context.new_object_info->setText("Click and drag to spawn a proto-system.");
         updateGuiSize(context.new_object_info, 1);
     }
 
@@ -744,6 +744,102 @@ public:
 			}
 			break;
 			}
+		}
+	}
+};
+
+class GenerateSystemFunction : public IUserFunction
+{
+	sf::Font font;
+
+	enum class State
+	{
+		INACTIVE,
+		LOCATION_FOUND
+	} state{State::INACTIVE};
+
+	sf::Vector2f location{};
+
+	void reset()
+	{
+		state = State::INACTIVE;
+		location = {};
+	}
+public:
+	GenerateSystemFunction()
+	{
+		font.loadFromFile("sansation.ttf");
+	}
+
+	void on_selection(FunctionContext& context) override
+	{
+		IUserFunction::on_selection(context);
+		context.new_object_info->setText("Click and drag to generate a stable star system.");
+		updateGuiSize(context.new_object_info, 1);
+	}
+
+	void execute(FunctionContext& context) override
+	{
+		switch (state)
+		{
+		case State::INACTIVE:
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
+			{
+				location = context.mouse_pos_world;
+				state = State::LOCATION_FOUND;
+			}
+			break;
+
+		case State::LOCATION_FOUND:
+		{
+			const auto rad = std::hypot(context.mouse_pos_world.x - location.x,
+				context.mouse_pos_world.y - location.y);
+
+			// Star mass hint (generateStableSystem will fit it to the goldilocks zone)
+			const double starMass = std::clamp(MASS_MULTIPLIER * std::cbrt(rad), GASGIANTLIMIT, STARLIMIT * 0.9);
+			const int numPlanets = std::clamp(static_cast<int>(std::log2(std::max(rad, 1.0f)) * 0.4), 1, 6);
+
+			sf::CircleShape indicator(rad);
+			indicator.setPosition(location);
+			indicator.setOrigin(rad, rad);
+			indicator.setFillColor(sf::Color(0, 0, 0, 0));
+			indicator.setOutlineColor(sf::Color(100, 200, 255));
+			indicator.setOutlineThickness(context.zoom);
+			indicator.setPointCount(100);
+			context.window.draw(indicator);
+
+			sf::Vertex line[] =
+			{
+				sf::Vertex(location, sf::Color(100, 200, 255)),
+				sf::Vertex(context.mouse_pos_world, sf::Color(100, 200, 255))
+			};
+
+			context.window.draw(line, 2, sf::Lines);
+
+			// Draw text in screen space
+			sf::Vector2i screenPos = context.window.mapCoordsToPixel(context.mouse_pos_world);
+			sf::View worldView = context.window.getView();
+			context.window.setView(context.window.getDefaultView());
+
+			sf::Text t;
+			t.setString("Star mass: " + std::to_string(static_cast<int>(starMass))
+				+ "\nPlanets: " + std::to_string(numPlanets)
+				+ "\nRadius: " + std::to_string(static_cast<int>(rad)));
+			t.setPosition(static_cast<float>(screenPos.x + 10), static_cast<float>(screenPos.y));
+			t.setFillColor(sf::Color(100, 200, 255));
+			t.setFont(font);
+			t.setCharacterSize(12);
+
+			context.window.draw(t);
+			context.window.setView(worldView);
+
+			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
+			{
+				context.space.generateStableSystem(starMass, numPlanets, rad, location);
+				reset();
+			}
+			break;
+		}
 		}
 	}
 };
@@ -1053,7 +1149,8 @@ public:
 		executioners[FunctionType::REMOVE_OBJECT] = std::make_shared<RemoveObjectFunction>();
 		executioners[FunctionType::SPAWN_SHIP] = std::make_shared<SpawnShipFunction>();
 		executioners[FunctionType::ADD_RINGS] = std::make_shared<AddRingsFunction>();
-		executioners[FunctionType::RANDOM_SYSTEM] = std::make_shared<RandomSystemFunction>();
+		executioners[FunctionType::PROTO_SYSTEM] = std::make_shared<ProtoSystemFunction>();
+		executioners[FunctionType::GENERATE_SYSTEM] = std::make_shared<GenerateSystemFunction>();
 		executioners[FunctionType::FOLLOW_OBJECT] = std::make_shared<TrackObjectFunction>();
 		executioners[FunctionType::SHOW_INFO] = std::make_shared<ShowObjectInfoFunction>();
 		executioners[FunctionType::ADVANCED_OBJECT_IN_ORBIT] = std::make_shared<AdvancedInOrbitFunction>();

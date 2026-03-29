@@ -60,7 +60,7 @@ void ObjectInfo::setup(Space& space, tgui::Gui& gui)
 	m_space = &space;
 
 	m_infoWindow = tgui::ChildWindow::create("Object Info");
-	m_infoWindow->setPosition(5, "100% - 250");
+	m_infoWindow->setPosition(5, "100% - 350");
 	m_infoWindow->setVisible(false);
 	m_infoWindow->setCloseBehavior(tgui::ChildWindow::CloseBehavior::Hide);
 	m_infoWindow->onClose([this]() { deactivate(); });
@@ -360,7 +360,7 @@ void ObjectInfo::update_info_text()
 	for (char c : info) if (c == '\n') lines++;
 	float lineHeight = m_infoLabel->getTextSize() * 1.4f;
 	float contentHeight = std::max(32.0f, lines * lineHeight + 15.0f);
-	m_infoWindow->setSize(150, contentHeight + 30);
+	m_infoWindow->setSize(200, contentHeight + 50);
 	m_infoWindow->setVisible(true);
 }
 

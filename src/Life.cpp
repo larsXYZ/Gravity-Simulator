@@ -111,47 +111,45 @@ void Life::update(double supportedBM, int t, double rad) {
             lifeLevel = 0;
             biomass = 0;
         }
-    } else if (lifeLevel == 6) {
-        // COUNTING
-        timer += t;
+    } else {
+        // lifeLevel 6 (interplanetary) or 7 (colony)
 
-        // CIVILIZATION GROWS ACCORDING TO HOW BIG THE PLANET IS
-        if (biomass < civilization_compact_constant * rad) {
-            double natural_growth = t * 0.0003 * (supportedBM - biomass);
-            if (natural_growth > t * interstellar_growth_rate) {
-                biomass += natural_growth;
-            } else {
-                biomass += t * interstellar_growth_rate * (civilization_compact_constant * rad * rad * rad - biomass);
-            }
-        } else if (biomass > civilization_compact_constant * rad) {
-            biomass += t * interstellar_growth_rate * (civilization_compact_constant * rad - biomass);
+        // Uninhabitable — civilization/colony collapses
+        if (supportedBM == 0) {
+            biomass *= 1.0 - t * 0.005;
+            if (biomass < 100) { lifeLevel = 0; biomass = 0; }
+            type = static_cast<lType>(lifeLevel);
+            return;
         }
 
-        // COLONIZING
-        if (timer > interstellar_expand_rate) {
-            expand = true;
-            timer = 0;
-        }
-    } else if (lifeLevel == 7) {
-        // COUNTING
         timer += t;
 
-        // GROWING WITH TIME
+        double growthRate = (lifeLevel == 6) ? interstellar_growth_rate : colony_growth_rate;
         double natural_growth = t * 0.0003 * (supportedBM - biomass);
-        if (natural_growth > t * colony_growth_rate) {
-            biomass += natural_growth;
+
+        if (lifeLevel == 6) {
+            if (biomass < civilization_compact_constant * rad) {
+                if (natural_growth > t * growthRate)
+                    biomass += natural_growth;
+                else
+                    biomass += t * growthRate * (civilization_compact_constant * rad * rad * rad - biomass);
+            } else {
+                biomass += t * growthRate * (civilization_compact_constant * rad - biomass);
+            }
         } else {
-            biomass += t * colony_growth_rate * (civilization_compact_constant * rad - biomass);
+            if (natural_growth > t * growthRate)
+                biomass += natural_growth;
+            else
+                biomass += t * growthRate * (civilization_compact_constant * rad - biomass);
+
+            if (biomass > interstellar_min_size) lifeLevel = 6;
         }
 
-        // COLONIZING
-        if (timer > colony_expand_rate) {
+        int expandRate = (lifeLevel == 6) ? interstellar_expand_rate : colony_expand_rate;
+        if (timer > expandRate) {
             expand = true;
             timer = 0;
         }
-
-        // GROWS
-        if (biomass > interstellar_min_size) lifeLevel = 6;
     }
 
     type = static_cast<lType>(lifeLevel);

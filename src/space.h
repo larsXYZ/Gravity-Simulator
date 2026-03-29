@@ -133,6 +133,7 @@ public:
 	void checkChandrasekharLimit();
 
 	void randomPlanets(int totmass, int antall, double radius, sf::Vector2f pos);
+	void generateStableSystem(double starMass, int numPlanets, double systemRadius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addStarshineFade(sf::Vector2f p, sf::Vector2f v, sf::Color col, double lr_lum, double sr_lum, int l);
 	void addParticle(sf::Vector2f p, sf::Vector2f v, double s, double lifespan, double initial_temp = 2000.0);
