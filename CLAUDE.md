@@ -1,5 +1,9 @@
 # Gravity Simulator
 
+## Workflow Preferences
+
+- Do NOT use subagents (Agent tool) — they are too slow. Use direct tool calls (Read, Grep, Glob, Bash) instead.
+
 ## Build
 
 ```bash

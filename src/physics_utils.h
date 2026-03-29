@@ -39,7 +39,6 @@ struct PhysicsBody
 	double mass;
 	double radius;
 	BodyType type;
-	bool isEvolved = false;
 
     sf::Vector2f getPosition() const { return position; }
     double getRadius() const { return radius; }

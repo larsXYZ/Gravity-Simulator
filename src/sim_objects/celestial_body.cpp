@@ -228,8 +228,14 @@ double CelestialBody::fuelFraction() const noexcept
 
 void CelestialBody::initializeFuel() noexcept
 {
-	if (fuel <= 0.0)
-		fuel = maxFuel();
+	if (fuel > 0.0) return; // already has fuel (e.g. set externally)
+
+	// Use mass ranges directly — planetType may not be set correctly yet during construction
+	double m = getMass();
+	if (m >= GASGIANTLIMIT)
+		fuel = m * INITIAL_FUEL_PER_MASS;
+	else if (m >= BROWNDWARFLIMIT)
+		fuel = m * INITIAL_FUEL_PER_MASS * BROWNDWARF_FUEL_FRACTION;
 }
 
 double CelestialBody::fusionEnergy() const noexcept
@@ -300,14 +306,9 @@ void CelestialBody::update_planet_sim(double timestep, bool heat_enabled, double
 		updateRadius();
 	}
 
-	// Brown dwarf fuel depleted — cools into a gas giant
+	// Brown dwarf fuel depleted — mass ladder reclassifies as gas giant
 	if (planetType == BROWNDWARF && fuel <= 0.0)
-	{
-		planetType = GASGIANT;
-		isEvolved = true;
-		updateVisualProperties();
-		updateRadius();
-	}
+		updateRadiAndType();
 
 	if (heat_enabled)
 		coolDown(timestep);
@@ -366,10 +367,16 @@ void CelestialBody::becomeAbsorbedBy(CelestialBody& absorbing_planet)
 
 void CelestialBody::updateRadiAndType() noexcept
 {
-	if (isEvolved)
-		updateEvolvedType();
+	if (isCompactRemnant())
+	{
+		// Compact remnants keep their type; only NS→BH transition
+		if (planetType == NEUTRONSTAR && getMass() > TOV_LIMIT)
+			planetType = BLACKHOLE;
+	}
 	else
+	{
 		updateMainSequenceType();
+	}
 	updateVisualProperties();
 	updateRadius();
 }
@@ -391,44 +398,9 @@ void CelestialBody::updateMainSequenceType() noexcept
 	else if (getMass() < BROWNDWARFLIMIT)
 		planetType = GASGIANT;
 	else if (getMass() < GASGIANTLIMIT)
-		planetType = BROWNDWARF;
+		planetType = (fuel > 0.0) ? BROWNDWARF : GASGIANT;
 	else
 		planetType = STAR;
-}
-
-void CelestialBody::updateEvolvedType() noexcept
-{
-	switch (planetType)
-	{
-	case WHITEDWARF:
-		// Chandrasekhar limit handled in Space::update() where explosion can be spawned
-		break;
-	case NEUTRONSTAR:
-		if (getMass() > TOV_LIMIT)
-		{
-			planetType = BLACKHOLE;
-			isEvolved = false;
-		}
-		break;
-	case BROWNDWARF:
-	case GASGIANT:
-		if (getMass() >= GASGIANTLIMIT)
-		{
-			planetType = STAR;
-			isEvolved = false;
-			initializeFuel();
-		}
-		break;
-	case BLACKHOLE:
-		// Black holes are forever
-		isEvolved = false;
-		break;
-	default:
-		// If somehow an evolved object has a non-evolved type, fall back to mass ladder
-		isEvolved = false;
-		updateMainSequenceType();
-		break;
-	}
 }
 
 void CelestialBody::updateVisualProperties() noexcept

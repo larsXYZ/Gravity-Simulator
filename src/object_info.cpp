@@ -431,7 +431,7 @@ void ObjectInfo::render(Space& space, sf::RenderWindow& window)
 		};
 		window.draw(g, 2, sf::Lines);
 
-		double rocheRad = RocheLimit::calculateLimitRadius(target_parent->getRadius() + target->getRadius());
+		double rocheRad = RocheLimit::calculateLimitRadius(target_parent->getRadius() + target->getRadius(), target_parent->isCompactRemnant());
 		sf::CircleShape omr(rocheRad);
 		omr.setPosition(sf::Vector2f(target_parent->getx(), target_parent->gety()));
 		omr.setOrigin(rocheRad, rocheRad);

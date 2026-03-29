@@ -118,7 +118,7 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 
 			// Roche
 			if (RocheLimit::hasMinimumBreakupSize(pSub.mass) &&
-				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].type == BLACKHOLE || planets[k].type == NEUTRONSTAR))
+				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].type == BLACKHOLE || planets[k].type == NEUTRONSTAR || planets[k].type == WHITEDWARF))
 			{
 				disintegration = true;
 				break;
@@ -436,7 +436,7 @@ public:
 				if (RocheLimit::hasMinimumBreakupSize(context.mass_slider->getValue())
 					&& RocheLimit::checkMassRatio(context.mass_slider->getValue(), target->getMass(), target->canTidallyDisrupt()))
 				{
-					double rocheRad = RocheLimit::calculateLimitRadius(temp_planet.getRadius() + target->getRadius());
+					double rocheRad = RocheLimit::calculateLimitRadius(temp_planet.getRadius() + target->getRadius(), target->isCompactRemnant());
 
 					sf::CircleShape viz(rocheRad);
 					viz.setPosition(sf::Vector2f(target->getx(), target->gety()));
@@ -718,17 +718,24 @@ public:
 				sf::Vertex(context.mouse_pos_world, sf::Color::Red)
 			};
 
+			context.window.draw(line, 2, sf::Lines);
+
+			// Draw text in screen space so size is constant regardless of zoom
+			sf::Vector2i screenPos = context.window.mapCoordsToPixel(context.mouse_pos_world);
+			sf::View worldView = context.window.getView();
+			context.window.setView(context.window.getDefaultView());
+
 			sf::Text t;
 			t.setString("Planets: " + std::to_string((int)((NUMBER_OF_OBJECT_MULTIPLIER * rad) + 1))
 				+ "\nMass: ca " + std::to_string(MASS_MULTIPLIER * cbrt(rad))
 				+ "\nRadius: " + std::to_string(rad));
-			t.setPosition(context.mouse_pos_world.x + 10, context.mouse_pos_world.y);
+			t.setPosition(static_cast<float>(screenPos.x + 10), static_cast<float>(screenPos.y));
 			t.setFillColor(sf::Color::Red);
 			t.setFont(font);
-			t.setCharacterSize(10);
+			t.setCharacterSize(12);
 
-			context.window.draw(line, 2, sf::Lines);
 			context.window.draw(t);
+			context.window.setView(worldView);
 
 			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 			{

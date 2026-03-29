@@ -181,8 +181,6 @@ std::string UdpCommandServer::handleCommand(const std::string& line, Space& spac
             if (!parseBodyType(typeName, type))
                 return "ERR unknown type";
             p.setType(type);
-            if (type == WHITEDWARF || type == NEUTRONSTAR)
-                p.setIsEvolved(true);
             p.updateRadiAndType();
             p.initializeRemnantTemperature();
 

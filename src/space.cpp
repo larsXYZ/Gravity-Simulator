@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <random>
+#include <unordered_map>
 #include "particles/particle_container.h"
 #include "user_functions.h"
 #include "physics_utils.h"
@@ -270,7 +271,7 @@ void Space::update()
 
 				// Roche Limit
 				if (can_disintegrate_i &&
-					RocheLimit::isBreached(dist, rad_dist, mi, hot_planets[j].mass, hot_planets[j].type == BLACKHOLE || hot_planets[j].type == NEUTRONSTAR))
+					RocheLimit::isBreached(dist, rad_dist, mi, hot_planets[j].mass, hot_planets[j].type == BLACKHOLE || hot_planets[j].type == NEUTRONSTAR || hot_planets[j].type == WHITEDWARF))
 				{
 					#pragma omp critical(events)
 					roche_events.push_back({i});
@@ -342,12 +343,36 @@ void Space::update()
 		}
 	}
 
+	// Resolve collision chains: if A->B and B->C, then A should be absorbed by C
+	std::unordered_map<int, int> absorbed_by;
 	for (const auto& ev : collision_events) {
-		if (ev.planetA_idx < (int)planets.size() && ev.planetB_idx < (int)planets.size() &&
-			!planets[ev.planetA_idx].isMarkedForRemoval() && !planets[ev.planetB_idx].isMarkedForRemoval()) 
-		{
-			Planet& pA = planets[ev.planetA_idx];
-			Planet& pB = planets[ev.planetB_idx];
+		absorbed_by[ev.planetA_idx] = ev.planetB_idx;
+	}
+
+	auto find_ultimate_absorber = [&](int idx) -> int {
+		int steps = 0;
+		while (absorbed_by.count(idx) && steps++ < 100)
+			idx = absorbed_by[idx];
+		return idx;
+	};
+
+	// Group by ultimate absorber to process all at once
+	std::unordered_map<int, std::vector<int>> absorption_groups;
+	for (const auto& [absorbed_idx, _] : absorbed_by) {
+		int ultimate = find_ultimate_absorber(absorbed_idx);
+		absorption_groups[ultimate].push_back(absorbed_idx);
+	}
+
+	for (const auto& [absorber_idx, absorbed_list] : absorption_groups) {
+		if (absorber_idx >= (int)planets.size() || planets[absorber_idx].isMarkedForRemoval())
+			continue;
+
+		for (int absorbed_idx : absorbed_list) {
+			if (absorbed_idx >= (int)planets.size() || planets[absorbed_idx].isMarkedForRemoval())
+				continue;
+
+			Planet& pA = planets[absorbed_idx];
+			Planet& pB = planets[absorber_idx];
 
 			const auto collision_pos = pA.getPosition();
 			const auto collision_vel = pA.getVelocity();
@@ -373,9 +398,9 @@ void Space::update()
 				rnd_vel *= static_cast<float>(CREATEDUSTSPEEDMULT);
 				const auto scatter_vel = collision_vel + rnd_vel;
 				const auto lifespan = uniform_random(DUST_LIFESPAN_MIN, DUST_LIFESPAN_MAX);
-				
+
 				double p_temp = collision_temp;
-				if (uniform_random(0, 100) < 15) p_temp *= 2.5; 
+				if (uniform_random(0, 100) < 15) p_temp *= 2.5;
 
 				addParticle(scatter_pos, scatter_vel, 2, lifespan, p_temp);
 			}
@@ -429,7 +454,6 @@ void Space::update()
 			ejecta.updateRadiAndType();
 
 			CelestialBody remnant(mass * remnantFraction, pos.x, pos.y, vel.x, vel.y);
-			remnant.setIsEvolved(true);
 			remnant.planetType = remnantType;
 			remnant.updateVisualProperties();
 			remnant.updateRadius();
@@ -855,7 +879,6 @@ void Space::checkChandrasekharLimit()
 			ejecta.updateRadiAndType();
 
 			CelestialBody remnant(mass * 0.2, pos.x, pos.y, vel.x, vel.y);
-			remnant.setIsEvolved(true);
 			remnant.planetType = NEUTRONSTAR;
 			remnant.setSubType(rollNeutronStarSubType());
 			remnant.setTemp(INITIAL_TEMP_NEUTRONSTAR);

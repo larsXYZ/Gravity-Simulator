@@ -38,7 +38,6 @@ private:
 	double age = 0.0;                          // accumulated simulation time
 	StellarSubType subType = SUBTYPE_NONE;     // pulsar/magnetar variant
 	double subTypeTimer = 0.0;                 // countdown for subtype phase
-	bool isEvolved = false;                    // true = type set by evolution, not mass ladder
 
 	//FOR DISINTEGRATION AND IGNORING
 	double disintegrate_grace_end_time = 0;
@@ -86,7 +85,6 @@ public:
 	[[nodiscard]] double fuelFraction() const noexcept;
 	[[nodiscard]] double getAge() const noexcept { return age; }
 	[[nodiscard]] StellarSubType getSubType() const noexcept { return subType; }
-	[[nodiscard]] bool getIsEvolved() const noexcept { return isEvolved; }
 
 	// Setters
 	void setName(const std::string& n) noexcept { name = n; }
@@ -98,7 +96,6 @@ public:
 	void setAtmospherePotensial(double a) noexcept { atmoPot = a; }
 	void setLifeLevel(lType level) noexcept { life.setLifeLevel(level); }
 	void setFuel(double f) noexcept { fuel = f; }
-	void setIsEvolved(bool evolved) noexcept { isEvolved = evolved; }
 	void setSubType(StellarSubType st) noexcept { subType = st; }
 	void setType(BodyType t) noexcept { planetType = t; }
 
@@ -106,7 +103,7 @@ public:
 	[[nodiscard]] bool isMainSequenceStar() const noexcept { return planetType == STAR; }
 	[[nodiscard]] bool isAnyStarType() const noexcept;
 	[[nodiscard]] bool isCompactRemnant() const noexcept;
-	[[nodiscard]] bool canTidallyDisrupt() const noexcept { return planetType == BLACKHOLE || planetType == NEUTRONSTAR; }
+	[[nodiscard]] bool canTidallyDisrupt() const noexcept { return isCompactRemnant(); }
 	[[nodiscard]] bool isFuelDepleted() const noexcept { return planetType == STAR && fuel <= 0.0; }
 	[[nodiscard]] bool hasFuel() const noexcept { return (planetType == STAR || planetType == BROWNDWARF) && fuel > 0.0; }
 
@@ -146,7 +143,6 @@ public:
 
 private:
 	void updateMainSequenceType() noexcept;
-	void updateEvolvedType() noexcept;
 	void updateVisualProperties() noexcept;
 	void updateRadius() noexcept;
 	void initializeFuel() noexcept;
