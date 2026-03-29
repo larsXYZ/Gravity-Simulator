@@ -143,6 +143,7 @@ public:
 	void update();
 	void runSim(sf::Vector2i window_size, bool fullscreen, int udp_port = 0);
 	void drawPlanets(sf::RenderTarget &window);
+	void drawBlackHoleDiscs(sf::RenderTarget &window);
 	void drawLifeVisuals(sf::RenderTarget& window, const Planet& p);
 	void drawCivConnections(sf::RenderTarget& window, const Planet& p, bool drawIndicatorsOnColonies = false);
 	void drawEffects(sf::RenderTarget & window);

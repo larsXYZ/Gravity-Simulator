@@ -349,6 +349,23 @@ void Space::update()
 		absorbed_by[ev.planetA_idx] = ev.planetB_idx;
 	}
 
+	// Break cycles: if A->B and B->A, keep the lower index as absorber
+	for (auto it = absorbed_by.begin(); it != absorbed_by.end(); ) {
+		int a = it->first;
+		int b = it->second;
+		if (absorbed_by.count(b) && absorbed_by[b] == a) {
+			// Mutual absorption — break cycle by removing the higher index from the map
+			if (a > b)
+				it = absorbed_by.erase(it);
+			else {
+				absorbed_by.erase(b);
+				++it;
+			}
+		} else {
+			++it;
+		}
+	}
+
 	auto find_ultimate_absorber = [&](int idx) -> int {
 		int steps = 0;
 		while (absorbed_by.count(idx) && steps++ < 100)
@@ -1505,6 +1522,12 @@ void Space::renderMST(sf::RenderTarget& window, const std::vector<size_t>& membe
 			}
 		}
 	}
+}
+
+void Space::drawBlackHoleDiscs(sf::RenderTarget &window)
+{
+	for (const auto& planet : planets)
+		planet.render_blackhole_disc(window);
 }
 
 void Space::drawPlanets(sf::RenderTarget &window)

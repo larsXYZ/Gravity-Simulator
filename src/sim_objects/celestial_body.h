@@ -139,6 +139,7 @@ public:
 	void draw_gas_planet_atmosphere(sf::RenderTarget& window) const;
 	void draw_pulsar_beams(sf::RenderTarget& window) const;
 	void draw_magnetar_glow(sf::RenderTarget& window) const;
+	void render_blackhole_disc(sf::RenderTarget& window) const;
 	void setColor() noexcept;
 
 private:

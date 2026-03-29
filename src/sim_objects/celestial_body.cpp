@@ -546,7 +546,7 @@ void CelestialBody::draw_thermal_shine(sf::RenderTarget& window) const
 
 	// Long-range luminosity — the big glow visible from far away
 	if (temp > 4000.0) {
-		double luminosity_factor = std::sqrt(temp / 1000.0) * std::sqrt(radius);
+		double luminosity_factor = std::cbrt(temp / 1000.0) * std::sqrt(radius);
 		col.a = 50;
 		render_shine(window, position, col, luminosity_factor * 10.0);
 	}
@@ -674,9 +674,25 @@ void CelestialBody::render(sf::RenderTarget& window) const
 		break;
 
 	case BLACKHOLE:
-		window.draw(circle);
+		// Outline glow drawn here (gets bloomed); dark disc drawn separately after bloom
+		{
+			auto savedFill = circle.getFillColor();
+			circle.setFillColor(sf::Color::Transparent);
+			window.draw(circle);
+			circle.setFillColor(savedFill);
+		}
 		break;
 	}
+}
+
+void CelestialBody::render_blackhole_disc(sf::RenderTarget& window) const
+{
+	if (planetType != BLACKHOLE) return;
+	circle.setPosition(position);
+	auto savedOutline = circle.getOutlineColor();
+	circle.setOutlineColor(sf::Color::Transparent);
+	window.draw(circle);
+	circle.setOutlineColor(savedOutline);
 }
 
 void CelestialBody::setColor() noexcept

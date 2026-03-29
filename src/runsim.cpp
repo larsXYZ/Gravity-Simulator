@@ -173,8 +173,11 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 			bloom.apply(window);
 		}
 
-		// Draw overlays directly to window (not bloomed)
+		// Draw black hole discs on top of bloom so they stay dark
 		window.setView(mainView);
+		drawBlackHoleDiscs(window);
+
+		// Draw overlays directly to window (not bloomed)
 		executeFunction(context);
 
 		if (object_info.is_active())
