@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.3)
 
 project(Gravity-Simulator)
 set(Gravity_Simulator_VERSION_MAJOR 1)
-set(Gravity_Simulator_VERSION_MINOR 2)
-set(Gravity_Simulator_VERSION_PATCH 3)
+set(Gravity_Simulator_VERSION_MINOR 3)
+set(Gravity_Simulator_VERSION_PATCH 0)
 set(Gravity_Simulator_HOMEPAGE_URL "https://www.youtube.com/@LarsGames_")
 set(Gravity_Simulator_DESCRIPTION "A simple 2D gravity simulator")
 
@@ -77,10 +77,11 @@ set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTE
 set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/DEBUG /SUBSYSTEM:WINDOWS")
 set_target_properties(Gravity-Simulator PROPERTIES LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:WINDOWS")
 
-target_link_libraries(Gravity-Simulator sfml-graphics 
+target_link_libraries(Gravity-Simulator sfml-graphics
 					sfml-window
 					sfml-system
 					sfml-audio
+					sfml-network
 					tgui
 					${SFML_DEPENDENCIES})
 
@@ -90,10 +91,11 @@ endif()
 
 # Benchmark executable
 add_executable(Benchmark ${BENCHMARK_SOURCE})
-target_link_libraries(Benchmark sfml-graphics 
+target_link_libraries(Benchmark sfml-graphics
 					sfml-window
 					sfml-system
 					sfml-audio
+					sfml-network
 					tgui
 					${SFML_DEPENDENCIES})
 
@@ -105,10 +107,11 @@ set_target_properties(Benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINA
 
 # HeatDebug executable
 add_executable(HeatDebug ${HEATDEBUG_SOURCE})
-target_link_libraries(HeatDebug sfml-graphics 
+target_link_libraries(HeatDebug sfml-graphics
 					sfml-window
 					sfml-system
 					sfml-audio
+					sfml-network
 					tgui
 					${SFML_DEPENDENCIES})
 if(OpenMP_CXX_FOUND)

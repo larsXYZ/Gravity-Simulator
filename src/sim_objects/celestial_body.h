@@ -9,12 +9,12 @@
 
 class Space;
 
-class Planet : public SimObject {
+class CelestialBody : public SimObject {
 private:
 	std::string name = generate_name();
 
 	//PHYSICAL
-	pType planetType;
+	BodyType planetType;
 
 		//ATMOSPHERE
 	double atmoCur = 0;
@@ -32,6 +32,12 @@ private:
 	int strongestAttractorId = -1;
 	double strongestAttractorStrength = 0;
 	bool marked_for_removal = false;
+
+	//STELLAR EVOLUTION
+	double fuel = 0.0;                         // hydrogen fuel reserve
+	double age = 0.0;                          // accumulated simulation time
+	StellarSubType subType = SUBTYPE_NONE;     // pulsar/magnetar variant
+	double subTypeTimer = 0.0;                 // countdown for subtype phase
 
 	//FOR DISINTEGRATION AND IGNORING
 	double disintegrate_grace_end_time = 0;
@@ -51,11 +57,12 @@ public:
 	};
 
 	// Constructors
-	explicit Planet(double m = 6.0, double xx = 0.0, double yy = 0.0, double xvv = 0.0, double yvv = 0.0);
+	explicit CelestialBody(double m = 6.0, double xx = 0.0, double yy = 0.0, double xvv = 0.0, double yvv = 0.0);
 
 	// Getters
-	[[nodiscard]] pType getType() const noexcept { return planetType; }
-	[[nodiscard]] static std::string getTypeString(pType type) noexcept;
+	[[nodiscard]] BodyType getType() const noexcept { return planetType; }
+	[[nodiscard]] static std::string getTypeString(BodyType type) noexcept;
+	[[nodiscard]] std::string getDisplayName() const noexcept;
 	[[nodiscard]] int getId() const noexcept override { return id; }
 	[[nodiscard]] int getStrongestAttractorId() const noexcept { return strongestAttractorId; }
 	[[nodiscard]] int getStrongestAttractorIdRef() const noexcept { return strongestAttractorId; }
@@ -73,6 +80,11 @@ public:
 	[[nodiscard]] const Life& getLife() const noexcept { return life; }
 	[[nodiscard]] double getSupportedBiomass() const noexcept { return supportedBiomass; }
 	[[nodiscard]] GoldilockInfo getGoldilockInfo() const noexcept;
+	[[nodiscard]] double getFuel() const noexcept { return fuel; }
+	[[nodiscard]] double maxFuel() const noexcept;
+	[[nodiscard]] double fuelFraction() const noexcept;
+	[[nodiscard]] double getAge() const noexcept { return age; }
+	[[nodiscard]] StellarSubType getSubType() const noexcept { return subType; }
 
 	// Setters
 	void setName(const std::string& n) noexcept { name = n; }
@@ -83,6 +95,17 @@ public:
 	void setAtmosphere(double a) noexcept { atmoCur = a; }
 	void setAtmospherePotensial(double a) noexcept { atmoPot = a; }
 	void setLifeLevel(lType level) noexcept { life.setLifeLevel(level); }
+	void setFuel(double f) noexcept { fuel = f; }
+	void setSubType(StellarSubType st) noexcept { subType = st; }
+	void setType(BodyType t) noexcept { planetType = t; }
+
+	// Type classification helpers
+	[[nodiscard]] bool isMainSequenceStar() const noexcept { return planetType == STAR; }
+	[[nodiscard]] bool isAnyStarType() const noexcept;
+	[[nodiscard]] bool isCompactRemnant() const noexcept;
+	[[nodiscard]] bool canTidallyDisrupt() const noexcept { return isCompactRemnant(); }
+	[[nodiscard]] bool isFuelDepleted() const noexcept { return planetType == STAR && fuel <= 0.0; }
+	[[nodiscard]] bool hasFuel() const noexcept { return (planetType == STAR || planetType == BROWNDWARF) && fuel > 0.0; }
 
 	// State checks
 	[[nodiscard]] bool canDisintegrate(double curr_time) const noexcept;
@@ -94,11 +117,12 @@ public:
 	void setDisintegrationGraceTime(double grace_time, double curr_time) noexcept;
 	void registerIgnoredId(int id);
 	void clearIgnores() noexcept { ignore_ids.clear(); }
-	void becomeAbsorbedBy(Planet& absorbing_planet);
+	void becomeAbsorbedBy(CelestialBody& absorbing_planet);
 	void updateRadiAndType() noexcept;
+	void initializeRemnantTemperature() noexcept;
 	void resetAttractorMeasure() noexcept { strongestAttractorStrength = 0; }
 	void incMass(double m) noexcept;
-	void collision(const Planet& p);
+	void collision(const CelestialBody& p);
 	void giveID(int i) noexcept;
 	void coolDown(int t) noexcept;
 	void absorbHeat(double e, int t) noexcept;
@@ -107,16 +131,27 @@ public:
 
 	// Simulation and rendering
 	void update(double timestep) override;
-	void update_planet_sim(double timestep, bool heat_enabled = true);
+	void update_planet_sim(double timestep, bool heat_enabled = true, double fuelBurnRate = 1.0);
 	void updateLife(int t);
-	void render(sf::RenderWindow& window) const override;
-	[[nodiscard]] double getDist(const Planet& forcer) const noexcept;
-	void draw_starshine(sf::RenderWindow& window) const;
-	void draw_planetshine(sf::RenderWindow& window) const;
-	void draw_gas_planet_atmosphere(sf::RenderWindow& window) const;
+	void render(sf::RenderTarget& window) const override;
+	[[nodiscard]] double getDist(const CelestialBody& forcer) const noexcept;
+	void draw_thermal_shine(sf::RenderTarget& window) const;
+	void draw_gas_planet_atmosphere(sf::RenderTarget& window) const;
+	void draw_pulsar_beams(sf::RenderTarget& window) const;
+	void draw_magnetar_glow(sf::RenderTarget& window) const;
+	void render_blackhole_disc(sf::RenderTarget& window) const;
 	void setColor() noexcept;
 
 private:
+	void updateMainSequenceType() noexcept;
+	void updateVisualProperties() noexcept;
+	void updateRadius() noexcept;
+	void initializeFuel() noexcept;
+	[[nodiscard]] sf::Color getShineColor() const noexcept;
+
 	[[nodiscard]] int modernRandomWithLimits(int min, int max) const;
 	[[nodiscard]] std::string generate_name();
 };
+
+// Type alias for backward compatibility during transition
+using Planet = CelestialBody;

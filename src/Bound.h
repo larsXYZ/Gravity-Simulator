@@ -24,6 +24,6 @@ public:
 
 	bool isOutside(sf::Vector2f p) const;
 
-	void render(sf::RenderWindow& window, float zoom);
+	void render(sf::RenderTarget& window, float zoom);
 
 };

@@ -13,7 +13,7 @@ class ObjectInfo
 	sf::Font font;
 	sf::Text text;
 	
-	tgui::Panel::Ptr panel;
+	tgui::ChildWindow::Ptr panel;
 	tgui::EditBox::Ptr nameBox;
 	tgui::EditBox::Ptr massBox;
 	tgui::EditBox::Ptr tempBox;
@@ -24,10 +24,15 @@ class ObjectInfo
 	tgui::EditBox::Ptr atmoBox;
 	tgui::EditBox::Ptr atmoPotBox;
 	tgui::ComboBox::Ptr lifeLevelSelector;
-	
+
+	tgui::ChildWindow::Ptr m_infoWindow;
+	tgui::Label::Ptr m_infoLabel;
+
 	bool ignore_change_signals{ false };
 	Space* m_space{ nullptr };
 	mutable sf::Clock m_lastInteractionClock;
+
+	void update_info_text();
 
 public:
 	ObjectInfo();

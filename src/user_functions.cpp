@@ -118,7 +118,7 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 
 			// Roche
 			if (RocheLimit::hasMinimumBreakupSize(pSub.mass) &&
-				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].getType() == pType::BLACKHOLE))
+				RocheLimit::isBreached(distRes.dist, distRes.rad_dist, pSub.mass, planets[k].mass, planets[k].type == BLACKHOLE || planets[k].type == NEUTRONSTAR || planets[k].type == WHITEDWARF))
 			{
 				disintegration = true;
 				break;
@@ -207,9 +207,12 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 	return result;
 }
 
-void updateGuiSize(tgui::TextArea::Ptr textbox, int lines)
+void updateGuiSize(tgui::TextArea::Ptr textbox, int = 0)
 {
-    float lineHeight = textbox->getTextSize() * 1.2f;
+    auto text = textbox->getText().toStdString();
+    int lines = 1;
+    for (char c : text) if (c == '\n') lines++;
+    float lineHeight = textbox->getTextSize() * 1.4f;
     textbox->setSize(textbox->getSize().x, std::max(32.0f, lines * lineHeight + 12.0f));
 }
 
@@ -397,9 +400,7 @@ public:
 
 				Planet temp_planet(context.mass_slider->getValue());
 				
-				if (target->getType() == SMALLSTAR 
-					|| target->getType() == STAR 
-					|| target->getType() == BIGSTAR)
+				if (target->getType() == STAR)
 				{
 					const auto goldilock_info = target->getGoldilockInfo();
 
@@ -435,10 +436,10 @@ public:
 				context.window.draw(center_point);
 
 				//DRAWING ROCHE LIMIT
-				if (RocheLimit::hasMinimumBreakupSize(context.mass_slider->getValue()) 
-					&& RocheLimit::checkMassRatio(context.mass_slider->getValue(), target->getMass(), target->getType() == pType::BLACKHOLE))
+				if (RocheLimit::hasMinimumBreakupSize(context.mass_slider->getValue())
+					&& RocheLimit::checkMassRatio(context.mass_slider->getValue(), target->getMass(), target->canTidallyDisrupt()))
 				{
-					double rocheRad = RocheLimit::calculateLimitRadius(temp_planet.getRadius() + target->getRadius());
+					double rocheRad = RocheLimit::calculateLimitRadius(temp_planet.getRadius() + target->getRadius(), target->isCompactRemnant());
 
 					sf::CircleShape viz(rocheRad);
 					viz.setPosition(sf::Vector2f(target->getx(), target->gety()));
@@ -657,7 +658,7 @@ public:
 	}
 };
 
-class RandomSystemFunction : public IUserFunction
+class ProtoSystemFunction : public IUserFunction
 {
 	sf::Font font;
 
@@ -675,7 +676,7 @@ class RandomSystemFunction : public IUserFunction
 		location = {};
 	}
 public:
-	RandomSystemFunction()
+	ProtoSystemFunction()
 	{
 		font.loadFromFile("sansation.ttf");
 	}
@@ -683,7 +684,7 @@ public:
     void on_selection(FunctionContext& context) override
     {
         IUserFunction::on_selection(context);
-        context.new_object_info->setText("Click and drag to spawn a random solar system.");
+        context.new_object_info->setText("Click and drag to spawn a proto-system.");
         updateGuiSize(context.new_object_info, 1);
     }
 
@@ -720,17 +721,24 @@ public:
 				sf::Vertex(context.mouse_pos_world, sf::Color::Red)
 			};
 
+			context.window.draw(line, 2, sf::Lines);
+
+			// Draw text in screen space so size is constant regardless of zoom
+			sf::Vector2i screenPos = context.window.mapCoordsToPixel(context.mouse_pos_world);
+			sf::View worldView = context.window.getView();
+			context.window.setView(context.window.getDefaultView());
+
 			sf::Text t;
 			t.setString("Planets: " + std::to_string((int)((NUMBER_OF_OBJECT_MULTIPLIER * rad) + 1))
 				+ "\nMass: ca " + std::to_string(MASS_MULTIPLIER * cbrt(rad))
 				+ "\nRadius: " + std::to_string(rad));
-			t.setPosition(context.mouse_pos_world.x + 10, context.mouse_pos_world.y);
+			t.setPosition(static_cast<float>(screenPos.x + 10), static_cast<float>(screenPos.y));
 			t.setFillColor(sf::Color::Red);
 			t.setFont(font);
-			t.setCharacterSize(10);
+			t.setCharacterSize(12);
 
-			context.window.draw(line, 2, sf::Lines);
 			context.window.draw(t);
+			context.window.setView(worldView);
 
 			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 			{
@@ -739,6 +747,102 @@ public:
 			}
 			break;
 			}
+		}
+	}
+};
+
+class GenerateSystemFunction : public IUserFunction
+{
+	sf::Font font;
+
+	enum class State
+	{
+		INACTIVE,
+		LOCATION_FOUND
+	} state{State::INACTIVE};
+
+	sf::Vector2f location{};
+
+	void reset()
+	{
+		state = State::INACTIVE;
+		location = {};
+	}
+public:
+	GenerateSystemFunction()
+	{
+		font.loadFromFile("sansation.ttf");
+	}
+
+	void on_selection(FunctionContext& context) override
+	{
+		IUserFunction::on_selection(context);
+		context.new_object_info->setText("Click and drag to generate a stable star system.");
+		updateGuiSize(context.new_object_info, 1);
+	}
+
+	void execute(FunctionContext& context) override
+	{
+		switch (state)
+		{
+		case State::INACTIVE:
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
+			{
+				location = context.mouse_pos_world;
+				state = State::LOCATION_FOUND;
+			}
+			break;
+
+		case State::LOCATION_FOUND:
+		{
+			const auto rad = std::hypot(context.mouse_pos_world.x - location.x,
+				context.mouse_pos_world.y - location.y);
+
+			// Star mass hint (generateStableSystem will fit it to the goldilocks zone)
+			const double starMass = std::clamp(MASS_MULTIPLIER * std::cbrt(rad), GASGIANTLIMIT, STARLIMIT * 0.9);
+			const int numPlanets = std::clamp(static_cast<int>(std::log2(std::max(rad, 1.0f)) * 0.4), 1, 6);
+
+			sf::CircleShape indicator(rad);
+			indicator.setPosition(location);
+			indicator.setOrigin(rad, rad);
+			indicator.setFillColor(sf::Color(0, 0, 0, 0));
+			indicator.setOutlineColor(sf::Color(100, 200, 255));
+			indicator.setOutlineThickness(context.zoom);
+			indicator.setPointCount(100);
+			context.window.draw(indicator);
+
+			sf::Vertex line[] =
+			{
+				sf::Vertex(location, sf::Color(100, 200, 255)),
+				sf::Vertex(context.mouse_pos_world, sf::Color(100, 200, 255))
+			};
+
+			context.window.draw(line, 2, sf::Lines);
+
+			// Draw text in screen space
+			sf::Vector2i screenPos = context.window.mapCoordsToPixel(context.mouse_pos_world);
+			sf::View worldView = context.window.getView();
+			context.window.setView(context.window.getDefaultView());
+
+			sf::Text t;
+			t.setString("Star mass: " + std::to_string(static_cast<int>(starMass))
+				+ "\nPlanets: " + std::to_string(numPlanets)
+				+ "\nRadius: " + std::to_string(static_cast<int>(rad)));
+			t.setPosition(static_cast<float>(screenPos.x + 10), static_cast<float>(screenPos.y));
+			t.setFillColor(sf::Color(100, 200, 255));
+			t.setFont(font);
+			t.setCharacterSize(12);
+
+			context.window.draw(t);
+			context.window.setView(worldView);
+
+			if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
+			{
+				context.space.generateStableSystem(starMass, numPlanets, rad, location);
+				reset();
+			}
+			break;
+		}
 		}
 	}
 };
@@ -800,14 +904,11 @@ public:
     void on_deselection(FunctionContext& context) override
     {
         IUserFunction::on_deselection(context);
-        context.space.object_info.set_visible(false);
-        context.space.object_info.deactivate();
+        // Keep object_info active — it has its own close button
     }
 
 	void execute(FunctionContext& context) override
 	{
-		context.space.object_info.set_visible(context.space.editObjectCheckBox->isChecked());
-
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !context.is_mouse_on_widgets)
 		{
 			for (const auto& planet : context.space.planets)
@@ -816,48 +917,9 @@ public:
 					planet.gety() - context.mouse_pos_world.y);
 				if (dist >= planet.getRadius())
 					continue;
-				
+
 				context.space.object_info.activate(planet.getId());
 				return;
-			}
-		}
-
-		if (context.space.object_info.is_active())
-		{
-			Planet* target = context.space.findPlanetPtr(context.space.object_info.get_target_id());
-			if (target)
-			{
-				const auto selected_temp_unit = static_cast<TemperatureUnit>(context.space.temperatureUnitSelector->getSelectedIndex());
-
-				std::string info = target->getName() +
-					"\nType: " + std::string(target->getTypeString(target->getType())) +
-					"\nRadius: " + std::to_string(static_cast<int>(target->getRadius())) +
-					"\nMass: " + std::to_string(static_cast<int>(target->getMass())) +
-					"\nSpeed: " + std::to_string(std::hypot(target->getxv(), target->getyv())) +
-					"\nTemperature: " + Space::temperature_info_string(target->getTemp(), selected_temp_unit);
-
-				Planet* target_parent = context.space.findPlanetPtr(target->getStrongestAttractorId());
-				if (target_parent)
-					info += "\nDistance: " + std::to_string(static_cast<int>(std::hypot(target->getx() - target_parent->getx(),
-						target->gety() - target_parent->gety())));
-
-				if (target->getType() == TERRESTIAL)
-				{
-					info += "\n\nAtmo: " + std::to_string((int)target->getCurrentAtmosphere()) + " / " + std::to_string((int)target->getAtmospherePotensial()) + "kPa";
-					if (target->getLife().getTypeEnum() == 0)
-						info += "\n\n" + target->getFlavorTextLife();
-				}
-
-				if (target->getLife().getTypeEnum() != 0)
-				{
-					info += "\n\nBiomass: " + std::to_string((int)target->getLife().getBmass()) + "MT";
-					info += "\n" + target->getLife().getType() + "\n" + target->getFlavorTextLife();
-				}
-
-				context.new_object_info->setText(info);
-				
-				// Count lines for scaling
-				updateGuiSize(context.new_object_info, context.new_object_info->getLinesCount());
 			}
 		}
 	}
@@ -1090,7 +1152,8 @@ public:
 		executioners[FunctionType::REMOVE_OBJECT] = std::make_shared<RemoveObjectFunction>();
 		executioners[FunctionType::SPAWN_SHIP] = std::make_shared<SpawnShipFunction>();
 		executioners[FunctionType::ADD_RINGS] = std::make_shared<AddRingsFunction>();
-		executioners[FunctionType::RANDOM_SYSTEM] = std::make_shared<RandomSystemFunction>();
+		executioners[FunctionType::PROTO_SYSTEM] = std::make_shared<ProtoSystemFunction>();
+		executioners[FunctionType::GENERATE_SYSTEM] = std::make_shared<GenerateSystemFunction>();
 		executioners[FunctionType::FOLLOW_OBJECT] = std::make_shared<TrackObjectFunction>();
 		executioners[FunctionType::SHOW_INFO] = std::make_shared<ShowObjectInfoFunction>();
 		executioners[FunctionType::ADVANCED_OBJECT_IN_ORBIT] = std::make_shared<AdvancedInOrbitFunction>();

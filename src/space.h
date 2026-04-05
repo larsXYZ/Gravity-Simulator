@@ -10,7 +10,8 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
-#include "sim_objects/Planet.h"
+#include "sim_objects/celestial_body.h"
+#include "sim_config.h"
 #include "Spaceship.h"
 #include "Effect.h"
 #include "CONSTANTS.h"
@@ -19,6 +20,7 @@
 #include "object_info.h"
 #include "object_tracker.h"
 #include "particles/particle_container.h"
+#include "BloomEffect.h"
 
 enum class TemperatureUnit
 {
@@ -40,14 +42,10 @@ class Space
 {
 	double total_mass{0.0};
 	int next_id{0};
-	bool paused{ false };
-	bool gravity_enabled{ true };
-	bool heat_enabled{ true };
 	float timestep{ TIMESTEP_VALUE_START };
 	double curr_time{ 0.0 };
 	int iteration{0};
 	int fps{ 0 };
-	bool show_gui{true};
     bool is_mouse_on_gui{ false };
 	
 	SpaceShip ship;
@@ -66,7 +64,7 @@ class Space
 		double mass;
 		double radius;
 		int id;
-		pType type;
+		BodyType type;
 		double strongestAttractorMag;
 		int strongestAttractorId;
 		double accumulatedHeat;
@@ -95,7 +93,9 @@ class Space
 	tgui::ComboBox::Ptr objectTypeSelector = std::make_shared<tgui::ComboBox>();
 	tgui::Slider::Ptr massSlider = std::make_shared<tgui::Slider>();
 	tgui::Slider::Ptr timeStepSlider = std::make_shared<tgui::Slider>();
-	tgui::CheckBox::Ptr autoBound = std::make_shared<tgui::CheckBox>();
+	tgui::CheckBox::Ptr autoBound = tgui::CheckBox::create("Auto Bound");
+
+	tgui::ChildWindow::Ptr quitDialog = tgui::ChildWindow::create("Quit?");
 
 	tgui::ChildWindow::Ptr optionsMenu = tgui::ChildWindow::create("Options Menu");
 	tgui::BitmapButton::Ptr optionsButton = tgui::BitmapButton::create();
@@ -103,12 +103,17 @@ class Space
 	tgui::CheckBox::Ptr gravityCheckBox = tgui::CheckBox::create("Gravity Enabled");
 	tgui::CheckBox::Ptr heatCheckBox = tgui::CheckBox::create("Heat Enabled");
 	tgui::CheckBox::Ptr renderLifeAlwaysCheckBox = tgui::CheckBox::create("Always Render Life");
+	tgui::CheckBox::Ptr bloomCheckBox = tgui::CheckBox::create("Bloom");
+	tgui::Slider::Ptr fuelBurnSlider = tgui::Slider::create();
+	tgui::Label::Ptr fuelBurnLabel = tgui::Label::create();
+
+	BloomEffect bloom;
 
 	ClickAndDragHandler click_and_drag_handler;
 	ObjectTracker object_tracker;
 	ObjectInfo object_info;
 
-	void renderMST(sf::RenderWindow& window, const std::vector<size_t>& members);
+	void renderMST(sf::RenderTarget& window, const std::vector<size_t>& members);
 
 public:
 
@@ -124,9 +129,11 @@ public:
 	void full_reset(sf::View& view, const sf::RenderWindow & window);
 
 	std::vector<int> disintegratePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
-	void explodePlanet(Planet planet);	/* No reference due to addition of new planets possibly invalidating references */
+	std::vector<int> explodePlanet(Planet planet, CelestialBody* remnant = nullptr);	/* No reference due to addition of new planets possibly invalidating references */
+	void checkChandrasekharLimit();
 
 	void randomPlanets(int totmass, int antall, double radius, sf::Vector2f pos);
+	void generateStableSystem(double starMass, int numPlanets, double systemRadius, sf::Vector2f pos);
 	void addExplosion(sf::Vector2f p, double s, sf::Vector2f v, int l);
 	void addStarshineFade(sf::Vector2f p, sf::Vector2f v, sf::Color col, double lr_lum, double sr_lum, int l);
 	void addParticle(sf::Vector2f p, sf::Vector2f v, double s, double lifespan, double initial_temp = 2000.0);
@@ -135,13 +142,14 @@ public:
 	
 	//SIMULATION FUNCTIONS
 	void update();
-	void runSim(sf::Vector2i window_size, bool fullscreen);
-	void drawPlanets(sf::RenderWindow &window);
-	void drawLifeVisuals(sf::RenderWindow& window, const Planet& p);
-	void drawCivConnections(sf::RenderWindow& window, const Planet& p, bool drawIndicatorsOnColonies = false);
-	void drawEffects(sf::RenderWindow & window);
-	void drawMissiles(sf::RenderWindow& window);
-	void drawDust(sf::RenderWindow &window);
+	void runSim(sf::Vector2i window_size, bool fullscreen, int udp_port = 0);
+	void drawPlanets(sf::RenderTarget &window);
+	void drawBlackHoleDiscs(sf::RenderTarget &window);
+	void drawLifeVisuals(sf::RenderTarget& window, const Planet& p);
+	void drawCivConnections(sf::RenderTarget& window, const Planet& p, bool drawIndicatorsOnColonies = false);
+	void drawEffects(sf::RenderTarget & window);
+	void drawMissiles(sf::RenderTarget& window);
+	void drawDust(sf::RenderTarget &window);
 	void giveId(Planet &p);
 	Planet findPlanet(int id);
 	Planet* findPlanetPtr(int id);
@@ -153,9 +161,16 @@ public:
 	sf::Vector2f centerOfMassAll();
 	int get_iteration() const;
 	bool auto_bound_active() const;
+	const std::vector<Planet>& getPlanets() const { return planets; }
+	void syncConfigToWidgets();
+
+	SimConfig config;
+
 	void set_ambient_temperature(Planet& planet);
 	
-	tgui::CheckBox::Ptr editObjectCheckBox = std::make_shared<tgui::CheckBox>();
+	tgui::BitmapButton::Ptr editObjectButton = std::make_shared<tgui::BitmapButton>();
+	sf::Texture editButtonTexture;
+	bool editPanelOpen = false;
 
 	void hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow & window);
 	

@@ -26,8 +26,8 @@ namespace LauncherConfig
     {
         const sf::Vector2f Position = {247, 33};
         const int CharacterSize = 25;
-        const std::string Text = "v1.2";
-        const sf::Color Color = sf::Color(252, 240, 3);
+        const std::string Text = "v1.3";
+        const sf::Color Color = sf::Color(175, 27, 63);
     }
 
     namespace Resolution
@@ -297,16 +297,113 @@ void runLauncher()
 	}
 }
 
+void runDirect(int width, int height, bool fullscreen, int udp_port = 0)
+{
+    saveSettings(width, height, fullscreen);
+
+    // Initialize TGUI backend before Space construction (Space creates TGUI widgets in member initializers)
+    sf::RenderWindow tempWin;
+    tempWin.create(sf::VideoMode(1, 1), "", sf::Style::None);
+    tgui::Gui tempGui{tempWin};
+
+    Space space;
+    tempWin.close();
+    space.runSim({width, height}, fullscreen, udp_port);
+}
+
+void runWithArgs(int argc, char** argv)
+{
+    // Usage: Gravity-Simulator [--skip-launcher] [--width W] [--height H] [--fullscreen|--windowed] [--udp-server PORT]
+    int width = 0, height = 0;
+    bool fullscreen = false;
+    bool skip = false;
+    int udp_port = 0;
+
+    for (int i = 1; i < argc; i++)
+    {
+        std::string arg = argv[i];
+        if (arg == "--skip-launcher") skip = true;
+        else if (arg == "--fullscreen") fullscreen = true;
+        else if (arg == "--windowed") fullscreen = false;
+        else if (arg == "--width" && i + 1 < argc) width = std::atoi(argv[++i]);
+        else if (arg == "--height" && i + 1 < argc) height = std::atoi(argv[++i]);
+        else if (arg == "--udp-server" && i + 1 < argc) udp_port = std::atoi(argv[++i]);
+    }
+
+    if (skip)
+    {
+        // Use saved settings as fallback
+        if (width == 0 || height == 0)
+        {
+            std::ifstream file(getSettingsPath());
+            if (file.is_open())
+            {
+                std::string m, x, y;
+                file >> m >> x >> y;
+                if (width == 0) width = std::atoi(x.c_str());
+                if (height == 0) height = std::atoi(y.c_str());
+                if (m == "f") fullscreen = true;
+            }
+        }
+        if (width <= 0) width = 1366;
+        if (height <= 0) height = 768;
+        runDirect(width, height, fullscreen, udp_port);
+    }
+    else
+    {
+        runLauncher();
+    }
+}
+
 #ifdef _DEBUG
 int main(int argc, char** argv)
 {
-    runLauncher();
+    runWithArgs(argc, argv);
 }
 #else
 #include <windows.h>
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    runLauncher();
+    std::string cmdLine(lpCmdLine);
+    if (cmdLine.find("--skip-launcher") != std::string::npos)
+    {
+        int width = 0, height = 0;
+        bool fullscreen = false;
+        int udp_port = 0;
+
+        if (cmdLine.find("--fullscreen") != std::string::npos) fullscreen = true;
+
+        auto parseValue = [&](const std::string& key) -> int {
+            auto pos = cmdLine.find(key);
+            if (pos == std::string::npos) return 0;
+            pos += key.size();
+            while (pos < cmdLine.size() && cmdLine[pos] == ' ') pos++;
+            return std::atoi(cmdLine.c_str() + pos);
+        };
+        width = parseValue("--width");
+        height = parseValue("--height");
+        udp_port = parseValue("--udp-server");
+
+        if (width <= 0 || height <= 0)
+        {
+            std::ifstream file(getSettingsPath());
+            if (file.is_open())
+            {
+                std::string m, x, y;
+                file >> m >> x >> y;
+                if (width <= 0) width = std::atoi(x.c_str());
+                if (height <= 0) height = std::atoi(y.c_str());
+                if (m == "f" && cmdLine.find("--windowed") == std::string::npos) fullscreen = true;
+            }
+        }
+        if (width <= 0) width = 1366;
+        if (height <= 0) height = 768;
+        runDirect(width, height, fullscreen, udp_port);
+    }
+    else
+    {
+        runLauncher();
+    }
 }
 #endif

@@ -9,8 +9,8 @@ class IParticleContainer
 public:
 	~IParticleContainer() = default;
 	virtual void update(const std::vector<Planet> & planets, const Bound &bound, double timestep, double curr_time, bool gravity_enabled, bool heat_enabled) = 0;
-	virtual void render_all(sf::RenderWindow &w) = 0;
-	virtual void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp) = 0;
+	virtual void render_all(sf::RenderTarget &w) = 0;
+	virtual void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp, bool ice = false) = 0;
 	virtual void clear() = 0;
 	virtual size_t size() const = 0;
 };
@@ -174,7 +174,7 @@ public:
 		}
 	}
 
-	void render_all(sf::RenderWindow& window) override
+	void render_all(sf::RenderTarget& window) override
 	{
         if (!texture_initialized) init_texture();
 
@@ -186,7 +186,7 @@ public:
 			for (const auto& particle : particle_vector)
 			{
 				sf::Vector2f pos = particle.get_position();
-				float r = static_cast<float>(particle.get_radius());
+				float r = static_cast<float>(particle.get_render_radius());
 				sf::Color col = particle.get_color();
 
 				// Body Quad
@@ -219,7 +219,7 @@ public:
 		window.draw(body_vertices, sf::RenderStates(&circle_texture));
 	}
 
-	void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp) override
+	void add_particle(const sf::Vector2f& position, const sf::Vector2f& velocity, double size, double removal_time, double initial_temp, bool ice = false) override
 	{
 		auto smallest_vector = std::min_element(particles.begin(),
 			particles.end(), [](const auto& vec1, const auto& vec2) {return vec1.size() < vec2.size(); });
@@ -229,7 +229,8 @@ public:
 			velocity,
 			size,
 			removal_time,
-			initial_temp
+			initial_temp,
+			ice
 		));
 	}
 

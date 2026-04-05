@@ -18,7 +18,7 @@ double calculate_heating(double radius, double source_emitted_energy, double dis
 	return tempConstTwo * radius * radius * source_emitted_energy / distance;
 }
 
-void render_shine(sf::RenderWindow& window, sf::Vector2f position, const sf::Color& col, double luminosity)
+void render_shine(sf::RenderTarget& window, sf::Vector2f position, const sf::Color& col, double luminosity)
 {
 	sf::VertexArray vertexArr(sf::TrianglesFan);
 	vertexArr.append(sf::Vertex(sf::Vector2f(position.x, position.y), col));
@@ -38,7 +38,7 @@ void render_shine(sf::RenderWindow& window, sf::Vector2f position, const sf::Col
 	window.draw(vertexArr);
 }
 
-void draw_heat_glow(sf::RenderWindow& window, sf::Vector2f position, double temp, double radius)
+void draw_heat_glow(sf::RenderTarget& window, sf::Vector2f position, double temp, double radius)
 {
 	sf::Color col{ sf::Color::White };
 	col.a = 70;

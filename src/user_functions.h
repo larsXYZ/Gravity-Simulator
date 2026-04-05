@@ -20,7 +20,8 @@ enum class FunctionType
 	SPAWN_SHIP,
 	SHOW_INFO,
 	ADD_RINGS,
-	RANDOM_SYSTEM,
+	PROTO_SYSTEM,
+	GENERATE_SYSTEM,
 	FOLLOW_OBJECT,
 	ADD_BOUND,
 	NO_FUNCTION
@@ -40,7 +41,8 @@ const std::vector<Function> function_info
 	{sf::Keyboard::A, "Adv Object in orbit (A)", FunctionType::ADVANCED_OBJECT_IN_ORBIT},
 	{sf::Keyboard::D, "Remove object (D)", FunctionType::REMOVE_OBJECT},
 	{sf::Keyboard::C, "Explode object (C)", FunctionType::EXPLODE_OBJECT},
-	{sf::Keyboard::G, "Random system(G)", FunctionType::RANDOM_SYSTEM},
+	{sf::Keyboard::G, "Proto-system (G)", FunctionType::PROTO_SYSTEM},
+	{sf::Keyboard::H, "Generate system (H)", FunctionType::GENERATE_SYSTEM},
 	{sf::Keyboard::S, "Spawn ship (S)", FunctionType::SPAWN_SHIP},
 	{sf::Keyboard::Q, "Rings (Q)", FunctionType::ADD_RINGS},
 	{sf::Keyboard::I, "Info (I)", FunctionType::SHOW_INFO},
@@ -89,7 +91,7 @@ struct PredictionResult {
 	std::vector<CollisionMarker> collisionMarkers;
 };
 
-PredictionResult predict_trajectory(const std::vector<class Planet>& planets_orig, const class Planet& subject, int steps = 200);
+PredictionResult predict_trajectory(const std::vector<class CelestialBody>& planets_orig, const class CelestialBody& subject, int steps = 200);
 
 void executeFunction(FunctionContext& context);
 void giveFunctionEvent(FunctionContext& context, sf::Event event);

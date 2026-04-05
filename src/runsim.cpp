@@ -1,6 +1,8 @@
 #include "space.h"
 
 #include "user_functions.h"
+#include "udp_server.h"
+#include <memory>
 
 bool is_mouse_on_widgets(const sf::RenderWindow & window, const tgui::Gui & gui)
 {
@@ -38,7 +40,7 @@ bool is_mouse_on_widgets(const sf::RenderWindow & window, const tgui::Gui & gui)
 	return mouse_currently_over_gui || started_on_gui;
 }
 
-void Space::runSim(sf::Vector2i window_size, bool fullscreen)
+void Space::runSim(sf::Vector2i window_size, bool fullscreen, int udp_port)
 {
 	sf::RenderWindow window;
 
@@ -60,7 +62,7 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 	gui.add(simInfo);
 	gui.add(toolInfo);
 	gui.add(functions);
-	gui.add(editObjectCheckBox);
+	gui.add(editObjectButton);
 	gui.add(newPlanetInfo);
 	gui.add(objectTypeSelector);
 	gui.add(massSlider);
@@ -70,18 +72,34 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 
 	gui.add(optionsMenu);
 	gui.add(optionsButton);
+	gui.add(quitDialog);
 
-	gui.add(autoBound);
-	autoBound->onUncheck([&]() {bound.setActiveState(false); });
+
+	// Initialize bloom effect
+	bloom.init(window_size.x, window_size.y);
+
+	// UDP command server
+	std::unique_ptr<UdpCommandServer> udpServer;
+	if (udp_port > 0)
+	{
+		udpServer = std::make_unique<UdpCommandServer>(static_cast<unsigned short>(udp_port));
+		if (!udpServer->start())
+			udpServer.reset();
+	}
 
 	sf::Event event;
 	while (window.isOpen())
 	{
-		window.clear(sf::Color::Black);
+		timestep = config.paused ? 0.0 : timeStepSlider->getValue();
 
-		timestep = paused ? 0.0 : timeStepSlider->getValue();
-        is_mouse_on_gui = is_mouse_on_widgets(window, gui);
-		
+		// Check if mouse is inside the window bounds
+		sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+		bool mouse_in_window = mousePos.x >= 0 && mousePos.y >= 0
+			&& mousePos.x < static_cast<int>(window.getSize().x)
+			&& mousePos.y < static_cast<int>(window.getSize().y);
+
+        is_mouse_on_gui = !mouse_in_window || is_mouse_on_widgets(window, gui);
+
 		FunctionContext context
 		{
 			.type = getSelectedFunction(functions),
@@ -104,6 +122,9 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 			if (event.type == sf::Event::Closed)
 				window.close();
 
+			if (event.type == sf::Event::Resized)
+				bloom.resize(event.size.width, event.size.height);
+
 			if (!object_info.is_focused(window))
 				hotkeys(event, mainView, window);
 
@@ -116,27 +137,53 @@ void Space::runSim(sf::Vector2i window_size, bool fullscreen)
 		}
 
 		window.setView(mainView);
-		
-		executeFunction(context);
+
 		flushPlanets();
+
+		if (udpServer && udpServer->processCommands(*this, mainView, window))
+			syncConfigToWidgets();
 
 		if (object_tracker.is_active())
 			object_tracker.update(*this, mainView);
 
 		updateInfoBox();
+		editObjectButton->setVisible(object_info.is_active());
 
-		drawPlanets(window);
-		ship.draw(window);
-		drawDust(window);
-		drawEffects(window);
-		
+		// Draw scene to bloom render target or directly to window
+		bool useBloom = bloom.isAvailable() && config.bloom_enabled;
+		sf::RenderTarget& target = useBloom ?
+			static_cast<sf::RenderTarget&>(bloom.getSceneTarget()) :
+			static_cast<sf::RenderTarget&>(window);
+
+		target.clear(sf::Color::Black);
+		target.setView(mainView);
+
+		drawPlanets(target);
+		ship.draw(target);
+		drawDust(target);
+		drawEffects(target);
+
 		if (bound.isActive())
-			bound.render(window, click_and_drag_handler.get_zoom());
+			bound.render(target, click_and_drag_handler.get_zoom());
+
+		// Apply bloom post-processing
+		if (useBloom)
+		{
+			window.clear(sf::Color::Black);
+			bloom.apply(window);
+		}
+
+		// Draw black hole discs on top of bloom so they stay dark
+		window.setView(mainView);
+		drawBlackHoleDiscs(window);
+
+		// Draw overlays directly to window (not bloomed)
+		executeFunction(context);
 
 		if (object_info.is_active())
 			object_info.render(*this, window);
 
-		if (show_gui)
+		if (config.show_gui)
 			gui.draw();
 
 		window.display();

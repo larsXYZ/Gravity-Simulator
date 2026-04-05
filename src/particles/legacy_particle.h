@@ -10,10 +10,11 @@ class LegacyParticle : public IParticle
 	sf::Color current_color;
 	double temp{ 0.0 };
 	double radius;
+	bool ice{ false };
 
 public:
-	LegacyParticle(const sf::Vector2f & position, const sf::Vector2f & velocity, double size, double removal_time, double initial_temp)
-		: IParticle(removal_time), velocity(velocity), position(position), radius(size), temp(initial_temp)
+	LegacyParticle(const sf::Vector2f & position, const sf::Vector2f & velocity, double size, double removal_time, double initial_temp, bool ice = false)
+		: IParticle(removal_time), velocity(velocity), position(position), radius(size), temp(initial_temp), ice(ice)
 	{
 		update_color();
 	}
@@ -60,26 +61,43 @@ public:
     void update_color()
     {
         sf::Color heat_col = temperature_effect(temp);
-        // Mix with base color (brighter grey)
-        int base = 100;
-        int r = base + heat_col.r;
-        int g = base + heat_col.g;
-        int b = base + heat_col.b;
-        
-        // Increase alpha with temperature to simulate glow
-        // Base alpha 100, max 255.
-        // Use redness as a proxy for 'heat visible'.
-        int alpha = 100 + heat_col.r / 2;
 
-        current_color = sf::Color(
-            std::min(255, r), 
-            std::min(255, g), 
-            std::min(255, b), 
-            std::min(255, alpha)
-        );
+        if (ice) {
+            // Ice particles: bright white-blue, highly reflective
+            int r = 210 + heat_col.r / 4;
+            int g = 220 + heat_col.g / 4;
+            int b = 240 + heat_col.b / 4;
+            int alpha = 200 + heat_col.r / 5;
+            current_color = sf::Color(
+                std::min(255, r),
+                std::min(255, g),
+                std::min(255, b),
+                std::min(255, alpha)
+            );
+        } else {
+            // Mix with base color (brighter grey)
+            int base = 100;
+            int r = base + heat_col.r;
+            int g = base + heat_col.g;
+            int b = base + heat_col.b;
+
+            // Increase alpha with temperature to simulate glow
+            // Base alpha 100, max 255.
+            // Use redness as a proxy for 'heat visible'.
+            int alpha = 100 + heat_col.r / 2;
+
+            current_color = sf::Color(
+                std::min(255, r),
+                std::min(255, g),
+                std::min(255, b),
+                std::min(255, alpha)
+            );
+        }
     }
     
     double get_radius() const { return radius; }
+    double get_render_radius() const { return ice ? radius * 2.0 : radius; }
     sf::Color get_color() const { return current_color; }
     double get_temp() const { return temp; }
+    bool is_ice() const { return ice; }
 };

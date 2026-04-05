@@ -3,6 +3,7 @@
 namespace RocheLimit {
     // Constants moved from CONSTANTS.h
     inline constexpr double DIST_MULTIPLIER = 1.5;
+    inline constexpr double REMNANT_DIST_MULTIPLIER = 3.0; // compact remnants have stronger tidal forces
     inline constexpr double SIZE_DIFFERENCE = 0.3;
     inline constexpr double MINIMUM_BREAKUP_SIZE = 4.0;
 
@@ -24,8 +25,9 @@ namespace RocheLimit {
      * @param radiusSum The sum of the radii of the two bodies.
      * @return The distance at which the Roche limit is considered breached.
      */
-    inline double calculateLimitRadius(double radiusSum) {
-        return DIST_MULTIPLIER * radiusSum;
+    inline double calculateLimitRadius(double radiusSum, bool aggressorIsRemnant = false) {
+        double mult = aggressorIsRemnant ? REMNANT_DIST_MULTIPLIER : DIST_MULTIPLIER;
+        return mult * radiusSum;
     }
 
     /**
@@ -38,9 +40,9 @@ namespace RocheLimit {
      * @param aggressorIsBlackHole Is the aggressor a black hole?
      * @return true if the Roche limit is breached, false otherwise.
      */
-    inline bool isBreached(double distance, double radiusSum, double victimMass, double aggressorMass, bool aggressorIsBlackHole) {
-        return distance < calculateLimitRadius(radiusSum) &&
-               checkMassRatio(victimMass,aggressorMass, aggressorIsBlackHole);
+    inline bool isBreached(double distance, double radiusSum, double victimMass, double aggressorMass, bool aggressorIsRemnant) {
+        return distance < calculateLimitRadius(radiusSum, aggressorIsRemnant) &&
+               checkMassRatio(victimMass, aggressorMass, aggressorIsRemnant);
     }
 
     /**

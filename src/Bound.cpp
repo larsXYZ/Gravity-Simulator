@@ -50,7 +50,7 @@ bool Bound::isOutside(sf::Vector2f p) const
 	return std::hypot((p.x - getPos().x), (p.y - getPos().y)) > indicator.getRadius();
 }
 
-void Bound::render(sf::RenderWindow& window, float zoom)
+void Bound::render(sf::RenderTarget& window, float zoom)
 {
 	indicator.setPosition(getPos());
 	indicator.setOutlineThickness(40 * zoom);
