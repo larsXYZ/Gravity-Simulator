@@ -207,9 +207,12 @@ PredictionResult predict_trajectory(const std::vector<Planet>& planets_orig, con
 	return result;
 }
 
-void updateGuiSize(tgui::TextArea::Ptr textbox, int lines)
+void updateGuiSize(tgui::TextArea::Ptr textbox, int = 0)
 {
-    float lineHeight = textbox->getTextSize() * 1.2f;
+    auto text = textbox->getText().toStdString();
+    int lines = 1;
+    for (char c : text) if (c == '\n') lines++;
+    float lineHeight = textbox->getTextSize() * 1.4f;
     textbox->setSize(textbox->getSize().x, std::max(32.0f, lines * lineHeight + 12.0f));
 }
 

@@ -228,14 +228,17 @@ double CelestialBody::fuelFraction() const noexcept
 
 void CelestialBody::initializeFuel() noexcept
 {
-	if (fuel > 0.0) return; // already has fuel (e.g. set externally)
-
-	// Use mass ranges directly — planetType may not be set correctly yet during construction
+	// Set fuel based on current mass range
 	double m = getMass();
+	double expectedFuel = 0.0;
 	if (m >= GASGIANTLIMIT)
-		fuel = m * INITIAL_FUEL_PER_MASS;
+		expectedFuel = m * INITIAL_FUEL_PER_MASS;
 	else if (m >= BROWNDWARFLIMIT)
-		fuel = m * INITIAL_FUEL_PER_MASS * BROWNDWARF_FUEL_FRACTION;
+		expectedFuel = m * INITIAL_FUEL_PER_MASS * BROWNDWARF_FUEL_FRACTION;
+
+	// Only set fuel if it would increase (don't reset a star that's already burning)
+	if (expectedFuel > fuel)
+		fuel = expectedFuel;
 }
 
 double CelestialBody::fusionEnergy() const noexcept

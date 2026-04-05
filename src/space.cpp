@@ -692,7 +692,7 @@ void Space::hotkeys(sf::Event event, sf::View & view, const sf::RenderWindow& wi
 
 void Space::randomPlanets(int totmass,int antall, double radius, sf::Vector2f pos)
 {
-	double speedmultRandom = 0.00000085 * uniform_random(120*totmass, 150*totmass);
+	double speedmultRandom = 0.00000070 * uniform_random(120*totmass, 150*totmass);
 	double angle = 0;
 	double delta_angle = 2*PI / antall;
 	double centermass = uniform_random(totmass / 3 , totmass / 2);
@@ -1170,7 +1170,7 @@ void Space::giveRings(const Planet & planet, int inner, int outer)
 		const auto pos = sf::Vector2f(planet.getPosition().x + cos(angle) * rad, planet.getPosition().y + sin(angle) * rad);
 		const auto vel = sf::Vector2f(speed * cos(angle + PI / 2.0) + planet.getVelocity().x, speed * sin(angle + PI / 2.0) + planet.getVelocity().y);
 		
-		particles->add_particle(pos, vel, 1, curr_time+2000000, 500.0);
+		particles->add_particle(pos, vel, 1, curr_time+2000000, 500.0, true);
 
 		angle += delta_angle;
 	}
