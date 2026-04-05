@@ -212,6 +212,8 @@ void Space::update()
 	// --- PHASE 2: BIG UNIFIED PASS (Gravity, Heat, Collisions, Roche) ---
 	std::vector<CollisionEvent> collision_events;
 	std::vector<RocheEvent> roche_events;
+	collision_events.reserve(16);
+	roche_events.reserve(16);
 
 	#pragma omp parallel if(n_planets > 50)
 	{
@@ -1518,8 +1520,8 @@ void Space::initSetup()
 
 template<typename T>
 T generate_uniform(T min, T max) {
-	std::random_device seeder;
-	std::default_random_engine generator(seeder());
+	thread_local static std::random_device seeder;
+	thread_local static std::default_random_engine generator(seeder());
 
 	if constexpr (std::is_integral_v<T>) {
 		std::uniform_int_distribution<T> uniform(min, max);

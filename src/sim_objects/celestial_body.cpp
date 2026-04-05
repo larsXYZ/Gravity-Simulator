@@ -803,8 +803,8 @@ void CelestialBody::colonize(int i, const sf::Color& c, std::string_view d, std:
 
 int CelestialBody::modernRandomWithLimits(int min, int max) const
 {
-	std::random_device seeder;
-	std::default_random_engine generator(seeder());
+	thread_local static std::random_device seeder;
+	thread_local static std::default_random_engine generator(seeder());
 	std::uniform_int_distribution<int> uniform(min, max);
 	return uniform(generator);
 }

@@ -12,6 +12,7 @@ int main(int argc, char* argv[]) {
     try {
         // Default values
         int num_planets = 250;
+        int num_particles = 15000;
         int iterations = 25;
 
         // Parse command line arguments
@@ -19,6 +20,8 @@ int main(int argc, char* argv[]) {
             std::string arg = argv[i];
             if ((arg == "--objects" || arg == "-n" || arg == "-o") && i + 1 < argc) {
                 num_planets = std::atoi(argv[++i]);
+            } else if ((arg == "--particles" || arg == "-p") && i + 1 < argc) {
+                num_particles = std::atoi(argv[++i]);
             } else if ((arg == "--iterations" || arg == "-i") && i + 1 < argc) {
                 iterations = std::atoi(argv[++i]);
             }
@@ -44,8 +47,8 @@ int main(int argc, char* argv[]) {
         
         space.flushPlanets(); 
 
-        std::cout << "Adding 15000 particles..." << std::endl;
-        for (int i = 0; i < 15000; ++i) {
+        std::cout << "Adding " << num_particles << " particles..." << std::endl;
+        for (int i = 0; i < num_particles; ++i) {
             double x = (i % 100) * 50.0 - 2500.0;
             double y = (i / 100) * 50.0 - 2500.0;
             space.addParticle(sf::Vector2f(x, y), sf::Vector2f(0, 0), 2.0, 10000.0);

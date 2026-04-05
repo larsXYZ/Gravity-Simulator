@@ -37,8 +37,8 @@ public:
 
 	int modernRandomWithLimits(int min, int max)
 	{
-		std::random_device seeder;
-		std::default_random_engine generator(seeder());
+		thread_local static std::random_device seeder;
+		thread_local static std::default_random_engine generator(seeder());
 		std::uniform_int_distribution<int> uniform(min, max);
 		return uniform(generator);
 	}

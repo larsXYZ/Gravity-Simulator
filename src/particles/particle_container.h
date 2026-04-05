@@ -67,9 +67,33 @@ class DecimatedLegacyParticleContainer : public IParticleContainer
 
 public:
 
+	struct CachedPlanet {
+		float x, y;
+		double mass, g_mass, radius, radius_sq;
+		double thermal_energy;
+		bool emits_heat;
+		bool grace_active;
+	};
+
 	void update(const std::vector<Planet>& planets, const Bound& bound, double timestep, double curr_time, bool gravity_enabled, bool heat_enabled) override
 	{
 		next_dec_simulation_target();
+
+		// Pre-filter and cache planet data for particle physics
+		std::vector<CachedPlanet> cached;
+		cached.reserve(planets.size());
+		for (const auto& planet : planets)
+		{
+			if (planet.getMass() < DUST_MIN_PHYSICS_SIZE) continue;
+			cached.push_back({
+				planet.getx(), planet.gety(),
+				planet.getMass(), G * planet.getMass(),
+				planet.getRadius(), planet.getRadius() * planet.getRadius(),
+				(heat_enabled && planet.emitsHeat()) ? planet.giveThermalEnergy(timestep * decimation_factor) : 0.0,
+				planet.emitsHeat(),
+				planet.disintegrationGraceTimeIsActive(curr_time)
+			});
+		}
 
 		auto& target_particles = particles[current_dec_simulation_target];
 
@@ -78,27 +102,23 @@ public:
 		{
 			auto& particle = target_particles[i];
 
-			for (const auto& planet : planets)
+			for (const auto& cp : cached)
 			{
-				if (planet.getMass() < DUST_MIN_PHYSICS_SIZE)
-					continue;
-
 				const auto curr_pos = particle.get_position();
 
-				const auto dx = planet.getx() - curr_pos.x;
-				const auto dy = planet.gety() - curr_pos.y;
+				const auto dx = cp.x - curr_pos.x;
+				const auto dy = cp.y - curr_pos.y;
 				const auto distanceSquared = dx * dx + dy * dy;
 
 				double dist = 1.0;
 				bool dist_calculated = false;
 
-				if (heat_enabled && planet.emitsHeat())
+				if (heat_enabled && cp.thermal_energy > 0)
 				{
 					dist = std::max(static_cast<double>(std::sqrt(distanceSquared)), 1.0);
 					dist_calculated = true;
 
-					double emitted = planet.giveThermalEnergy(timestep * decimation_factor);
-					double heat = calculate_heating(particle.get_radius(), emitted, dist);
+					double heat = calculate_heating(particle.get_radius(), cp.thermal_energy, dist);
 					particle.absorb_heat(heat);
 				}
 
@@ -112,12 +132,8 @@ public:
 
 					if (real_dist < 0.1) real_dist = 0.1;
 
-					// F = G * M * m / r^2
-					// a = F / m = G * M / r^2
-					// ax = a * (dx / r) = G * M * dx / r^3
-					
 					const double r3 = real_dist * real_dist * real_dist;
-					const double A_div_r3 = (G * planet.getMass()) / r3;
+					const double A_div_r3 = cp.g_mass / r3;
 
 					const auto acceleration = sf::Vector2f(
 						static_cast<float>(A_div_r3 * dx),
@@ -142,17 +158,13 @@ public:
 				if (bound.isActive() && bound.isOutside(particle.get_position()))
 					return true;
 
-				for (const auto& planet : planets)
+				for (const auto& cp : cached)
 				{
-					if (planet.getMass() < DUST_MIN_PHYSICS_SIZE)
-						continue;
-
-					const float dx = planet.getx() - particle.get_position().x;
-					const float dy = planet.gety() - particle.get_position().y;
+					const float dx = cp.x - particle.get_position().x;
+					const float dy = cp.y - particle.get_position().y;
 					const float distanceSquared = dx * dx + dy * dy;
 
-					if (distanceSquared <= planet.getRadius() * planet.getRadius() &&
-						!planet.disintegrationGraceTimeIsActive(curr_time))
+					if (distanceSquared <= cp.radius_sq && !cp.grace_active)
 					{
 						return true;
 					}
